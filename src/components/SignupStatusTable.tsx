@@ -116,28 +116,25 @@ export default function SignupStatusTable({ searchTerm = '' }: SignupStatusTable
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-green-600">{data.statistics.caretakerSignedFinalForms}</div>
-            <div className="text-gray-600">Parent Signed</div>
+            <div className="text-gray-600">Parents Signed Final Forms</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-green-600">{data.statistics.playerSignedFinalForms}</div>
-            <div className="text-gray-600">Student Signed</div>
+            <div className="text-gray-600">Students Signed Final Forms</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-green-600">{data.statistics.playerClearedPhysical}</div>
-            <div className="text-gray-600">Physical Cleared</div>
+            <div className="text-gray-600">Physicals Cleared</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-green-600">{data.statistics.caretakerFilledQuestionnaire}</div>
-            <div className="text-gray-600">Questionnaire</div>
+            <div className="text-gray-600">Questionnaires Answered</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-green-600">{data.statistics.caretaker1JoinedMailingList}</div>
-            <div className="text-gray-600">Mailing List</div>
+            <div className="text-gray-600">Parents on Mailing List</div>
           </div>
         </div>
-        <p className="text-xs text-gray-500 mt-2">
-          Last updated: {new Date(data.lastUpdated).toLocaleString()}
-        </p>
       </div>
 
       {/* Desktop Table View */}
