@@ -240,18 +240,17 @@ Required environment variables for production deployment:
 
 **Method 1 (Recommended for Vercel): Direct JSON Content**
 1. Navigate to Vercel project settings: Environment Variables
-2. Create variable: `GOOGLE_SERVICE_ACCOUNT_KEY`
-3. Copy the entire content of your `.google-service-account.json` file
-4. Paste the JSON content as the value (single line, no formatting)
+2. Copy JSON to clipboard: `jq -c . .google-service-account.json | pbcopy`
+3. Create variable `GOOGLE_SERVICE_ACCOUNT_KEY` and paste the content
 
 **Method 2 (Local Development): File Path**
-1. Set `GOOGLE_SERVICE_ACCOUNT_KEY_FILE=./.google-service-account.json` 
-2. Ensure the JSON file exists at the specified path
+1. Set `GOOGLE_SERVICE_ACCOUNT_KEY_FILE=./.google-service-account.json`
 
 **Configuration Steps:**
 1. Navigate to Vercel project settings: Environment Variables
-2. Add `GOOGLE_SERVICE_ACCOUNT_KEY` with JSON content from `.google-service-account.json`
-3. Add the three data source ID variables with their respective values
+2. Run `jq -c . .google-service-account.json | pbcopy`
+3. Add `GOOGLE_SERVICE_ACCOUNT_KEY` variable and paste
+4. Add the three data source ID variables
 
 ## Deployment
 
