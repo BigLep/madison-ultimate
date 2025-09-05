@@ -214,8 +214,10 @@ src/
 
 ### Local Development (.env.local)
 ```bash
-# Google API Configuration
-GOOGLE_SERVICE_ACCOUNT_KEY_FILE=./.google-service-account.json
+# Google API Configuration (choose one method)
+GOOGLE_SERVICE_ACCOUNT_KEY_FILE=./.google-service-account.json  # File path method
+# OR
+# GOOGLE_SERVICE_ACCOUNT_KEY={"type":"service_account",...}      # Direct JSON method
 
 # Data Source IDs
 ADDITIONAL_QUESTIONNAIRE_SHEET_ID=1f_PPULjdg-5q2Gi0cXvWvGz1RbwYmUtADChLqwsHuNs
@@ -226,17 +228,30 @@ TEAM_MAILING_LIST_FOLDER_ID=1pAeQMEqiA9QdK9G5yRXsqgbNVzEU7R1E
 ### Vercel Deployment Environment Variables
 Required environment variables for production deployment:
 
-| Variable | Description | Value |
-|----------|-------------|-------|
-| `GOOGLE_SERVICE_ACCOUNT_KEY_FILE` | Google service account JSON credentials | Content of `.google-service-account.json` file |
-| `ADDITIONAL_QUESTIONNAIRE_SHEET_ID` | Google Sheet ID for questionnaire responses | `1f_PPULjdg-5q2Gi0cXvWvGz1RbwYmUtADChLqwsHuNs` |
-| `SPS_FINAL_FORMS_FOLDER_ID` | Google Drive folder ID for SPS Final Forms CSV | `1SnWCxDIn3FxJCvd1JcWyoeoOMscEsQcW` |
-| `TEAM_MAILING_LIST_FOLDER_ID` | Google Drive folder ID for mailing list CSV | `1pAeQMEqiA9QdK9G5yRXsqgbNVzEU7R1E` |
+| Variable | Description | Value | Required |
+|----------|-------------|-------|----------|
+| `GOOGLE_SERVICE_ACCOUNT_KEY` | **Recommended**: Direct JSON credentials for easy copy/paste | Complete JSON content from `.google-service-account.json` | Choose one |
+| `GOOGLE_SERVICE_ACCOUNT_KEY_FILE` | Alternative: File path to credentials (not recommended for Vercel) | Path to service account file | Choose one |
+| `ADDITIONAL_QUESTIONNAIRE_SHEET_ID` | Google Sheet ID for questionnaire responses | `1f_PPULjdg-5q2Gi0cXvWvGz1RbwYmUtADChLqwsHuNs` | ✅ Yes |
+| `SPS_FINAL_FORMS_FOLDER_ID` | Google Drive folder ID for SPS Final Forms CSV | `1SnWCxDIn3FxJCvd1JcWyoeoOMscEsQcW` | ✅ Yes |
+| `TEAM_MAILING_LIST_FOLDER_ID` | Google Drive folder ID for mailing list CSV | `1pAeQMEqiA9QdK9G5yRXsqgbNVzEU7R1E` | ✅ Yes |
+
+#### **Google Service Account Authentication Methods**
+
+**Method 1 (Recommended for Vercel): Direct JSON Content**
+1. Navigate to Vercel project settings: Environment Variables
+2. Create variable: `GOOGLE_SERVICE_ACCOUNT_KEY`
+3. Copy the entire content of your `.google-service-account.json` file
+4. Paste the JSON content as the value (single line, no formatting)
+
+**Method 2 (Local Development): File Path**
+1. Set `GOOGLE_SERVICE_ACCOUNT_KEY_FILE=./.google-service-account.json` 
+2. Ensure the JSON file exists at the specified path
 
 **Configuration Steps:**
 1. Navigate to Vercel project settings: Environment Variables
-2. Add each variable with corresponding values from local `.env.local`
-3. For Google service account key, copy entire JSON content from `.google-service-account.json`
+2. Add `GOOGLE_SERVICE_ACCOUNT_KEY` with JSON content from `.google-service-account.json`
+3. Add the three data source ID variables with their respective values
 
 ## Deployment
 

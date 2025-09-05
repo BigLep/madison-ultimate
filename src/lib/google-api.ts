@@ -1,14 +1,39 @@
 import { google } from 'googleapis';
 import { GoogleAuth } from 'google-auth-library';
 
-// Initialize Google Auth with service account JSON file
-const auth = new GoogleAuth({
-  keyFile: process.env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE,
-  scopes: [
+// Initialize Google Auth with service account - supports both file path and direct JSON content
+function createGoogleAuth(): GoogleAuth {
+  const scopes = [
     'https://www.googleapis.com/auth/spreadsheets.readonly',
     'https://www.googleapis.com/auth/drive.readonly',
-  ],
-});
+  ];
+
+  // Check if direct JSON content is provided (for Vercel deployment)
+  if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
+    try {
+      const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY);
+      return new GoogleAuth({
+        credentials,
+        scopes,
+      });
+    } catch (error) {
+      console.error('Failed to parse GOOGLE_SERVICE_ACCOUNT_KEY JSON:', error);
+      throw new Error('Invalid GOOGLE_SERVICE_ACCOUNT_KEY format - must be valid JSON');
+    }
+  }
+
+  // Fallback to file path (for local development)
+  if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE) {
+    return new GoogleAuth({
+      keyFile: process.env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE,
+      scopes,
+    });
+  }
+
+  throw new Error('Either GOOGLE_SERVICE_ACCOUNT_KEY or GOOGLE_SERVICE_ACCOUNT_KEY_FILE must be set');
+}
+
+const auth = createGoogleAuth();
 
 // Initialize Google Sheets and Drive APIs
 export const sheets = google.sheets({ version: 'v4', auth });
