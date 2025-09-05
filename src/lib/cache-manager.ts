@@ -9,12 +9,14 @@ import {
   parseSPSFinalForms, 
   parseTeamMailingList, 
   parseQuestionnaireData,
-  integratePlayerData,
+  integratePlayerData
+} from '@/lib/data-processing';
+import { 
+  PlayerSignupStatus,
   SPSFinalFormsRecord,
   MailingListRecord,
   QuestionnaireRecord
-} from '@/lib/data-processing';
-import { PlayerSignupStatus } from '@/lib/types';
+} from '@/lib/types';
 import { formatToPacificTime } from '@/lib/date-utils';
 
 // Cache configuration
@@ -298,8 +300,8 @@ class CacheManager {
     // Get all mailing list emails
     const mailingListEmails = mailingListData.map(record => ({
       email: record.email.toLowerCase(),
-      nickname: record.nickname || '',
-      status: record.status || ''
+      name: record.name || '',
+      joinedDate: record.joinedDate || ''
     }));
 
     // Find matched emails
