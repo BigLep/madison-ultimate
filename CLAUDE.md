@@ -10,12 +10,12 @@ This file contains development guidelines and commands for working with Claude C
 
 ## Commit Message Guidelines
 
-Use conventional commits with emojis:
+Use conventional commits with emojis for fun:
 
 ```bash
-git commit -m "✨ feat: add new feature"
-git commit -m "🐛 fix: resolve bug"  
-git commit -m "📚 docs: update documentation"
+git commit -m "feat: add new feature ✨"
+git commit -m "fix: resolve bug 🔧"  
+git commit -m "docs: update documentation 📚"
 ```
 
 ## Claude Code Specific Notes
