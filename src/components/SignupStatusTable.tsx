@@ -118,7 +118,7 @@ export default function SignupStatusTable({ searchTerm = '' }: SignupStatusTable
     <div className="space-y-6">
       {/* Statistics Summary */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="text-lg font-semibold mb-3">Signup Progress Summary</h3>
+        <h3 className="text-xl font-bold text-gray-900 mb-3">Signup Progress Summary</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-sm">
           <div className="text-center">
             <div className="text-2xl font-bold text-blue-600">{data.statistics.totalPlayers}</div>
@@ -311,15 +311,15 @@ export default function SignupStatusTable({ searchTerm = '' }: SignupStatusTable
                   )}
                 </h4>
                 <div className="grid grid-cols-1 gap-2">
-                  <div className="flex justify-between">
+                  <div className="flex items-center gap-3">
                     <span className="text-gray-900">Parent Signed:</span>
                     <StatusBadge status={player.hasCaretakerSignedFinalForms} label="Parent signed" />
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex items-center gap-3">
                     <span className="text-gray-900">Student Signed:</span>
                     <StatusBadge status={player.hasPlayerSignedFinalForms} label="Student signed" />
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex items-center gap-3">
                     <span className="text-gray-900">Physical Cleared:</span>
                     <StatusBadge status={player.hasPlayerClearedPhysical} label="Physical cleared" />
                   </div>
@@ -330,7 +330,7 @@ export default function SignupStatusTable({ searchTerm = '' }: SignupStatusTable
               <div>
                 <h4 className="font-medium text-gray-700 text-xs uppercase tracking-wider mb-2">Other Requirements</h4>
                 <div className="grid grid-cols-1 gap-2">
-                  <div className="flex justify-between">
+                  <div className="flex items-center gap-3">
                     <span>
                       <a 
                         href="https://docs.google.com/document/d/1A2F7ThHtcMm23bxk8-30rMT2svaqT3gMbRWeSR_QXXY/edit?tab=t.rmrdcntgom85#bookmark=id.mns959sc82q8" 
@@ -348,7 +348,7 @@ export default function SignupStatusTable({ searchTerm = '' }: SignupStatusTable
                     </span>
                     <StatusBadge status={player.hasCaretakerFilledQuestionnaire} label="Questionnaire" />
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex items-center gap-3">
                     <span>
                       <a 
                         href="https://docs.google.com/document/d/1A2F7ThHtcMm23bxk8-30rMT2svaqT3gMbRWeSR_QXXY/edit?tab=t.hka67no39wu0#bookmark=kix.7hy9wbcg612n" 
