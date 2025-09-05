@@ -312,15 +312,15 @@ export default function SignupStatusTable({ searchTerm = '' }: SignupStatusTable
                 </h4>
                 <div className="grid grid-cols-1 gap-2">
                   <div className="flex justify-between">
-                    <span>Parent Signed:</span>
+                    <span className="text-gray-900">Parent Signed:</span>
                     <StatusBadge status={player.hasCaretakerSignedFinalForms} label="Parent signed" />
                   </div>
                   <div className="flex justify-between">
-                    <span>Student Signed:</span>
+                    <span className="text-gray-900">Student Signed:</span>
                     <StatusBadge status={player.hasPlayerSignedFinalForms} label="Student signed" />
                   </div>
                   <div className="flex justify-between">
-                    <span>Physical Cleared:</span>
+                    <span className="text-gray-900">Physical Cleared:</span>
                     <StatusBadge status={player.hasPlayerClearedPhysical} label="Physical cleared" />
                   </div>
                 </div>
