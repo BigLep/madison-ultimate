@@ -207,6 +207,7 @@ src/
 
 ## Environment Configuration
 
+### Local Development (.env.local)
 ```bash
 # Google API Configuration
 GOOGLE_SERVICE_ACCOUNT_KEY_FILE=./.google-service-account.json
@@ -219,6 +220,61 @@ TEAM_MAILING_LIST_FOLDER_ID=1pAeQMEqiA9QdK9G5yRXsqgbNVzEU7R1E
 # Cache Configuration
 CACHE_DURATION_MINUTES=30
 ```
+
+### Vercel Deployment Environment Variables
+Required environment variables for production deployment:
+
+| Variable | Description | Value |
+|----------|-------------|-------|
+| `GOOGLE_SERVICE_ACCOUNT_KEY_FILE` | Google service account JSON credentials | Content of `.google-service-account.json` file |
+| `ADDITIONAL_QUESTIONNAIRE_SHEET_ID` | Google Sheet ID for questionnaire responses | `1f_PPULjdg-5q2Gi0cXvWvGz1RbwYmUtADChLqwsHuNs` |
+| `SPS_FINAL_FORMS_FOLDER_ID` | Google Drive folder ID for SPS Final Forms CSV | `1SnWCxDIn3FxJCvd1JcWyoeoOMscEsQcW` |
+| `TEAM_MAILING_LIST_FOLDER_ID` | Google Drive folder ID for mailing list CSV | `1pAeQMEqiA9QdK9G5yRXsqgbNVzEU7R1E` |
+| `CACHE_DURATION_MINUTES` | Cache expiration time in minutes | `30` |
+
+**Configuration Steps:**
+1. Navigate to Vercel project settings: Environment Variables
+2. Add each variable with corresponding values from local `.env.local`
+3. For Google service account key, copy entire JSON content from `.google-service-account.json`
+
+## Deployment
+
+### Vercel Production Deployment
+The application is deployed on Vercel with the following configuration:
+
+- **Production URL**: https://madison-ultimate-on1ma0ric-madison-ultimates-projects.vercel.app
+- **Build Command**: `npm run build` 
+- **Framework**: Next.js 15 with App Router
+- **Function Timeout**: 60 seconds (configured for Google API calls)
+
+#### Deployment Process
+```bash
+# 1. Build and test locally
+npm run build
+
+# 2. Deploy to Vercel
+vercel --prod --yes
+
+# 3. Configure environment variables in Vercel dashboard
+# Navigate to: Project Settings → Environment Variables
+```
+
+#### Vercel Configuration (vercel.json)
+```json
+{
+  "version": 2,
+  "framework": "nextjs", 
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "functions": {
+    "src/app/api/*/route.ts": {
+      "maxDuration": 60
+    }
+  }
+}
+```
+
+**Note**: Cron jobs removed due to Hobby plan limitations. Background refresh relies on in-memory timer instead.
 
 ## Current Status (Production Ready)
 
@@ -235,5 +291,6 @@ CACHE_DURATION_MINUTES=30
   - Comprehensive statistics and progress tracking
   - Mobile-first responsive design
   - First name alphabetical sorting
+✅ **Deployment**: Successfully deployed to Vercel production environment
   
-🚀 **Ready for Deployment**: All core features implemented and tested
+🚀 **Production Status**: Live at https://madison-ultimate-on1ma0ric-madison-ultimates-projects.vercel.app
