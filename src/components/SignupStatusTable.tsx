@@ -55,7 +55,7 @@ export default function SignupStatusTable({ searchTerm = '' }: SignupStatusTable
     fetchData()
   }, [])
 
-  // Filter players based on search term (search against full names but display obfuscated)
+  // Filter and sort players based on search term (search against full names but display obfuscated)
   const filteredPlayers = data?.players.filter(player => {
     const fullName = `${player.firstName} ${player.lastName}`;
     const obfuscatedName = obfuscatePlayerName(player.firstName, player.lastName);
@@ -63,6 +63,15 @@ export default function SignupStatusTable({ searchTerm = '' }: SignupStatusTable
            obfuscatedName.toLowerCase().includes(searchTerm.toLowerCase()) ||
            player.grade.includes(searchTerm) ||
            player.gender.toLowerCase().includes(searchTerm.toLowerCase());
+  }).sort((a, b) => {
+    // Sort alphabetically by first name, then last name
+    const firstNameA = a.firstName.toLowerCase();
+    const firstNameB = b.firstName.toLowerCase();
+    if (firstNameA !== firstNameB) {
+      return firstNameA.localeCompare(firstNameB);
+    }
+    // If first names are the same, sort by last name
+    return a.lastName.toLowerCase().localeCompare(b.lastName.toLowerCase());
   }) || []
 
   if (loading) {
