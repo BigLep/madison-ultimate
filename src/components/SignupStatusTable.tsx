@@ -19,6 +19,11 @@ interface PlayersApiResponse {
     caretaker1JoinedMailingList: number
     caretaker2JoinedMailingList: number
   }
+  timestamps: {
+    finalForms: string
+    mailingList: string
+    questionnaire: string
+  }
   lastUpdated: string
 }
 
@@ -159,6 +164,11 @@ export default function SignupStatusTable({ searchTerm = '' }: SignupStatusTable
                 >
                   SPS Final Forms ↗
                 </a>
+                {data?.timestamps?.finalForms && (
+                  <div className="text-xs text-gray-500 normal-case mt-1">
+                    (exported {data.timestamps.finalForms})
+                  </div>
+                )}
               </th>
               <th className="px-4 py-2 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider border-b border-r border-gray-300" rowSpan={2}>
                 <a 
@@ -169,6 +179,11 @@ export default function SignupStatusTable({ searchTerm = '' }: SignupStatusTable
                 >
                   Coach Questionnaire ↗
                 </a>
+                {data?.timestamps?.questionnaire && (
+                  <div className="text-xs text-gray-500 normal-case mt-1">
+                    (refreshed {data.timestamps.questionnaire})
+                  </div>
+                )}
               </th>
               <th className="px-4 py-2 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider border-b border-gray-300" rowSpan={2}>
                 <a 
@@ -179,6 +194,11 @@ export default function SignupStatusTable({ searchTerm = '' }: SignupStatusTable
                 >
                   Team Mailing List ↗
                 </a>
+                {data?.timestamps?.mailingList && (
+                  <div className="text-xs text-gray-500 normal-case mt-1">
+                    (exported {data.timestamps.mailingList})
+                  </div>
+                )}
               </th>
             </tr>
             {/* Bottom header row with SPS Final Forms specific columns */}
@@ -277,6 +297,11 @@ export default function SignupStatusTable({ searchTerm = '' }: SignupStatusTable
                   >
                     SPS Final Forms ↗
                   </a>
+                  {data?.timestamps?.finalForms && (
+                    <span className="text-xs text-gray-500 normal-case ml-2">
+                      (exported {data.timestamps.finalForms})
+                    </span>
+                  )}
                 </h4>
                 <div className="grid grid-cols-1 gap-2">
                   <div className="flex justify-between">
@@ -307,7 +332,12 @@ export default function SignupStatusTable({ searchTerm = '' }: SignupStatusTable
                         className="text-blue-600 hover:text-blue-800 hover:underline"
                       >
                         Coach Questionnaire ↗
-                      </a>:
+                      </a>
+                      {data?.timestamps?.questionnaire && (
+                        <span className="text-xs text-gray-500">
+                          (refreshed {data.timestamps.questionnaire})
+                        </span>
+                      )}:
                     </span>
                     <StatusBadge status={player.hasCaretakerFilledQuestionnaire} label="Questionnaire" />
                   </div>
@@ -320,7 +350,12 @@ export default function SignupStatusTable({ searchTerm = '' }: SignupStatusTable
                         className="text-blue-600 hover:text-blue-800 hover:underline"
                       >
                         Team Mailing List ↗
-                      </a>:
+                      </a>
+                      {data?.timestamps?.mailingList && (
+                        <span className="text-xs text-gray-500">
+                          (exported {data.timestamps.mailingList})
+                        </span>
+                      )}:
                     </span>
                     <div className="flex space-x-1">
                       <StatusBadge status={player.hasCaretaker1JoinedMailingList} label="Parent 1" />
