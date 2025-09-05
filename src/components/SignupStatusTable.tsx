@@ -4,6 +4,13 @@ import { useState, useEffect } from 'react'
 import { PlayerSignupStatus } from '@/lib/types'
 import { obfuscatePlayerName } from '@/lib/privacy'
 
+const formatGenderForUltimate = (gender: string): string => {
+  const normalized = gender.toLowerCase();
+  if (normalized === 'male' || normalized === 'm') return 'Bx';
+  if (normalized === 'female' || normalized === 'f') return 'Gx';
+  return gender; // Return original if no match
+};
+
 interface SignupStatusTableProps {
   searchTerm?: string
 }
@@ -164,7 +171,7 @@ export default function SignupStatusTable({ searchTerm = '' }: SignupStatusTable
               </th>
               <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider border-b border-r border-gray-300" colSpan={3}>
                 <a 
-                  href="https://docs.google.com/document/d/1A2F7ThHtcMm23bxk8-30rMT2svaqT3gMbRWeSR_QXXY/edit?tab=t.rmrdcntgom85#bookmark=id.xa6bxpq5mxh1" 
+                  href="https://madisonultimate.notion.site/Newcomer-Info-265c4da46f758103ab6acc0c607f5956#265c4da46f75810bb98efc045346d290" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-blue-600 hover:text-blue-800 hover:underline"
@@ -179,7 +186,7 @@ export default function SignupStatusTable({ searchTerm = '' }: SignupStatusTable
               </th>
               <th className="px-4 py-2 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider border-b border-r border-gray-300" rowSpan={2}>
                 <a 
-                  href="https://docs.google.com/document/d/1A2F7ThHtcMm23bxk8-30rMT2svaqT3gMbRWeSR_QXXY/edit?tab=t.rmrdcntgom85#bookmark=id.mns959sc82q8" 
+                  href="https://madisonultimate.notion.site/Newcomer-Info-265c4da46f758103ab6acc0c607f5956#265c4da46f7581799dc6eacbe4cb2218" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-blue-600 hover:text-blue-800 hover:underline"
@@ -194,7 +201,7 @@ export default function SignupStatusTable({ searchTerm = '' }: SignupStatusTable
               </th>
               <th className="px-4 py-2 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider border-b border-gray-300" rowSpan={2}>
                 <a 
-                  href="https://docs.google.com/document/d/1A2F7ThHtcMm23bxk8-30rMT2svaqT3gMbRWeSR_QXXY/edit?tab=t.hka67no39wu0#bookmark=kix.7hy9wbcg612n" 
+                  href="https://madisonultimate.notion.site/More-Season-Info-265c4da46f7580668995df287590039f#265c4da46f75812981c1ee2b8d88e956" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-blue-600 hover:text-blue-800 hover:underline"
@@ -223,7 +230,7 @@ export default function SignupStatusTable({ searchTerm = '' }: SignupStatusTable
           </thead>
           <tbody className="divide-y divide-gray-200">
             {filteredPlayers.map((player, index) => (
-              <tr key={`${player.firstName}-${player.lastName}-${index}`} className="hover:bg-gray-50">
+              <tr key={`${player.firstName}-${player.lastName}-${index}`} className={`hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
                 <td className="px-4 py-4 whitespace-nowrap">
                   <div className="font-medium text-gray-900">
                     {obfuscatePlayerName(player.firstName, player.lastName)}
@@ -233,7 +240,7 @@ export default function SignupStatusTable({ searchTerm = '' }: SignupStatusTable
                   {player.grade}
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {player.gender}
+                  {formatGenderForUltimate(player.gender)}
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap">
                   <StatusBadge 
@@ -280,14 +287,14 @@ export default function SignupStatusTable({ searchTerm = '' }: SignupStatusTable
       {/* Mobile Card View */}
       <div className="lg:hidden space-y-4">
         {filteredPlayers.map((player, index) => (
-          <div key={`${player.firstName}-${player.lastName}-${index}`} className="bg-white border border-gray-200 rounded-lg p-4">
+          <div key={`${player.firstName}-${player.lastName}-${index}`} className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} border border-gray-200 rounded-lg p-4`}>
             <div className="flex justify-between items-start mb-3">
               <div>
                 <h3 className="font-medium text-gray-900">
                   {obfuscatePlayerName(player.firstName, player.lastName)}
                 </h3>
                 <p className="text-sm text-gray-500">
-                  Grade {player.grade} • {player.gender}
+                  Grade {player.grade} • {formatGenderForUltimate(player.gender)}
                 </p>
               </div>
             </div>
@@ -297,7 +304,7 @@ export default function SignupStatusTable({ searchTerm = '' }: SignupStatusTable
               <div>
                 <h4 className="font-medium text-gray-700 text-xs uppercase tracking-wider mb-2">
                   <a 
-                    href="https://docs.google.com/document/d/1A2F7ThHtcMm23bxk8-30rMT2svaqT3gMbRWeSR_QXXY/edit?tab=t.rmrdcntgom85#bookmark=id.xa6bxpq5mxh1" 
+                    href="https://madisonultimate.notion.site/Newcomer-Info-265c4da46f758103ab6acc0c607f5956#265c4da46f75810bb98efc045346d290" 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="text-blue-600 hover:text-blue-800 hover:underline"
@@ -333,7 +340,7 @@ export default function SignupStatusTable({ searchTerm = '' }: SignupStatusTable
                   <div className="flex items-center gap-3">
                     <span>
                       <a 
-                        href="https://docs.google.com/document/d/1A2F7ThHtcMm23bxk8-30rMT2svaqT3gMbRWeSR_QXXY/edit?tab=t.rmrdcntgom85#bookmark=id.mns959sc82q8" 
+                        href="https://madisonultimate.notion.site/Newcomer-Info-265c4da46f758103ab6acc0c607f5956#265c4da46f7581799dc6eacbe4cb2218" 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:text-blue-800 hover:underline"
@@ -351,7 +358,7 @@ export default function SignupStatusTable({ searchTerm = '' }: SignupStatusTable
                   <div className="flex items-center gap-3">
                     <span>
                       <a 
-                        href="https://docs.google.com/document/d/1A2F7ThHtcMm23bxk8-30rMT2svaqT3gMbRWeSR_QXXY/edit?tab=t.hka67no39wu0#bookmark=kix.7hy9wbcg612n" 
+                        href="https://madisonultimate.notion.site/More-Season-Info-265c4da46f7580668995df287590039f#265c4da46f75812981c1ee2b8d88e956" 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:text-blue-800 hover:underline"
