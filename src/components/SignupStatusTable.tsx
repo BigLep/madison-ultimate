@@ -161,10 +161,24 @@ export default function SignupStatusTable({ searchTerm = '' }: SignupStatusTable
                 </a>
               </th>
               <th className="px-4 py-2 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider border-b border-r border-gray-300" rowSpan={2}>
-                Coach Questionnaire
+                <a 
+                  href="https://docs.google.com/document/d/1A2F7ThHtcMm23bxk8-30rMT2svaqT3gMbRWeSR_QXXY/edit?tab=t.rmrdcntgom85#bookmark=id.mns959sc82q8" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800 hover:underline"
+                >
+                  Coach Questionnaire ↗
+                </a>
               </th>
               <th className="px-4 py-2 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider border-b border-gray-300" rowSpan={2}>
-                Team Mailing List
+                <a 
+                  href="https://docs.google.com/document/d/1A2F7ThHtcMm23bxk8-30rMT2svaqT3gMbRWeSR_QXXY/edit?tab=t.hka67no39wu0#bookmark=kix.7hy9wbcg612n" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800 hover:underline"
+                >
+                  Team Mailing List ↗
+                </a>
               </th>
             </tr>
             {/* Bottom header row with SPS Final Forms specific columns */}
@@ -254,7 +268,16 @@ export default function SignupStatusTable({ searchTerm = '' }: SignupStatusTable
             <div className="space-y-3 text-sm">
               {/* SPS Final Forms Section */}
               <div>
-                <h4 className="font-medium text-gray-700 text-xs uppercase tracking-wider mb-2">SPS Final Forms</h4>
+                <h4 className="font-medium text-gray-700 text-xs uppercase tracking-wider mb-2">
+                  <a 
+                    href="https://docs.google.com/document/d/1A2F7ThHtcMm23bxk8-30rMT2svaqT3gMbRWeSR_QXXY/edit?tab=t.rmrdcntgom85#bookmark=id.xa6bxpq5mxh1" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 hover:underline"
+                  >
+                    SPS Final Forms ↗
+                  </a>
+                </h4>
                 <div className="grid grid-cols-1 gap-2">
                   <div className="flex justify-between">
                     <span>Parent Signed:</span>
@@ -276,11 +299,29 @@ export default function SignupStatusTable({ searchTerm = '' }: SignupStatusTable
                 <h4 className="font-medium text-gray-700 text-xs uppercase tracking-wider mb-2">Other Requirements</h4>
                 <div className="grid grid-cols-1 gap-2">
                   <div className="flex justify-between">
-                    <span>Coach Questionnaire:</span>
+                    <span>
+                      <a 
+                        href="https://docs.google.com/document/d/1A2F7ThHtcMm23bxk8-30rMT2svaqT3gMbRWeSR_QXXY/edit?tab=t.rmrdcntgom85#bookmark=id.mns959sc82q8" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 hover:underline"
+                      >
+                        Coach Questionnaire ↗
+                      </a>:
+                    </span>
                     <StatusBadge status={player.hasCaretakerFilledQuestionnaire} label="Questionnaire" />
                   </div>
                   <div className="flex justify-between">
-                    <span>Team Mailing List:</span>
+                    <span>
+                      <a 
+                        href="https://docs.google.com/document/d/1A2F7ThHtcMm23bxk8-30rMT2svaqT3gMbRWeSR_QXXY/edit?tab=t.hka67no39wu0#bookmark=kix.7hy9wbcg612n" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 hover:underline"
+                      >
+                        Team Mailing List ↗
+                      </a>:
+                    </span>
                     <div className="flex space-x-1">
                       <StatusBadge status={player.hasCaretaker1JoinedMailingList} label="Parent 1" />
                       <StatusBadge status={player.hasCaretaker2JoinedMailingList} label="Parent 2" />
