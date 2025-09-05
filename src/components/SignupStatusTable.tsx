@@ -18,6 +18,7 @@ interface PlayersApiResponse {
     caretakerFilledQuestionnaire: number
     caretaker1JoinedMailingList: number
     caretaker2JoinedMailingList: number
+    parentsOnMailingList: number
   }
   timestamps: {
     finalForms: string
@@ -131,7 +132,7 @@ export default function SignupStatusTable({ searchTerm = '' }: SignupStatusTable
             <div className="text-gray-600">Questionnaires Answered</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">{data.statistics.caretaker1JoinedMailingList}</div>
+            <div className="text-2xl font-bold text-green-600">{data.statistics.parentsOnMailingList}</div>
             <div className="text-gray-600">Parents on Mailing List</div>
           </div>
         </div>

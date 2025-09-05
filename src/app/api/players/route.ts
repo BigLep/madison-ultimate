@@ -46,6 +46,9 @@ export async function GET() {
       caretakerFilledQuestionnaire: playerData.filter(p => p.hasCaretakerFilledQuestionnaire).length,
       caretaker1JoinedMailingList: playerData.filter(p => p.hasCaretaker1JoinedMailingList).length,
       caretaker2JoinedMailingList: playerData.filter(p => p.hasCaretaker2JoinedMailingList).length,
+      parentsOnMailingList: playerData.reduce((count, p) => {
+        return count + (p.hasCaretaker1JoinedMailingList ? 1 : 0) + (p.hasCaretaker2JoinedMailingList ? 1 : 0);
+      }, 0),
     };
 
     return NextResponse.json({
