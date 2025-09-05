@@ -111,47 +111,54 @@ interface QuestionnaireRecord {
 
 ## Caching Strategy
 
-### Server-Side Caching with Background Refresh
+### Simplified In-Memory Caching
 
-The application implements a sophisticated caching strategy to minimize Google API calls and provide fast page loads:
+The application uses a simple in-memory caching strategy optimized for Vercel's serverless environment:
 
 #### **Cache Manager Features**
-- **Cache Duration**: 30 minutes (configurable via `CACHE_DURATION_MINUTES`)
-- **Storage Location**: `/tmp/integrated-data.json` (disk-based)
-- **Background Refresh**: Automatic every 30 minutes
+- **Cache Duration**: 2 minutes (hardcoded for optimal balance)
+- **Storage Location**: In-memory Map (no disk persistence)
+- **Refresh Strategy**: On-demand only (no background tasks)
 - **Stale-While-Revalidate**: Serves stale cache if Google APIs fail
 - **Force Refresh**: Debug endpoints trigger fresh data fetch
 
 #### **Performance Characteristics**
-- **Cache Hit**: ~50-100ms response time (disk read)
-- **Cache Miss**: ~3-5 seconds (Google API calls)
-- **API Usage Reduction**: ~95% fewer Google API calls
-- **Graceful Degradation**: Continues serving stale data during API outages
+- **Memory Cache Hit**: ~10-20ms response time
+- **Cache Miss**: ~3-5 seconds (Google API calls + processing)
+- **API Usage Reduction**: ~80-90% fewer Google API calls
+- **Container Persistence**: Cache survives between requests when container is reused
+- **Cold Start Behavior**: Fresh fetch on new container deployment
 
 #### **Cache Behavior**
 ```
 ┌─────────────────┬──────────────────┬─────────────────┐
 │ Scenario        │ Action           │ Response Time   │
 ├─────────────────┼──────────────────┼─────────────────┤
-│ Fresh cache     │ Serve from cache │ ~50-100ms      │
-│ Expired cache   │ Fetch + cache    │ ~3-5 seconds   │
-│ API failure     │ Serve stale      │ ~50-100ms      │
-│ No cache + fail │ Return error     │ ~3-5 seconds   │
+│ Memory hit      │ Serve from RAM   │ ~10-20ms       │
+│ Cache expired   │ Fetch + cache    │ ~3-5 seconds   │
+│ API failure     │ Serve stale      │ ~10-20ms       │
+│ Cold start      │ Fresh fetch      │ ~3-5 seconds   │
 │ Debug endpoint  │ Force refresh    │ ~3-5 seconds   │
 └─────────────────┴──────────────────┴─────────────────┘
 ```
+
+#### **Vercel Serverless Optimizations**
+- **No Background Timers**: Eliminates unreliable setInterval() in serverless
+- **No Disk I/O**: Avoids ephemeral file system writes
+- **Container Reuse**: Leverages Vercel's container persistence when available
+- **Fast Response**: 2-minute cache balances freshness with performance
 
 ## API Endpoints
 
 ### `/api/players` (Main Data API)
 - **Purpose**: Serve integrated player signup data
-- **Caching**: Uses cache manager with 30-minute expiry
+- **Caching**: Uses in-memory cache with 2-minute expiry
 - **Response**: Complete PlayerSignupStatus[] with statistics
-- **Performance**: ~50ms (cached) / ~3-5s (fresh)
+- **Performance**: ~10-20ms (cached) / ~3-5s (fresh)
 
 ### `/api/debug` (Debug & Force Refresh)
 - **Purpose**: Email matching analysis + force cache refresh
-- **Caching**: Always fetches fresh data and updates cache
+- **Caching**: Always fetches fresh data and updates memory cache
 - **Response**: Matched/unmatched email breakdown
 - **Usage**: Troubleshooting email matching issues
 
@@ -201,8 +208,6 @@ src/
 │   └── types.ts                         # TypeScript type definitions
 ├── components/
 │   └── SignupStatusTable.tsx            # Main UI component with responsive design
-└── tmp/
-    └── integrated-data.json             # Cached data (30min expiry)
 ```
 
 ## Environment Configuration
@@ -216,9 +221,6 @@ GOOGLE_SERVICE_ACCOUNT_KEY_FILE=./.google-service-account.json
 ADDITIONAL_QUESTIONNAIRE_SHEET_ID=1f_PPULjdg-5q2Gi0cXvWvGz1RbwYmUtADChLqwsHuNs
 SPS_FINAL_FORMS_FOLDER_ID=1SnWCxDIn3FxJCvd1JcWyoeoOMscEsQcW
 TEAM_MAILING_LIST_FOLDER_ID=1pAeQMEqiA9QdK9G5yRXsqgbNVzEU7R1E
-
-# Cache Configuration
-CACHE_DURATION_MINUTES=30
 ```
 
 ### Vercel Deployment Environment Variables
@@ -230,7 +232,6 @@ Required environment variables for production deployment:
 | `ADDITIONAL_QUESTIONNAIRE_SHEET_ID` | Google Sheet ID for questionnaire responses | `1f_PPULjdg-5q2Gi0cXvWvGz1RbwYmUtADChLqwsHuNs` |
 | `SPS_FINAL_FORMS_FOLDER_ID` | Google Drive folder ID for SPS Final Forms CSV | `1SnWCxDIn3FxJCvd1JcWyoeoOMscEsQcW` |
 | `TEAM_MAILING_LIST_FOLDER_ID` | Google Drive folder ID for mailing list CSV | `1pAeQMEqiA9QdK9G5yRXsqgbNVzEU7R1E` |
-| `CACHE_DURATION_MINUTES` | Cache expiration time in minutes | `30` |
 
 **Configuration Steps:**
 1. Navigate to Vercel project settings: Environment Variables

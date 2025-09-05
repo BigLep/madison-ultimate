@@ -1,5 +1,3 @@
-import fs from 'fs/promises';
-import path from 'path';
 import { 
   getMostRecentFileInfoFromFolder,
   downloadCsvFromDrive,
@@ -19,14 +17,12 @@ import {
 } from '@/lib/types';
 import { formatToPacificTime } from '@/lib/date-utils';
 
-// Cache configuration
-const CACHE_DIR = path.join(process.cwd(), 'tmp');
-const CACHE_DURATION_MS = parseInt(process.env.CACHE_DURATION_MINUTES || '30') * 60 * 1000; // Default 30 minutes
+// Cache configuration - 2 minutes for in-memory cache
+const CACHE_DURATION_MS = 2 * 60 * 1000; // 2 minutes
 
 interface CacheEntry<T> {
   data: T;
   timestamp: number;
-  source_timestamp?: string;
 }
 
 interface IntegratedData {
@@ -51,11 +47,10 @@ interface IntegratedData {
 
 class CacheManager {
   private static instance: CacheManager;
-  private refreshTimer: NodeJS.Timeout | null = null;
+  private memoryCache: Map<string, CacheEntry<IntegratedData>> = new Map();
 
   private constructor() {
-    this.ensureCacheDir();
-    this.startBackgroundRefresh();
+    // Simple in-memory only cache
   }
 
   public static getInstance(): CacheManager {
@@ -63,37 +58,6 @@ class CacheManager {
       CacheManager.instance = new CacheManager();
     }
     return CacheManager.instance;
-  }
-
-  private async ensureCacheDir() {
-    try {
-      await fs.mkdir(CACHE_DIR, { recursive: true });
-    } catch (error) {
-      console.error('Failed to create cache directory:', error);
-    }
-  }
-
-  private getCacheFilePath(key: string): string {
-    return path.join(CACHE_DIR, `${key}.json`);
-  }
-
-  private async readCacheFile<T>(key: string): Promise<CacheEntry<T> | null> {
-    try {
-      const filePath = this.getCacheFilePath(key);
-      const content = await fs.readFile(filePath, 'utf-8');
-      return JSON.parse(content);
-    } catch (error) {
-      return null;
-    }
-  }
-
-  private async writeCacheFile<T>(key: string, entry: CacheEntry<T>): Promise<void> {
-    try {
-      const filePath = this.getCacheFilePath(key);
-      await fs.writeFile(filePath, JSON.stringify(entry, null, 2));
-    } catch (error) {
-      console.error(`Failed to write cache file ${key}:`, error);
-    }
   }
 
   private isCacheExpired(timestamp: number): boolean {
@@ -217,35 +181,35 @@ class CacheManager {
     }
   }
 
-  // Get integrated data (from cache if available, otherwise fetch fresh)
+  // Get integrated data (from memory cache if available, otherwise fetch fresh)
   public async getIntegratedData(forceRefresh = false): Promise<IntegratedData | null> {
     const cacheKey = 'integrated-data';
     
-    // Always check for cached data first
-    const cached = await this.readCacheFile<IntegratedData>(cacheKey);
+    // Check in-memory cache first
+    const cached = this.memoryCache.get(cacheKey);
     
     if (!forceRefresh && cached && !this.isCacheExpired(cached.timestamp)) {
-      console.log('📦 Serving fresh data from cache');
+      console.log('📦 Serving data from memory cache');
       return cached.data;
     }
 
-    // Cache expired or force refresh - try to fetch fresh data
-    console.log('🔄 Cache expired or force refresh requested, fetching fresh data...');
+    // Cache expired or force refresh - fetch fresh data
+    console.log('🔄 Cache expired or force refresh, fetching fresh data...');
     const freshData = await this.fetchFreshData();
     
     if (freshData) {
-      // Successfully fetched fresh data - update cache
+      // Successfully fetched fresh data - update memory cache
       const cacheEntry: CacheEntry<IntegratedData> = {
         data: freshData,
         timestamp: Date.now()
       };
-      await this.writeCacheFile(cacheKey, cacheEntry);
-      console.log('💾 Fresh data cached successfully');
+      this.memoryCache.set(cacheKey, cacheEntry);
+      console.log('💾 Fresh data cached in memory');
       return freshData;
     } else {
       // Failed to fetch fresh data - serve stale cache if available
       if (cached) {
-        console.log('⚠️ Failed to fetch fresh data, serving stale cache');
+        console.log('⚠️ Failed to fetch fresh data, serving stale memory cache');
         return cached.data;
       } else {
         console.error('❌ No cached data available and fresh fetch failed');
@@ -328,28 +292,10 @@ class CacheManager {
     };
   }
 
-  // Start background refresh process
-  private startBackgroundRefresh() {
-    console.log(`🔄 Starting background refresh every ${CACHE_DURATION_MS / 60000} minutes`);
-    
-    this.refreshTimer = setInterval(async () => {
-      try {
-        console.log('⏰ Background refresh triggered');
-        await this.getIntegratedData(true);
-      } catch (error) {
-        console.error('❌ Background refresh failed:', error);
-        // Don't throw - let the timer continue for next attempt
-      }
-    }, CACHE_DURATION_MS);
-  }
-
-  // Stop background refresh (for cleanup)
-  public stopBackgroundRefresh() {
-    if (this.refreshTimer) {
-      clearInterval(this.refreshTimer);
-      this.refreshTimer = null;
-      console.log('🛑 Background refresh stopped');
-    }
+  // Clear memory cache (useful for testing)
+  public clearCache() {
+    this.memoryCache.clear();
+    console.log('🧹 Memory cache cleared');
   }
 }
 
