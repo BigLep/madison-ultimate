@@ -139,30 +139,44 @@ export default function SignupStatusTable({ searchTerm = '' }: SignupStatusTable
       <div className="hidden lg:block overflow-x-auto">
         <table className="min-w-full bg-white border border-gray-200 rounded-lg">
           <thead className="bg-gray-50">
+            {/* Top header row for grouping */}
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-r border-gray-300" rowSpan={2}>
                 Player Name
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-r border-gray-300" rowSpan={2}>
                 Grade
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-r border-gray-300" rowSpan={2}>
                 Gender
               </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider border-b border-r border-gray-300" colSpan={3}>
+                <a 
+                  href="https://docs.google.com/document/d/1A2F7ThHtcMm23bxk8-30rMT2svaqT3gMbRWeSR_QXXY/edit?tab=t.rmrdcntgom85#bookmark=id.xa6bxpq5mxh1" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800 hover:underline"
+                >
+                  SPS Final Forms ↗
+                </a>
+              </th>
+              <th className="px-4 py-2 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider border-b border-r border-gray-300" rowSpan={2}>
+                Coach Questionnaire
+              </th>
+              <th className="px-4 py-2 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider border-b border-gray-300" rowSpan={2}>
+                Team Mailing List
+              </th>
+            </tr>
+            {/* Bottom header row with SPS Final Forms specific columns */}
+            <tr>
+              <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                 Parent Signed
               </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                 Student Signed
               </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Physical Cleared
-              </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Questionnaire
-              </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Mailing List
+              <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                Physical
               </th>
             </tr>
           </thead>
@@ -237,28 +251,41 @@ export default function SignupStatusTable({ searchTerm = '' }: SignupStatusTable
               </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="flex justify-between">
-                <span>Parent Signed:</span>
-                <StatusBadge status={player.hasCaretakerSignedFinalForms} label="Parent signed" />
+            <div className="space-y-3 text-sm">
+              {/* SPS Final Forms Section */}
+              <div>
+                <h4 className="font-medium text-gray-700 text-xs uppercase tracking-wider mb-2">SPS Final Forms</h4>
+                <div className="grid grid-cols-1 gap-2">
+                  <div className="flex justify-between">
+                    <span>Parent Signed:</span>
+                    <StatusBadge status={player.hasCaretakerSignedFinalForms} label="Parent signed" />
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Student Signed:</span>
+                    <StatusBadge status={player.hasPlayerSignedFinalForms} label="Student signed" />
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Physical Cleared:</span>
+                    <StatusBadge status={player.hasPlayerClearedPhysical} label="Physical cleared" />
+                  </div>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span>Student Signed:</span>
-                <StatusBadge status={player.hasPlayerSignedFinalForms} label="Student signed" />
-              </div>
-              <div className="flex justify-between">
-                <span>Physical:</span>
-                <StatusBadge status={player.hasPlayerClearedPhysical} label="Physical cleared" />
-              </div>
-              <div className="flex justify-between">
-                <span>Questionnaire:</span>
-                <StatusBadge status={player.hasCaretakerFilledQuestionnaire} label="Questionnaire" />
-              </div>
-              <div className="flex justify-between col-span-2">
-                <span>Mailing List:</span>
-                <div className="flex space-x-1">
-                  <StatusBadge status={player.hasCaretaker1JoinedMailingList} label="Parent 1" />
-                  <StatusBadge status={player.hasCaretaker2JoinedMailingList} label="Parent 2" />
+              
+              {/* Other Requirements Section */}
+              <div>
+                <h4 className="font-medium text-gray-700 text-xs uppercase tracking-wider mb-2">Other Requirements</h4>
+                <div className="grid grid-cols-1 gap-2">
+                  <div className="flex justify-between">
+                    <span>Coach Questionnaire:</span>
+                    <StatusBadge status={player.hasCaretakerFilledQuestionnaire} label="Questionnaire" />
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Team Mailing List:</span>
+                    <div className="flex space-x-1">
+                      <StatusBadge status={player.hasCaretaker1JoinedMailingList} label="Parent 1" />
+                      <StatusBadge status={player.hasCaretaker2JoinedMailingList} label="Parent 2" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
