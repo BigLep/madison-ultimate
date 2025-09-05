@@ -61,16 +61,31 @@ madison-ultimate/
 
 ## Development Workflow
 
-This project uses conventional commits. Please format your commit messages as:
+This project uses conventional commits with emojis for fun! Please format your commit messages as:
 
 ```
-type(scope): description
+emoji type(scope): description
 
 Examples:
-feat: add player signup status table
-fix: resolve data matching issue  
-docs: update setup instructions
+✨ feat: add player signup status table
+🐛 fix: resolve data matching issue  
+📚 docs: update setup instructions
+🎨 style: improve mobile responsive design
+♻️ refactor: reorganize data processing logic
+⚡ perf: optimize table rendering
+🧪 test: add unit tests for fuzzy matching
+🔧 chore: update dependencies
 ```
+
+### Common Commit Emojis
+- ✨ `:sparkles:` - New features
+- 🐛 `:bug:` - Bug fixes  
+- 📚 `:books:` - Documentation
+- 🎨 `:art:` - UI/styling improvements
+- ♻️ `:recycle:` - Refactoring
+- ⚡ `:zap:` - Performance improvements
+- 🧪 `:test_tube:` - Tests
+- 🔧 `:wrench:` - Configuration/tooling
 
 ## Stage 1: Signup Steps Reporting
 
