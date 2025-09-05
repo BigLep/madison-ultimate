@@ -39,18 +39,26 @@ A web application to track signup progress for Madison Middle School Ultimate Fr
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint for code quality checks
 
+## Documentation
+
+- **[PROJECT REQUIREMENTS.md](./PROJECT%20REQUIREMENTS.md)** - Business requirements and feature specifications
+- **[PLAN.md](./PLAN.md)** - Implementation plan, progress tracking, and development phases
+- **[DESIGN.md](./DESIGN.md)** - Technical architecture, data mapping, and implementation details
+- **[CLAUDE.md](./CLAUDE.md)** - Claude Code development notes and commands
+
 ## Project Structure
 
 ```
 madison-ultimate/
 ├── src/
 │   ├── app/                    # Next.js app router pages
+│   │   └── api/                # API routes for data processing
 │   ├── components/             # Reusable UI components
 │   ├── lib/                    # Utilities and API integrations
 │   └── styles/                 # Global styles
+├── tmp/                        # Cached data files (development)
 ├── public/                     # Static assets
-├── PLAN.md                     # Implementation plan and progress
-└── PROJECT REQUIREMENTS.md     # Full project requirements
+└── *.md                        # Documentation files
 ```
 
 ## Tech Stack

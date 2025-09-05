@@ -32,23 +32,27 @@ export async function parseSPSFinalForms(csvContent: string): Promise<SPSFinalFo
     playerLastName: row['Last Name'] || '',
     playerGrade: row['Grade'] || '',
     playerGender: row['Gender'] || '',
-    caretaker1Email: row['Email'] || '',
-    caretaker2Email: '', // May need to extract from additional fields
-    parentsSignedStatus: row['Are All Forms Parent Signed'] === 'Yes',
-    studentsSignedStatus: row['Are All Forms Student Signed'] === 'Yes',
-    physicalClearanceStatus: row['Physical Clearance'] === 'Yes'
+    caretaker1Email: row['Parent 1 Email'] || row['Email'] || '',
+    caretaker2Email: row['Parent 2 Email'] || '',
+    parentsSignedStatus: row['Are All Forms Parent Signed'] === 'true',
+    studentsSignedStatus: row['Are All Forms Student Signed'] === 'true',
+    physicalClearanceStatus: row['Physical Clearance'] === 'Cleared'
   }));
 }
 
 // Parse Team Mailing List CSV export  
 export async function parseTeamMailingList(csvContent: string): Promise<MailingListRecord[]> {
-  const rawData = await parseCsvString(csvContent);
+  // Remove the first line "Members for group madisonultimatefall25" before parsing
+  const lines = csvContent.split('\n');
+  const csvWithoutFirstLine = lines.slice(1).join('\n'); // Skip first line
   
-  // Skip header row that contains "Members for group madisonultimatefall25"
+  const rawData = await parseCsvString(csvWithoutFirstLine);
+  
+  // Filter out any invalid rows
   const dataRows = rawData.filter(row => 
     row['Email address'] && 
     row['Email address'] !== 'Email address' &&
-    !row['Email address'].includes('Members for group')
+    row['Email address'].includes('@') // Must be a valid email
   );
   
   return dataRows.map(row => ({
