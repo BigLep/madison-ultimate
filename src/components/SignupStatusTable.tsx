@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { PlayerSignupStatus } from '@/lib/types'
+import { obfuscatePlayerName } from '@/lib/privacy'
 
 interface SignupStatusTableProps {
   searchTerm?: string
@@ -48,13 +49,15 @@ export default function SignupStatusTable({ searchTerm = '' }: SignupStatusTable
     fetchData()
   }, [])
 
-  // Filter players based on search term
-  const filteredPlayers = data?.players.filter(player =>
-    player.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    player.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    player.grade.includes(searchTerm) ||
-    player.gender.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || []
+  // Filter players based on search term (search against full names but display obfuscated)
+  const filteredPlayers = data?.players.filter(player => {
+    const fullName = `${player.firstName} ${player.lastName}`;
+    const obfuscatedName = obfuscatePlayerName(player.firstName, player.lastName);
+    return fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           obfuscatedName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           player.grade.includes(searchTerm) ||
+           player.gender.toLowerCase().includes(searchTerm.toLowerCase());
+  }) || []
 
   if (loading) {
     return (
@@ -168,7 +171,7 @@ export default function SignupStatusTable({ searchTerm = '' }: SignupStatusTable
               <tr key={`${player.firstName}-${player.lastName}-${index}`} className="hover:bg-gray-50">
                 <td className="px-4 py-4 whitespace-nowrap">
                   <div className="font-medium text-gray-900">
-                    {player.firstName} {player.lastName}
+                    {obfuscatePlayerName(player.firstName, player.lastName)}
                   </div>
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -226,7 +229,7 @@ export default function SignupStatusTable({ searchTerm = '' }: SignupStatusTable
             <div className="flex justify-between items-start mb-3">
               <div>
                 <h3 className="font-medium text-gray-900">
-                  {player.firstName} {player.lastName}
+                  {obfuscatePlayerName(player.firstName, player.lastName)}
                 </h3>
                 <p className="text-sm text-gray-500">
                   Grade {player.grade} • {player.gender}
