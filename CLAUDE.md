@@ -26,6 +26,14 @@ git commit -m "docs: update documentation 📚"
 - Use fuzzy matching for joining player data across different sources
 - Mobile-first responsive design approach with Tailwind CSS
 
+## Data Privacy Guidelines
+
+**CRITICAL**: Never commit personal or student information to the repository:
+- The `/tmp` directory is gitignored and contains cached data files
+- Never add actual student names, emails, or personal data to version control
+- Use placeholder/anonymized data for development and testing
+- Always verify `.gitignore` includes sensitive data directories before committing
+
 ## Data Sources for Stage 1
 
 1. **SPS Final Forms** - Google Drive exports (CSV format)
