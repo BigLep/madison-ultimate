@@ -257,7 +257,7 @@ Required environment variables for production deployment:
 ### Vercel Production Deployment
 The application is deployed on Vercel with the following configuration:
 
-- **Production URL**: https://madison-ultimate-on1ma0ric-madison-ultimates-projects.vercel.app
+- **Production URL**: https://madison-ultimate.vercel.app
 - **Build Command**: `npm run build` 
 - **Framework**: Next.js 15 with App Router
 - **Function Timeout**: 60 seconds (configured for Google API calls)
@@ -308,4 +308,4 @@ vercel --prod --yes
   - First name alphabetical sorting
 ✅ **Deployment**: Successfully deployed to Vercel production environment
   
-🚀 **Production Status**: Live at https://madison-ultimate-on1ma0ric-madison-ultimates-projects.vercel.app
+🚀 **Production Status**: Live at https://madison-ultimate.vercel.app
