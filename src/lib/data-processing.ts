@@ -102,8 +102,20 @@ export function parseQuestionnaireData(sheetData: string[][]): QuestionnaireReco
     h.toLowerCase().includes('pronouns') ||
     h.toLowerCase().includes('player pronouns')
   );
+  const genderIndex = headers.findIndex(h => h.toLowerCase().includes('gender identification'));
+  const allergiesIndex = headers.findIndex(h => h.toLowerCase().includes('allergies'));
+  const competingSportsIndex = headers.findIndex(h => h.toLowerCase().includes('competing sports'));
+  const jerseySizeIndex = headers.findIndex(h => h.toLowerCase().includes('jersey size'));
+  const playingExperienceIndex = headers.findIndex(h => h.toLowerCase().includes('playing experience'));
+  const hopesIndex = headers.findIndex(h => h.toLowerCase().includes('hopes for the season'));
+  const otherInfoIndex = headers.findIndex(h => h.toLowerCase().includes('other player info'));
+  const interestedInCoachingIndex = headers.findIndex(h => h.toLowerCase().includes('interested in helping coach'));
+  const ultimateExperienceIndex = headers.findIndex(h => h.toLowerCase().includes('played or coached ultimate'));
+  const teamSportsExperienceIndex = headers.findIndex(h => h.toLowerCase().includes('played or coached other team sports'));
+  const interestedInHelpingIndex = headers.findIndex(h => h.toLowerCase().includes('interested in helping in other ways'));
+  const anythingElseIndex = headers.findIndex(h => h.toLowerCase().includes('anything else you want to share'));
   
-  console.log(`📋 Column indices: timestamp=${timestampIndex}, playerName=${playerNameIndex}, pronouns=${pronounIndex}`);
+  console.log(`📋 Column indices: timestamp=${timestampIndex}, playerName=${playerNameIndex}, pronouns=${pronounIndex}, gender=${genderIndex}, allergies=${allergiesIndex}`);
   
   return dataRows.map(row => {
     const playerName = row[playerNameIndex] || '';
@@ -114,7 +126,19 @@ export function parseQuestionnaireData(sheetData: string[][]): QuestionnaireReco
       playerLastName: lastNameParts.join(' ') || '',
       caretakerEmail: '', // Would need to extract from form if available
       submissionTimestamp: row[timestampIndex] || '',
-      pronouns: row[pronounIndex] || ''
+      pronouns: row[pronounIndex] || '',
+      genderIdentification: row[genderIndex] || '',
+      allergies: row[allergiesIndex] || '',
+      competingSports: row[competingSportsIndex] || '',
+      jerseySize: row[jerseySizeIndex] || '',
+      playingExperience: row[playingExperienceIndex] || '',
+      hopesForSeason: row[hopesIndex] || '',
+      otherInfo: row[otherInfoIndex] || '',
+      interestedInCoaching: row[interestedInCoachingIndex] || '',
+      ultimateExperience: row[ultimateExperienceIndex] || '',
+      teamSportsExperience: row[teamSportsExperienceIndex] || '',
+      interestedInHelping: row[interestedInHelpingIndex] || '',
+      anythingElse: row[anythingElseIndex] || ''
     };
   });
 }

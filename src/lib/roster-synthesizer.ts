@@ -390,6 +390,42 @@ export class RosterSynthesizer {
     if (columnLower.includes('pronoun')) {
       return questionnaireRecord.pronouns || '';
     }
+    if (columnLower.includes('gender identification')) {
+      return questionnaireRecord.genderIdentification || '';
+    }
+    if (columnLower.includes('allergies')) {
+      return questionnaireRecord.allergies || '';
+    }
+    if (columnLower.includes('competing sports')) {
+      return questionnaireRecord.competingSports || '';
+    }
+    if (columnLower.includes('jersey size')) {
+      return questionnaireRecord.jerseySize || '';
+    }
+    if (columnLower.includes('playing experience')) {
+      return questionnaireRecord.playingExperience || '';
+    }
+    if (columnLower.includes('hopes for the season')) {
+      return questionnaireRecord.hopesForSeason || '';
+    }
+    if (columnLower.includes('other player info')) {
+      return questionnaireRecord.otherInfo || '';
+    }
+    if (columnLower.includes('interested in helping coach')) {
+      return questionnaireRecord.interestedInCoaching || '';
+    }
+    if (columnLower.includes('played or coached ultimate')) {
+      return questionnaireRecord.ultimateExperience || '';
+    }
+    if (columnLower.includes('played or coached other team sports')) {
+      return questionnaireRecord.teamSportsExperience || '';
+    }
+    if (columnLower.includes('interested in helping in other ways')) {
+      return questionnaireRecord.interestedInHelping || '';
+    }
+    if (columnLower.includes('anything else you want to share')) {
+      return questionnaireRecord.anythingElse || '';
+    }
     
     // For other questionnaire fields, return if questionnaire was filled
     return questionnaireRecord ? 'TRUE' : 'FALSE';

@@ -49,6 +49,18 @@ export interface QuestionnaireRecord {
   caretakerEmail: string;
   submissionTimestamp: string;
   pronouns: string;
+  genderIdentification: string;
+  allergies: string;
+  competingSports: string;
+  jerseySize: string;
+  playingExperience: string;
+  hopesForSeason: string;
+  otherInfo: string;
+  interestedInCoaching: string;
+  ultimateExperience: string;
+  teamSportsExperience: string;
+  interestedInHelping: string;
+  anythingElse: string;
 }
 
 export interface MailingListRecord {
