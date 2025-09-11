@@ -75,9 +75,14 @@ export class RosterSynthesizer {
     const finalFormsFolder = process.env.SPS_FINAL_FORMS_FOLDER_ID;
     if (finalFormsFolder) {
       const finalFormsFileInfo = await getMostRecentFileInfoFromFolder(finalFormsFolder);
-      const finalFormsCsv = await downloadCsvFromDrive(finalFormsFileInfo.id);
-      this.rawFinalFormsData = await parseSPSFinalForms(finalFormsCsv);
-      console.log(`📄 Loaded ${this.rawFinalFormsData.length} Final Forms records`);
+      if (finalFormsFileInfo) {
+        console.log(`📊 Using Final Forms file: ${finalFormsFileInfo.name} (${finalFormsFileInfo.timestamp})`);
+        const finalFormsCsv = await downloadCsvFromDrive(finalFormsFileInfo.id);
+        if (finalFormsCsv) {
+          this.rawFinalFormsData = await parseSPSFinalForms(finalFormsCsv);
+          console.log(`📄 Loaded ${this.rawFinalFormsData.length} Final Forms records from ${finalFormsFileInfo.name}`);
+        }
+      }
     }
     
     // Load Questionnaire data
@@ -92,9 +97,13 @@ export class RosterSynthesizer {
     const mailingListFolder = process.env.TEAM_MAILING_LIST_FOLDER_ID;
     if (mailingListFolder) {
       const mailingListFileInfo = await getMostRecentFileInfoFromFolder(mailingListFolder);
-      const mailingListCsv = await downloadCsvFromDrive(mailingListFileInfo.id);
-      this.rawMailingListData = await parseTeamMailingList(mailingListCsv);
-      console.log(`📄 Loaded ${this.rawMailingListData.length} Mailing List records`);
+      if (mailingListFileInfo) {
+        const mailingListCsv = await downloadCsvFromDrive(mailingListFileInfo.id);
+        if (mailingListCsv) {
+          this.rawMailingListData = await parseTeamMailingList(mailingListCsv);
+          console.log(`📄 Loaded ${this.rawMailingListData.length} Mailing List records`);
+        }
+      }
     }
   }
 
@@ -362,13 +371,13 @@ export class RosterSynthesizer {
     
     // Status fields
     if (columnLower.includes('caretaker signed') || columnLower.includes('parent signed')) {
-      return finalFormsRecord.parentsSignedStatus ? 'Yes' : 'No';
+      return finalFormsRecord.parentsSignedStatus ? 'TRUE' : 'FALSE';
     }
     if (columnLower.includes('student signed') || columnLower.includes('player signed')) {
-      return finalFormsRecord.studentsSignedStatus ? 'Yes' : 'No';
+      return finalFormsRecord.studentsSignedStatus ? 'TRUE' : 'FALSE';
     }
     if (columnLower.includes('physical cleared') || columnLower.includes('physical clearance')) {
-      return finalFormsRecord.physicalClearanceStatus ? 'Yes' : 'No';
+      return finalFormsRecord.physicalClearanceStatus ? 'TRUE' : 'FALSE';
     }
 
     return '';
@@ -391,7 +400,7 @@ export class RosterSynthesizer {
     }
     
     // For other questionnaire fields, return if questionnaire was filled
-    return questionnaireRecord ? 'Yes' : 'No';
+    return questionnaireRecord ? 'TRUE' : 'FALSE';
   }
 
   private mapFromMailingList(finalFormsRecord: SPSFinalFormsRecord | null, sourceColumn: string): string {
@@ -403,19 +412,19 @@ export class RosterSynthesizer {
     // Check Parent 1 email
     if (columnLower.includes('parent 1')) {
       const parent1Email = finalFormsRecord.parent1Email.toLowerCase();
-      return mailingEmails.includes(parent1Email) ? 'Yes' : 'No';
+      return mailingEmails.includes(parent1Email) ? 'TRUE' : 'FALSE';
     }
     
     // Check Parent 2 email
     if (columnLower.includes('parent 2')) {
       const parent2Email = (finalFormsRecord.parent2Email || '').toLowerCase();
-      return parent2Email && mailingEmails.includes(parent2Email) ? 'Yes' : 'No';
+      return parent2Email && mailingEmails.includes(parent2Email) ? 'TRUE' : 'FALSE';
     }
     
     // Check student email
     if (columnLower.includes('student')) {
       const studentEmail = finalFormsRecord.playerEmail.toLowerCase();
-      return mailingEmails.includes(studentEmail) ? 'Yes' : 'No';
+      return mailingEmails.includes(studentEmail) ? 'TRUE' : 'FALSE';
     }
 
     return '';

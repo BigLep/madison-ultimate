@@ -72,7 +72,7 @@ export async function getMostRecentFileFromFolder(folderId: string): Promise<str
 }
 
 // Helper function to get the most recent file info including timestamp from filename
-export async function getMostRecentFileInfoFromFolder(folderId: string): Promise<{id: string, timestamp: string} | null> {
+export async function getMostRecentFileInfoFromFolder(folderId: string): Promise<{id: string, timestamp: string, name: string} | null> {
   try {
     const response = await drive.files.list({
       q: `'${folderId}' in parents and trashed=false`,
@@ -86,23 +86,47 @@ export async function getMostRecentFileInfoFromFolder(folderId: string): Promise
       return null;
     }
 
-    // Find the file with the most recent ISO8601 timestamp in the filename
-    const fileWithTimestamp = files.find(file => {
-      return file.name && /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z/.test(file.name);
+    console.log(`📁 Found ${files.length} files in folder ${folderId}:`);
+    files.forEach(file => {
+      console.log(`  📄 ${file.name} (modified: ${file.modifiedTime})`);
     });
 
-    if (!fileWithTimestamp?.id || !fileWithTimestamp.name) {
+    // Find all files with ISO8601 timestamps in filename
+    const filesWithTimestamp = files.filter(file => {
+      return file.name && /\d{4}-\d{2}-\d{2}T\d{2}[_:]\d{2}[_:]\d{2}Z/.test(file.name);
+    });
+
+    if (filesWithTimestamp.length === 0) {
       console.error(`No files with timestamp found in folder ${folderId}`);
       return null;
     }
 
-    // Extract timestamp from filename
-    const timestampMatch = fileWithTimestamp.name.match(/(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)/);
-    const timestamp = timestampMatch ? timestampMatch[1] : '';
+    console.log(`🕐 Found ${filesWithTimestamp.length} files with timestamps:`);
+    
+    // Sort by timestamp in filename (most recent first)
+    const sortedFiles = filesWithTimestamp.map(file => {
+      const timestampMatch = file.name!.match(/(\d{4}-\d{2}-\d{2}T\d{2}[_:]\d{2}[_:]\d{2}Z)/);
+      const timestamp = timestampMatch ? timestampMatch[1].replace(/_/g, ':') : '';
+      return {
+        ...file,
+        extractedTimestamp: timestamp
+      };
+    }).sort((a, b) => {
+      // Sort by extracted timestamp descending (most recent first)
+      return b.extractedTimestamp.localeCompare(a.extractedTimestamp);
+    });
+
+    sortedFiles.forEach((file, index) => {
+      console.log(`  ${index + 1}. 📄 ${file.name} (timestamp: ${file.extractedTimestamp})`);
+    });
+
+    const mostRecentFile = sortedFiles[0];
+    console.log(`🎯 Selected most recent file: ${mostRecentFile.name}`);
 
     return {
-      id: fileWithTimestamp.id,
-      timestamp
+      id: mostRecentFile.id!,
+      timestamp: mostRecentFile.extractedTimestamp,
+      name: mostRecentFile.name!
     };
   } catch (error) {
     console.error(`Error fetching files from folder ${folderId}:`, error);
