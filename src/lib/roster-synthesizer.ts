@@ -1,7 +1,7 @@
 import { getRosterMetadata, getRosterData, parseDataSourceMapping, type RosterColumnMetadata } from './roster-metadata';
 import { updateSheetData, appendSheetData } from './google-api';
 import { ROSTER_SHEET_ID } from './roster-metadata';
-import { getIntegratedData } from './data-processing';
+import CacheManager from './cache-manager';
 import type { PlayerSignupStatus } from './types';
 
 export interface RosterSynthesisResult {
@@ -48,7 +48,14 @@ export class RosterSynthesizer {
     this.existingRosterData = await getRosterData();
     
     // Load source data (same as Stage 1)
-    this.sourceData = await getIntegratedData();
+    const cacheManager = CacheManager.getInstance();
+    const cachedData = await cacheManager.getIntegratedData();
+    
+    if (!cachedData || !cachedData.players) {
+      throw new Error('Failed to fetch integrated player data');
+    }
+    
+    this.sourceData = cachedData.players;
   }
 
   async synthesizeRoster(): Promise<RosterSynthesisResult> {
@@ -226,11 +233,11 @@ export class RosterSynthesizer {
     const sourceColumn = mapping.sourceColumn || column.columnName;
 
     // Map from source player data based on data source
-    if (dataSource.includes('sps final forms') || dataSource.includes('final forms')) {
+    if (dataSource.includes('finalforms') || dataSource.includes('final forms') || dataSource.includes('sps final forms')) {
       return this.mapFromFinalForms(sourcePlayer, sourceColumn);
-    } else if (dataSource.includes('additional questionnaire') || dataSource.includes('questionnaire')) {
+    } else if (dataSource.includes('additionalinfoform') || dataSource.includes('additional questionnaire') || dataSource.includes('questionnaire')) {
       return this.mapFromQuestionnaire(sourcePlayer, sourceColumn);
-    } else if (dataSource.includes('mailing list')) {
+    } else if (dataSource.includes('mailinglist') || dataSource.includes('mailing list')) {
       return this.mapFromMailingList(sourcePlayer, sourceColumn);
     }
 
@@ -320,10 +327,13 @@ export class RosterSynthesizer {
   }
 
   private async applyChangesToSheet(updatedRows: any[][], newRows: any[][]): Promise<void> {
+    console.log(`🔧 Applying changes: ${updatedRows.length} updates, ${newRows.length} new rows`);
+    
     // Apply updates to existing rows
     for (let i = 0; i < updatedRows.length; i++) {
       if (updatedRows[i]) {
         const range = `A${this.metadata.dataStartRow + i}:Z${this.metadata.dataStartRow + i}`;
+        console.log(`📝 Updating row ${i + this.metadata.dataStartRow} with range ${range}`);
         await updateSheetData(ROSTER_SHEET_ID, range, [updatedRows[i]]);
       }
     }
@@ -331,7 +341,20 @@ export class RosterSynthesizer {
     // Append new rows
     if (newRows.length > 0) {
       const range = `A${this.metadata.dataStartRow}:Z${this.metadata.dataStartRow}`;
-      await appendSheetData(ROSTER_SHEET_ID, range, newRows);
+      console.log(`➕ Appending ${newRows.length} new rows starting at ${range}`);
+      console.log(`📋 First row data:`, JSON.stringify(newRows[0]));
+      console.log(`📋 First row length:`, newRows[0]?.length);
+      console.log(`📋 Expected columns:`, this.metadata.columns.length);
+      
+      try {
+        const result = await appendSheetData(ROSTER_SHEET_ID, range, newRows);
+        console.log(`✅ Append successful:`, result);
+      } catch (error) {
+        console.error(`❌ Append failed:`, error);
+        throw error;
+      }
+    } else {
+      console.log(`⚠️ No new rows to append`);
     }
   }
 }
