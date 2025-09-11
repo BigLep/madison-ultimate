@@ -15,15 +15,32 @@ export interface PlayerSignupStatus {
 
 // Raw data structures from each source
 export interface SPSFinalFormsRecord {
+  // Player basic info
   playerFirstName: string;
   playerLastName: string;
   playerGrade: string;
   playerGender: string;
-  caretaker1Email: string;
-  caretaker2Email?: string;
+  playerEmail: string;
+  playerDateOfBirth: string;
+  
+  // Parent 1 info
+  parent1FirstName: string;
+  parent1LastName: string;
+  parent1Email: string;
+  
+  // Parent 2 info
+  parent2FirstName?: string;
+  parent2LastName?: string;
+  parent2Email?: string;
+  
+  // Status fields
   parentsSignedStatus: boolean;
   studentsSignedStatus: boolean;
   physicalClearanceStatus: boolean;
+  
+  // Legacy fields for backward compatibility
+  caretaker1Email: string;
+  caretaker2Email?: string;
 }
 
 export interface QuestionnaireRecord {
@@ -31,6 +48,7 @@ export interface QuestionnaireRecord {
   playerLastName: string;
   caretakerEmail: string;
   submissionTimestamp: string;
+  pronouns: string;
 }
 
 export interface MailingListRecord {

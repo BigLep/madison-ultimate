@@ -1,8 +1,9 @@
 import { getRosterMetadata, getRosterData, parseDataSourceMapping, type RosterColumnMetadata } from './roster-metadata';
-import { updateSheetData, appendSheetData } from './google-api';
+import { updateSheetData, appendSheetData, getMostRecentFileInfoFromFolder, downloadCsvFromDrive, getSheetData } from './google-api';
 import { ROSTER_SHEET_ID } from './roster-metadata';
 import CacheManager from './cache-manager';
-import type { PlayerSignupStatus } from './types';
+import { parseSPSFinalForms, parseTeamMailingList, parseQuestionnaireData } from './data-processing';
+import type { PlayerSignupStatus, SPSFinalFormsRecord, MailingListRecord, QuestionnaireRecord } from './types';
 
 export interface RosterSynthesisResult {
   newPlayersAdded: number;
@@ -35,11 +36,17 @@ export class RosterSynthesizer {
   private metadata: any;
   private existingRosterData: any[][];
   private sourceData: PlayerSignupStatus[];
+  private rawFinalFormsData: SPSFinalFormsRecord[];
+  private rawQuestionnaireData: QuestionnaireRecord[];
+  private rawMailingListData: MailingListRecord[];
   
   constructor() {
     this.metadata = null;
     this.existingRosterData = [];
     this.sourceData = [];
+    this.rawFinalFormsData = [];
+    this.rawQuestionnaireData = [];
+    this.rawMailingListData = [];
   }
 
   async initialize(): Promise<void> {
@@ -47,7 +54,7 @@ export class RosterSynthesizer {
     this.metadata = await getRosterMetadata();
     this.existingRosterData = await getRosterData();
     
-    // Load source data (same as Stage 1)
+    // Load integrated data for player matching
     const cacheManager = CacheManager.getInstance();
     const cachedData = await cacheManager.getIntegratedData();
     
@@ -56,6 +63,39 @@ export class RosterSynthesizer {
     }
     
     this.sourceData = cachedData.players;
+    
+    // Load raw data sources for complete field mapping
+    await this.loadRawDataSources();
+  }
+  
+  private async loadRawDataSources(): Promise<void> {
+    console.log('🔄 Loading raw data sources for complete field mapping...');
+    
+    // Load Final Forms data
+    const finalFormsFolder = process.env.SPS_FINAL_FORMS_FOLDER_ID;
+    if (finalFormsFolder) {
+      const finalFormsFileInfo = await getMostRecentFileInfoFromFolder(finalFormsFolder);
+      const finalFormsCsv = await downloadCsvFromDrive(finalFormsFileInfo.id);
+      this.rawFinalFormsData = await parseSPSFinalForms(finalFormsCsv);
+      console.log(`📄 Loaded ${this.rawFinalFormsData.length} Final Forms records`);
+    }
+    
+    // Load Questionnaire data
+    const questionnaireSheetId = process.env.ADDITIONAL_QUESTIONNAIRE_SHEET_ID;
+    if (questionnaireSheetId) {
+      const questionnaireData = await getSheetData(questionnaireSheetId);
+      this.rawQuestionnaireData = parseQuestionnaireData(questionnaireData);
+      console.log(`📄 Loaded ${this.rawQuestionnaireData.length} Questionnaire records`);
+    }
+    
+    // Load Mailing List data
+    const mailingListFolder = process.env.TEAM_MAILING_LIST_FOLDER_ID;
+    if (mailingListFolder) {
+      const mailingListFileInfo = await getMostRecentFileInfoFromFolder(mailingListFolder);
+      const mailingListCsv = await downloadCsvFromDrive(mailingListFileInfo.id);
+      this.rawMailingListData = await parseTeamMailingList(mailingListCsv);
+      console.log(`📄 Loaded ${this.rawMailingListData.length} Mailing List records`);
+    }
   }
 
   async synthesizeRoster(): Promise<RosterSynthesisResult> {
@@ -75,6 +115,7 @@ export class RosterSynthesizer {
 
     // Parse existing roster players
     const existingPlayers = this.parseExistingRosterPlayers();
+    console.log(`🔍 Found ${existingPlayers.length} existing players in roster sheet`);
     
     // Find orphaned players (on roster but not in source data)
     result.orphanedPlayers = this.findOrphanedPlayers(existingPlayers);
@@ -105,7 +146,9 @@ export class RosterSynthesizer {
         }
       } else {
         // Add new player
+        console.log(`➕ Adding new player: ${sourcePlayer.firstName} ${sourcePlayer.lastName}`);
         const newRow = this.buildPlayerRow(sourcePlayer, null);
+        console.log(`📋 New row data:`, newRow.slice(0, 5)); // Log first 5 fields
         newRows.push(newRow);
         result.newPlayersAdded++;
         result.changes.push({
@@ -115,6 +158,8 @@ export class RosterSynthesizer {
         });
       }
     }
+    
+    console.log(`📊 Processing summary: ${result.newPlayersAdded} new players, ${result.existingPlayersUpdated} updates`);
 
     // Apply changes to Google Sheets
     await this.applyChangesToSheet(updatedRows, newRows);
@@ -211,19 +256,25 @@ export class RosterSynthesizer {
     for (const column of this.metadata.columns) {
       let value = '';
 
-      if (existingPlayer && column.humanEditable) {
+      if (existingPlayer && column.humanEditable && existingPlayer.data[column.columnName]) {
         // Preserve existing value for human-editable fields
-        value = existingPlayer.data[column.columnName] || '';
+        value = existingPlayer.data[column.columnName];
       } else {
-        // Use source data for non-human-editable fields
+        // Use source data for non-human-editable fields OR if human-editable field is empty
         value = this.mapSourceDataToColumn(sourcePlayer, column);
       }
 
       row[column.columnIndex] = value;
+      
+      // Debug: Log first player's mappings
+      if (sourcePlayer.firstName === 'Donovan') {
+        console.log(`🔍 ${column.columnName}: "${value}" (source: ${column.source}, human editable: ${column.humanEditable})`);
+      }
     }
 
     return row;
   }
+
 
   private mapSourceDataToColumn(sourcePlayer: PlayerSignupStatus, column: RosterColumnMetadata): string {
     const mapping = parseDataSourceMapping(column.source);
@@ -232,50 +283,139 @@ export class RosterSynthesizer {
     const dataSource = mapping.dataSource.toLowerCase();
     const sourceColumn = mapping.sourceColumn || column.columnName;
 
-    // Map from source player data based on data source
+    // Find matching raw Final Forms record for this player
+    const finalFormsRecord = this.findFinalFormsRecord(sourcePlayer);
+    
+    // Map from raw source data based on data source
     if (dataSource.includes('finalforms') || dataSource.includes('final forms') || dataSource.includes('sps final forms')) {
-      return this.mapFromFinalForms(sourcePlayer, sourceColumn);
+      return this.mapFromFinalForms(finalFormsRecord, sourceColumn);
     } else if (dataSource.includes('additionalinfoform') || dataSource.includes('additional questionnaire') || dataSource.includes('questionnaire')) {
-      return this.mapFromQuestionnaire(sourcePlayer, sourceColumn);
+      return this.mapFromQuestionnaire(sourcePlayer, finalFormsRecord, sourceColumn);
     } else if (dataSource.includes('mailinglist') || dataSource.includes('mailing list')) {
-      return this.mapFromMailingList(sourcePlayer, sourceColumn);
+      return this.mapFromMailingList(finalFormsRecord, sourceColumn);
     }
 
     return '';
   }
 
-  private mapFromFinalForms(sourcePlayer: PlayerSignupStatus, sourceColumn: string): string {
+  private findFinalFormsRecord(sourcePlayer: PlayerSignupStatus): SPSFinalFormsRecord | null {
+    // Find matching Final Forms record by name
+    const match = this.rawFinalFormsData.find(record => 
+      record.playerFirstName === sourcePlayer.firstName && 
+      record.playerLastName === sourcePlayer.lastName
+    ) || null;
+    
+    // Debug: Log the first match to see data structure
+    if (match && sourcePlayer.firstName === 'Donovan') {
+      console.log('🔍 Final Forms Record for Donovan:', {
+        playerFirstName: match.playerFirstName,
+        playerLastName: match.playerLastName,
+        playerEmail: match.playerEmail,
+        parent1FirstName: match.parent1FirstName,
+        parent1LastName: match.parent1LastName,
+        parent1Email: match.parent1Email,
+        parent2FirstName: match.parent2FirstName,
+        parent2LastName: match.parent2LastName,
+        parent2Email: match.parent2Email
+      });
+    }
+    
+    return match;
+  }
+
+  private mapFromFinalForms(finalFormsRecord: SPSFinalFormsRecord | null, sourceColumn: string): string {
+    if (!finalFormsRecord) return '';
+    
     const columnLower = sourceColumn.toLowerCase();
     
-    if (columnLower.includes('first name')) return sourcePlayer.firstName;
-    if (columnLower.includes('last name')) return sourcePlayer.lastName;
-    if (columnLower.includes('grade')) return sourcePlayer.grade;
-    if (columnLower.includes('gender')) return sourcePlayer.gender;
+    // Player basic info (be specific to avoid matching parent fields)
+    if (columnLower.includes('first name') && !columnLower.includes('parent')) return finalFormsRecord.playerFirstName;
+    if (columnLower.includes('last name') && !columnLower.includes('parent')) return finalFormsRecord.playerLastName;
+    if (columnLower.includes('grade')) return finalFormsRecord.playerGrade;
+    if (columnLower.includes('gender')) return finalFormsRecord.playerGender;
+    if (columnLower.includes('date of birth')) return finalFormsRecord.playerDateOfBirth;
+    
+    // Student email categorization
+    if (columnLower.includes('student sps email')) {
+      return finalFormsRecord.playerEmail.endsWith('@seattleschools.org') ? finalFormsRecord.playerEmail : '';
+    }
+    if (columnLower.includes('student personal email') && !columnLower.includes('mailing list')) {
+      const email = finalFormsRecord.playerEmail;
+      // Only set if it's not SPS and not used as a parent email
+      if (!email.endsWith('@seattleschools.org') && 
+          email !== finalFormsRecord.parent1Email && 
+          email !== finalFormsRecord.parent2Email) {
+        return email;
+      }
+      return '';
+    }
+    
+    // Parent 1 info
+    if (columnLower.includes('parent 1 first name')) return finalFormsRecord.parent1FirstName;
+    if (columnLower.includes('parent 1 last name')) return finalFormsRecord.parent1LastName;
+    if (columnLower.includes('parent 1 email')) return finalFormsRecord.parent1Email;
+    
+    // Parent 2 info
+    if (columnLower.includes('parent 2 first name')) return finalFormsRecord.parent2FirstName || '';
+    if (columnLower.includes('parent 2 last name')) return finalFormsRecord.parent2LastName || '';
+    if (columnLower.includes('parent 2 email')) return finalFormsRecord.parent2Email || '';
+    
+    // Status fields
     if (columnLower.includes('caretaker signed') || columnLower.includes('parent signed')) {
-      return sourcePlayer.hasCaretakerSignedFinalForms ? 'Yes' : 'No';
+      return finalFormsRecord.parentsSignedStatus ? 'Yes' : 'No';
     }
     if (columnLower.includes('student signed') || columnLower.includes('player signed')) {
-      return sourcePlayer.hasPlayerSignedFinalForms ? 'Yes' : 'No';
+      return finalFormsRecord.studentsSignedStatus ? 'Yes' : 'No';
     }
-    if (columnLower.includes('physical')) {
-      return sourcePlayer.hasPlayerClearedPhysical ? 'Yes' : 'No';
+    if (columnLower.includes('physical cleared') || columnLower.includes('physical clearance')) {
+      return finalFormsRecord.physicalClearanceStatus ? 'Yes' : 'No';
     }
 
     return '';
   }
 
-  private mapFromQuestionnaire(sourcePlayer: PlayerSignupStatus, sourceColumn: string): string {
-    return sourcePlayer.hasCaretakerFilledQuestionnaire ? 'Yes' : 'No';
-  }
-
-  private mapFromMailingList(sourcePlayer: PlayerSignupStatus, sourceColumn: string): string {
+  private mapFromQuestionnaire(sourcePlayer: PlayerSignupStatus, finalFormsRecord: SPSFinalFormsRecord | null, sourceColumn: string): string {
+    // Find matching questionnaire record
+    const questionnaireRecord = this.rawQuestionnaireData.find(record =>
+      record.playerFirstName === sourcePlayer.firstName &&
+      record.playerLastName === sourcePlayer.lastName
+    );
+    
+    if (!questionnaireRecord) return '';
+    
     const columnLower = sourceColumn.toLowerCase();
     
-    if (columnLower.includes('caretaker 1') || columnLower.includes('parent 1')) {
-      return sourcePlayer.hasCaretaker1JoinedMailingList ? 'Yes' : 'No';
+    // Extract specific questionnaire fields
+    if (columnLower.includes('pronoun')) {
+      return questionnaireRecord.pronouns || '';
     }
-    if (columnLower.includes('caretaker 2') || columnLower.includes('parent 2')) {
-      return sourcePlayer.hasCaretaker2JoinedMailingList ? 'Yes' : 'No';
+    
+    // For other questionnaire fields, return if questionnaire was filled
+    return questionnaireRecord ? 'Yes' : 'No';
+  }
+
+  private mapFromMailingList(finalFormsRecord: SPSFinalFormsRecord | null, sourceColumn: string): string {
+    if (!finalFormsRecord) return '';
+    
+    const columnLower = sourceColumn.toLowerCase();
+    const mailingEmails = this.rawMailingListData.map(record => record.email.toLowerCase());
+    
+    // Check Parent 1 email
+    if (columnLower.includes('parent 1')) {
+      const parent1Email = finalFormsRecord.parent1Email.toLowerCase();
+      return mailingEmails.includes(parent1Email) ? 'Yes' : 'No';
+    }
+    
+    // Check Parent 2 email
+    if (columnLower.includes('parent 2')) {
+      const parent2Email = (finalFormsRecord.parent2Email || '').toLowerCase();
+      return parent2Email && mailingEmails.includes(parent2Email) ? 'Yes' : 'No';
+    }
+    
+    // Check student email
+    if (columnLower.includes('student')) {
+      const studentEmail = finalFormsRecord.playerEmail.toLowerCase();
+      return mailingEmails.includes(studentEmail) ? 'Yes' : 'No';
     }
 
     return '';
@@ -329,19 +469,59 @@ export class RosterSynthesizer {
   private async applyChangesToSheet(updatedRows: any[][], newRows: any[][]): Promise<void> {
     console.log(`🔧 Applying changes: ${updatedRows.length} updates, ${newRows.length} new rows`);
     
-    // Apply updates to existing rows
-    for (let i = 0; i < updatedRows.length; i++) {
-      if (updatedRows[i]) {
-        const range = `A${this.metadata.dataStartRow + i}:Z${this.metadata.dataStartRow + i}`;
-        console.log(`📝 Updating row ${i + this.metadata.dataStartRow} with range ${range}`);
-        await updateSheetData(ROSTER_SHEET_ID, range, [updatedRows[i]]);
+    // Rate limiting configuration
+    const BATCH_SIZE = 10; // Process 10 rows at a time
+    const DELAY_BETWEEN_BATCHES_MS = 2000; // 2 second delay between batches
+    const DELAY_BETWEEN_INDIVIDUAL_UPDATES_MS = 100; // 100ms delay between individual updates
+    
+    // Helper function to add delay
+    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+    
+    // Apply updates to existing rows with rate limiting
+    if (updatedRows.length > 0) {
+      console.log(`🚀 Processing ${updatedRows.length} row updates with rate limiting...`);
+      
+      for (let batchStart = 0; batchStart < updatedRows.length; batchStart += BATCH_SIZE) {
+        const batchEnd = Math.min(batchStart + BATCH_SIZE, updatedRows.length);
+        const batch = updatedRows.slice(batchStart, batchEnd);
+        
+        console.log(`📦 Processing batch ${Math.floor(batchStart / BATCH_SIZE) + 1}/${Math.ceil(updatedRows.length / BATCH_SIZE)} (rows ${batchStart + 1}-${batchEnd})`);
+        
+        // Process batch with individual delays
+        for (let i = 0; i < batch.length; i++) {
+          const globalIndex = batchStart + i;
+          if (batch[i]) {
+            const range = `A${this.metadata.dataStartRow + globalIndex}:Z${this.metadata.dataStartRow + globalIndex}`;
+            console.log(`📝 Updating row ${globalIndex + this.metadata.dataStartRow} (${i + 1}/${batch.length} in batch)`);
+            
+            try {
+              await updateSheetData(ROSTER_SHEET_ID, range, [batch[i]]);
+              
+              // Add delay between individual updates within batch
+              if (i < batch.length - 1) {
+                await delay(DELAY_BETWEEN_INDIVIDUAL_UPDATES_MS);
+              }
+            } catch (error) {
+              console.error(`❌ Failed to update row ${globalIndex + this.metadata.dataStartRow}:`, error);
+              // Continue with other updates despite individual failures
+            }
+          }
+        }
+        
+        // Add delay between batches
+        if (batchEnd < updatedRows.length) {
+          console.log(`⏱️ Waiting ${DELAY_BETWEEN_BATCHES_MS}ms before next batch...`);
+          await delay(DELAY_BETWEEN_BATCHES_MS);
+        }
       }
+      
+      console.log(`✅ Completed ${updatedRows.length} row updates`);
     }
 
-    // Append new rows
+    // Append new rows (if any)
     if (newRows.length > 0) {
+      console.log(`➕ Appending ${newRows.length} new rows`);
       const range = `A${this.metadata.dataStartRow}:Z${this.metadata.dataStartRow}`;
-      console.log(`➕ Appending ${newRows.length} new rows starting at ${range}`);
       console.log(`📋 First row data:`, JSON.stringify(newRows[0]));
       console.log(`📋 First row length:`, newRows[0]?.length);
       console.log(`📋 Expected columns:`, this.metadata.columns.length);

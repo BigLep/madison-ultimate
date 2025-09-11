@@ -27,16 +27,38 @@ export async function parseCsvString(csvContent: string): Promise<any[]> {
 export async function parseSPSFinalForms(csvContent: string): Promise<SPSFinalFormsRecord[]> {
   const rawData = await parseCsvString(csvContent);
   
+  // Debug: Log first row to see available columns
+  if (rawData.length > 0) {
+    console.log('📋 Available Final Forms columns:', Object.keys(rawData[0]));
+  }
+  
   return rawData.map(row => ({
+    // Player basic info
     playerFirstName: row['First Name'] || '',
     playerLastName: row['Last Name'] || '',
     playerGrade: row['Grade'] || '',
     playerGender: row['Gender'] || '',
-    caretaker1Email: row['Parent 1 Email'] || row['Email'] || '',
-    caretaker2Email: row['Parent 2 Email'] || '',
+    playerEmail: row['Email'] || '',
+    playerDateOfBirth: row['Date of Birth'] || '',
+    
+    // Parent 1 info
+    parent1FirstName: row['Parent 1 First Name'] || '',
+    parent1LastName: row['Parent 1 Last Name'] || '',
+    parent1Email: row['Parent 1 Email'] || '',
+    
+    // Parent 2 info
+    parent2FirstName: row['Parent 2 First Name'] || '',
+    parent2LastName: row['Parent 2 Last Name'] || '',
+    parent2Email: row['Parent 2 Email'] || '',
+    
+    // Status fields
     parentsSignedStatus: row['Are All Forms Parent Signed'] === 'true',
     studentsSignedStatus: row['Are All Forms Student Signed'] === 'true',
-    physicalClearanceStatus: row['Physical Clearance'] === 'Cleared'
+    physicalClearanceStatus: row['Physical Clearance'] === 'Cleared',
+    
+    // Legacy fields for backward compatibility
+    caretaker1Email: row['Parent 1 Email'] || row['Email'] || '',
+    caretaker2Email: row['Parent 2 Email'] || ''
   }));
 }
 
@@ -69,9 +91,19 @@ export function parseQuestionnaireData(sheetData: string[][]): QuestionnaireReco
   const headers = sheetData[0];
   const dataRows = sheetData.slice(1);
   
+  // Debug: Log available questionnaire columns
+  console.log('📋 Available Questionnaire columns:', headers);
+  
   // Find column indices
   const timestampIndex = headers.findIndex(h => h.toLowerCase().includes('timestamp'));
   const playerNameIndex = headers.findIndex(h => h.toLowerCase().includes('player name'));
+  const pronounIndex = headers.findIndex(h => 
+    h.toLowerCase().includes('pronoun') || 
+    h.toLowerCase().includes('pronouns') ||
+    h.toLowerCase().includes('player pronouns')
+  );
+  
+  console.log(`📋 Column indices: timestamp=${timestampIndex}, playerName=${playerNameIndex}, pronouns=${pronounIndex}`);
   
   return dataRows.map(row => {
     const playerName = row[playerNameIndex] || '';
@@ -81,7 +113,8 @@ export function parseQuestionnaireData(sheetData: string[][]): QuestionnaireReco
       playerFirstName: firstName || '',
       playerLastName: lastNameParts.join(' ') || '',
       caretakerEmail: '', // Would need to extract from form if available
-      submissionTimestamp: row[timestampIndex] || ''
+      submissionTimestamp: row[timestampIndex] || '',
+      pronouns: row[pronounIndex] || ''
     };
   });
 }
