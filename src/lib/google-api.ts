@@ -4,7 +4,7 @@ import { GoogleAuth } from 'google-auth-library';
 // Initialize Google Auth with service account - supports both file path and direct JSON content
 function createGoogleAuth(): GoogleAuth {
   const scopes = [
-    'https://www.googleapis.com/auth/spreadsheets.readonly',
+    'https://www.googleapis.com/auth/spreadsheets',
     'https://www.googleapis.com/auth/drive.readonly',
   ];
 
@@ -137,5 +137,59 @@ export async function getSheetData(sheetId: string, range: string = 'A:Z') {
   } catch (error) {
     console.error(`Error fetching sheet data for ${sheetId}:`, error);
     return [];
+  }
+}
+
+// Helper function to update Google Sheets data (batch update)
+export async function updateSheetData(sheetId: string, range: string, values: any[][]) {
+  try {
+    const response = await sheets.spreadsheets.values.update({
+      spreadsheetId: sheetId,
+      range,
+      valueInputOption: 'RAW',
+      requestBody: {
+        values,
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error(`Error updating sheet data for ${sheetId}:`, error);
+    throw error;
+  }
+}
+
+// Helper function to append data to Google Sheets
+export async function appendSheetData(sheetId: string, range: string, values: any[][]) {
+  try {
+    const response = await sheets.spreadsheets.values.append({
+      spreadsheetId: sheetId,
+      range,
+      valueInputOption: 'RAW',
+      insertDataOption: 'INSERT_ROWS',
+      requestBody: {
+        values,
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error(`Error appending sheet data for ${sheetId}:`, error);
+    throw error;
+  }
+}
+
+// Helper function to clear a range in Google Sheets
+export async function clearSheetData(sheetId: string, range: string) {
+  try {
+    const response = await sheets.spreadsheets.values.clear({
+      spreadsheetId: sheetId,
+      range,
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error(`Error clearing sheet data for ${sheetId}:`, error);
+    throw error;
   }
 }

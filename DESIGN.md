@@ -223,6 +223,7 @@ GOOGLE_SERVICE_ACCOUNT_KEY_FILE=./.google-service-account.json  # File path meth
 ADDITIONAL_QUESTIONNAIRE_SHEET_ID=1f_PPULjdg-5q2Gi0cXvWvGz1RbwYmUtADChLqwsHuNs
 SPS_FINAL_FORMS_FOLDER_ID=1SnWCxDIn3FxJCvd1JcWyoeoOMscEsQcW
 TEAM_MAILING_LIST_FOLDER_ID=1pAeQMEqiA9QdK9G5yRXsqgbNVzEU7R1E
+ROSTER_SHEET_ID=1ZZA5TxHu8nmtyNORm3xYtN5rzP3p1jtW178UgRcxLA8
 ```
 
 ### Vercel Deployment Environment Variables
@@ -235,6 +236,7 @@ Required environment variables for production deployment:
 | `ADDITIONAL_QUESTIONNAIRE_SHEET_ID` | Google Sheet ID for questionnaire responses | `1f_PPULjdg-5q2Gi0cXvWvGz1RbwYmUtADChLqwsHuNs` | ✅ Yes |
 | `SPS_FINAL_FORMS_FOLDER_ID` | Google Drive folder ID for SPS Final Forms CSV | `1SnWCxDIn3FxJCvd1JcWyoeoOMscEsQcW` | ✅ Yes |
 | `TEAM_MAILING_LIST_FOLDER_ID` | Google Drive folder ID for mailing list CSV | `1pAeQMEqiA9QdK9G5yRXsqgbNVzEU7R1E` | ✅ Yes |
+| `ROSTER_SHEET_ID` | **Stage 2**: Google Sheet ID for roster synthesis | `1ZZA5TxHu8nmtyNORm3xYtN5rzP3p1jtW178UgRcxLA8` | ✅ Yes |
 
 #### **Google Service Account Authentication Methods**
 

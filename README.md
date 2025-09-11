@@ -147,6 +147,13 @@ You must share each Google resource with the service account email (found in the
 3. Add the service account email with "Viewer" permission
 4. Repeat for [Team Mailing List folder](https://drive.google.com/drive/folders/1pAeQMEqiA9QdK9G5yRXsqgbNVzEU7R1E)
 
+**For Roster Sheet (Stage 2):**
+1. Open the [Team Roster sheet](https://docs.google.com/spreadsheets/d/1ZZA5TxHu8nmtyNORm3xYtN5rzP3p1jtW178UgRcxLA8/)
+2. Click "Share" button
+3. Add the service account email
+4. Set permission to **"Editor"** (required for roster building functionality)
+5. Uncheck "Notify people" since it's a service account
+
 ### 6. Configure Environment Variables
 
 1. Copy `.env.example` to `.env.local`:
@@ -154,9 +161,16 @@ You must share each Google resource with the service account email (found in the
    cp .env.example .env.local
    ```
 
-2. Update the file path in `.env.local` to point to your service account key:
-   ```
+2. Update `.env.local` with your configuration:
+   ```bash
+   # Google API Configuration
    GOOGLE_SERVICE_ACCOUNT_KEY_FILE=./.google-service-account.json
+   
+   # Data Source IDs
+   ADDITIONAL_QUESTIONNAIRE_SHEET_ID=1f_PPULjdg-5q2Gi0cXvWvGz1RbwYmUtADChLqwsHuNs
+   SPS_FINAL_FORMS_FOLDER_ID=1SnWCxDIn3FxJCvd1JcWyoeoOMscEsQcW
+   TEAM_MAILING_LIST_FOLDER_ID=1pAeQMEqiA9QdK9G5yRXsqgbNVzEU7R1E
+   ROSTER_SHEET_ID=1ZZA5TxHu8nmtyNORm3xYtN5rzP3p1jtW178UgRcxLA8
    ```
 
 ### 7. Security Notes
