@@ -263,21 +263,13 @@ export class RosterSynthesizer {
     const row: any[] = new Array(this.metadata.columns.length).fill('');
 
     for (const column of this.metadata.columns) {
-      let value = '';
-
-      if (existingPlayer && column.humanEditable && existingPlayer.data[column.columnName]) {
-        // Preserve existing value for human-editable fields
-        value = existingPlayer.data[column.columnName];
-      } else {
-        // Use source data for non-human-editable fields OR if human-editable field is empty
-        value = this.mapSourceDataToColumn(sourcePlayer, column);
-      }
-
+      // Always use source data - no human editable fields
+      const value = this.mapSourceDataToColumn(sourcePlayer, column);
       row[column.columnIndex] = value;
       
       // Debug: Log first player's mappings
       if (sourcePlayer.firstName === 'Donovan') {
-        console.log(`🔍 ${column.columnName}: "${value}" (source: ${column.source}, human editable: ${column.humanEditable})`);
+        console.log(`🔍 ${column.columnName}: "${value}" (source: ${column.source})`);
       }
     }
 

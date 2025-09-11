@@ -4,7 +4,6 @@ export interface RosterColumnMetadata {
   columnName: string;
   type: string;
   source: string;
-  humanEditable: boolean;
   additionalNote: string;
   columnIndex: number;
 }
@@ -15,19 +14,19 @@ export interface RosterMetadata {
 }
 
 const ROSTER_SHEET_ID = process.env.ROSTER_SHEET_ID || '1ZZA5TxHu8nmtyNORm3xYtN5rzP3p1jtW178UgRcxLA8';
-const METADATA_ROWS = 5;
+const METADATA_ROWS = 4;
 
-// Parse the first 5 rows of the roster sheet to understand column structure
+// Parse the first 4 rows of the roster sheet to understand column structure
 export async function getRosterMetadata(): Promise<RosterMetadata> {
   try {
-    // Get the first 5 rows which contain metadata
+    // Get the first 4 rows which contain metadata
     const metadataRows = await getSheetData(ROSTER_SHEET_ID, `A1:Z${METADATA_ROWS}`);
     
     if (metadataRows.length < METADATA_ROWS) {
       throw new Error(`Expected ${METADATA_ROWS} metadata rows, got ${metadataRows.length}`);
     }
 
-    const [columnNameRow, typeRow, sourceRow, humanEditableRow, additionalNoteRow] = metadataRows;
+    const [columnNameRow, typeRow, sourceRow, additionalNoteRow] = metadataRows;
     
     const columns: RosterColumnMetadata[] = [];
     
@@ -40,7 +39,6 @@ export async function getRosterMetadata(): Promise<RosterMetadata> {
         columnName,
         type: typeRow[i]?.trim() || 'string',
         source: sourceRow[i]?.trim() || '',
-        humanEditable: parseBoolean(humanEditableRow[i]?.trim()),
         additionalNote: additionalNoteRow[i]?.trim() || '',
         columnIndex: i,
       });
@@ -91,11 +89,6 @@ export function parseDataSourceMapping(source: string): {
   };
 }
 
-// Helper function to parse boolean values from sheet cells
-function parseBoolean(value: string | undefined): boolean {
-  if (!value) return false;
-  return value.toLowerCase().trim() === 'true';
-}
 
 // Export the roster sheet ID for use in other modules
 export { ROSTER_SHEET_ID };
