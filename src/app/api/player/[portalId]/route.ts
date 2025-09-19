@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSheetData } from '../../../../lib/google-api';
+import { findPortalEntryByPortalId } from '../../../../lib/portal-cache';
 
 const ROSTER_SHEET_ID = process.env.ROSTER_SHEET_ID || '1ZZA5TxHu8nmtyNORm3xYtN5rzP3p1jtW178UgRcxLA8';
 
@@ -65,7 +66,17 @@ export async function GET(
       }, { status: 400 });
     }
 
-    // Step 1: Get metadata to understand column structure
+    // Step 1: Validate Portal ID exists in cache and get row info
+    const portalEntry = await findPortalEntryByPortalId(portalId);
+
+    if (!portalEntry) {
+      return NextResponse.json({
+        success: false,
+        error: 'Player not found with the provided Portal ID'
+      }, { status: 404 });
+    }
+
+    // Step 2: Get metadata to understand column structure
     const metadataRows = await getSheetData(ROSTER_SHEET_ID, 'A1:AZ4');
 
     if (metadataRows.length < 4) {
@@ -86,43 +97,20 @@ export async function GET(
       }
     }
 
-    // Find Portal ID column
-    const portalIdIndex = Object.keys(columnMap).find(key =>
-      key.toLowerCase().includes('portal') &&
-      key.toLowerCase().includes('id') &&
-      !key.toLowerCase().includes('lookup')
-    );
+    // Step 3: Get the specific player's row data
+    const playerRow = await getSheetData(ROSTER_SHEET_ID, `A${portalEntry.rowIndex}:AZ${portalEntry.rowIndex}`);
 
-    if (!portalIdIndex) {
+    if (!playerRow || playerRow.length === 0) {
       return NextResponse.json({
         success: false,
-        error: 'Portal ID column not found'
-      }, { status: 500 });
-    }
-
-    // Step 2: Get roster data and find player by Portal ID
-    const rosterData = await getSheetData(ROSTER_SHEET_ID, 'A5:AZ1000'); // Skip metadata rows
-
-    let playerRow: any[] | null = null;
-    for (const row of rosterData) {
-      const rowPortalId = row[columnMap[portalIdIndex]]?.toString().trim();
-      if (rowPortalId === portalId) {
-        playerRow = row;
-        break;
-      }
-    }
-
-    if (!playerRow) {
-      return NextResponse.json({
-        success: false,
-        error: 'Player not found with the provided Portal ID'
+        error: 'Player data not found'
       }, { status: 404 });
     }
 
-    // Step 3: Map row data to structured player object using dynamic column discovery
+    // Step 4: Map row data to structured player object using dynamic column discovery
     const getValue = (columnName: string): string => {
       const index = columnMap[columnName];
-      return index !== undefined ? (playerRow![index]?.toString().trim() || '') : '';
+      return index !== undefined ? (playerRow[0][index]?.toString().trim() || '') : '';
     };
 
     const getBooleanValue = (columnName: string): boolean => {

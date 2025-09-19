@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSheetData } from '../../../../lib/google-api';
-
-const ROSTER_SHEET_ID = process.env.ROSTER_SHEET_ID || '1ZZA5TxHu8nmtyNORm3xYtN5rzP3p1jtW178UgRcxLA8';
+import { findPortalIdByLookupKey } from '../../../../lib/portal-cache';
 
 interface PlayerLookupRequest {
   lastName: string;
@@ -30,57 +28,17 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Step 1: Get metadata to find Portal columns dynamically
-    const metadataRows = await getSheetData(ROSTER_SHEET_ID, 'A1:AZ4');
-
-    if (metadataRows.length < 4) {
-      return NextResponse.json({
-        success: false,
-        error: 'Invalid roster metadata structure'
-      }, { status: 500 });
-    }
-
-    const [columnNameRow] = metadataRows;
-
-    // Find Portal Lookup Key and Portal ID columns dynamically
-    let lookupKeyIndex = -1;
-    let portalIdIndex = -1;
-
-    for (let i = 0; i < columnNameRow.length; i++) {
-      const columnName = columnNameRow[i]?.toLowerCase().trim();
-      if (columnName.includes('portal') && columnName.includes('lookup')) {
-        lookupKeyIndex = i;
-      }
-      if (columnName.includes('portal') && columnName.includes('id') && !columnName.includes('lookup')) {
-        portalIdIndex = i;
-      }
-    }
-
-    if (lookupKeyIndex === -1 || portalIdIndex === -1) {
-      return NextResponse.json({
-        success: false,
-        error: 'Portal columns not found in roster metadata'
-      }, { status: 500 });
-    }
-
-    // Step 2: Construct lookup key from input
+    // Construct lookup key from input
     const lookupKey = `${lastName.toLowerCase()}${birthMonth}${birthYear}`;
 
-    // Step 3: Get roster data and search for matching lookup key
-    const rosterData = await getSheetData(ROSTER_SHEET_ID, 'A5:AZ1000'); // Skip metadata rows
+    // Use cached portal data to find matching portal ID
+    const playerPortalId = await findPortalIdByLookupKey(lookupKey);
 
-    for (const row of rosterData) {
-      const rowLookupKey = row[lookupKeyIndex]?.toString().trim();
-      if (rowLookupKey === lookupKey) {
-        const playerPortalId = row[portalIdIndex]?.toString().trim();
-
-        if (playerPortalId) {
-          return NextResponse.json({
-            success: true,
-            playerPortalId
-          });
-        }
-      }
+    if (playerPortalId) {
+      return NextResponse.json({
+        success: true,
+        playerPortalId
+      });
     }
 
     // No match found
