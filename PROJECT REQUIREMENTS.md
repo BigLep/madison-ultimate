@@ -73,6 +73,24 @@ In summary, if I load `/build-roster` I expect:
    - name/link of the SPS Final Forms file that was used
    - name/link of the Team Mailing List file that was used
 
+### Stage 3: Player Portal for seeing player info and marking availability
+I ended up not really using the work for Stage 1 and Stage 2.  I ended up using a separate process to build my player roster.  
+
+I now want to build a player portal that presents a web interface for each player.  Each player and their family should be able to see their player's portal.
+
+Here are the requirements for the portal:
+1. If a player comes to /player-portal, they should be presented the option to "login" for their player.  I want login to be very simple though.  Login involves typing in the player later name (text box), player birth month (2 digits), and player birth year (2 digits).  When the backend receives <lastName,birthMonth,birthYear>, it should try and lookup the player in the roster using the "Player Portal Lookup Key" column.  If it doesn't find one, report an error to the user and they can try again.  If it does find one, it should redirect the user to `/player-port/$playerPortalId` where `$playerPortalId` is defined by the "Player Portal ID" column.
+2. `/player-port/$playerPortalId` is a pseudo secret URL.  It should be fine for a family to bookmark.  The `$playerPortalId` should be used to lookup the the player in the roster.
+3. For now the player roster will be basic with 3 screens: 
+  - Season Info and News
+  - Player Info
+  - Practice Availability
+  - Game Availability
+
+I'll give further instructions later about what each of these screens should look like.  Just make sure there is easy mobile friendly navigation between them and that it also works well on desktop.  So maybe on mobile we follow the pattern of a bottom bar navigation?
+
+I actually expect to use this Stage of the project.  It is fine to discard code or notes regarding stage 1 or 2 since those were experiments.  I want to make sure that stage 3 ("the player portal") is kept clean and maintainable.  Documentation should be tailored towards the this stage.  I do expect though to deploy using the existing mechanism with vercel and the existing conventions are true, like using conventional commits.
+
 ## Data Sources
 ### SPS Final Forms
 Exports of this data is https://drive.google.com/drive/folders/1SnWCxDIn3FxJCvd1JcWyoeoOMscEsQcW?usp=drive_link
@@ -92,6 +110,10 @@ You can see exports of who is on the mailing list in https://drive.google.com/dr
 Use the most recent export.
 The export time is in the filename as a ISO8601 datetime (e.g., 2025-09-05T05:15:38Z).
 There is one row per player caretaker that signed up. 
+
+### Team Roster Spreadsheet
+The official roster used by coaches is stored in https://docs.google.com/spreadsheets/d/1ZZA5TxHu8nmtyNORm3xYtN5rzP3p1jtW178UgRcxLA8/edit?gid=267530468#gid=267530468
+It wasn't built using this webapp, but it is the source of truth on our players.
 
 # Steve Scratchpad
 Note: ignore this section for now.  It is just raw notes and is not ready to handled.  

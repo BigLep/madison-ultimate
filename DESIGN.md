@@ -311,3 +311,124 @@ vercel --prod --yes
 ✅ **Deployment**: Successfully deployed to Vercel production environment
   
 🚀 **Production Status**: Live at https://madison-ultimate.vercel.app
+
+## Stage 3: Player Portal UI Framework Decision
+
+### Selected Framework: shadcn/ui
+
+For the Stage 3 Player Portal implementation, we selected **shadcn/ui** as our primary UI component library. This decision prioritizes maintainability, industry standards, and long-term sustainability.
+
+#### Why shadcn/ui?
+
+**1. Industry Standard & Proven Track Record**
+- Used by major companies: Vercel, Linear, Resend, and thousands of open-source projects
+- Over 40,000 GitHub stars with active development
+- Trusted by enterprise and startup teams alike
+
+**2. Not Bespoke - Built on Proven Foundations**
+- Built on **Radix UI primitives** (the gold standard for accessible React components)
+- Uses **Tailwind CSS** (which we already use in the project)
+- Leverages **class-variance-authority** for component variants
+- No custom framework - just industry-standard building blocks
+
+**3. Copy-Paste Architecture (You Own the Code)**
+- Components are copied directly into your codebase (`src/components/ui/`)
+- No runtime dependencies or black-box libraries
+- Full control over customization and modifications
+- Never locked into a framework - you own the components
+
+**4. Perfect Integration with Existing Stack**
+- Native Tailwind CSS integration (no CSS-in-JS conflicts)
+- TypeScript-first with full type safety
+- Next.js App Router compatible
+- Works seamlessly with existing project structure
+
+**5. Accessibility & Mobile-First**
+- Built-in ARIA support and keyboard navigation
+- Screen reader optimized
+- Mobile-responsive by default
+- Follows WAI-ARIA guidelines
+
+**6. Developer Experience**
+- Excellent documentation with copy-paste examples
+- CLI tools for easy component installation
+- Consistent API patterns across all components
+- Hot-reloading and dev tools support
+
+#### Alternatives Considered & Why They Were Rejected
+
+**Material-UI (MUI)**
+- ❌ Heavy bundle size (200kb+ runtime)
+- ❌ Google Material Design doesn't fit our app aesthetic
+- ❌ Complex theming system with CSS-in-JS overhead
+- ❌ Runtime styling performance impact
+
+**Ant Design**
+- ❌ Enterprise-focused design language (too corporate)
+- ❌ Large bundle size and Chinese company dependencies
+- ❌ Less flexibility for custom styling
+- ❌ Desktop-first design approach
+
+**Mantine**
+- ✅ Good alternative with similar philosophy
+- ❌ Smaller community and ecosystem
+- ❌ Less battle-tested in production environments
+- ❌ More opinionated styling approach
+
+**Chakra UI**
+- ✅ Good developer experience
+- ❌ CSS-in-JS performance overhead
+- ❌ Less momentum in the React community
+- ❌ More complex setup with Next.js App Router
+
+**Headless UI + Custom Components**
+- ✅ Maximum flexibility
+- ❌ Requires significant custom development time
+- ❌ Reinventing the wheel for common patterns
+- ❌ Inconsistent design system without significant effort
+
+#### Technical Implementation Strategy
+
+**Component Installation Pattern**
+```bash
+npx shadcn-ui@latest add button
+npx shadcn-ui@latest add form
+npx shadcn-ui@latest add navigation-menu
+```
+
+**File Structure**
+```
+src/
+├── components/
+│   ├── ui/                    # shadcn/ui components (copy-paste)
+│   │   ├── button.tsx
+│   │   ├── form.tsx
+│   │   └── navigation-menu.tsx
+│   └── portal/                # Custom portal components
+│       ├── player-info.tsx
+│       ├── availability-calendar.tsx
+│       └── portal-navigation.tsx
+```
+
+**Customization Strategy**
+- Modify copied components directly for project-specific needs
+- Use Tailwind CSS custom classes for brand colors and spacing
+- Extend component variants using class-variance-authority patterns
+- Maintain consistency with existing project styling
+
+#### Long-term Maintainability
+
+**Why This Choice Supports Maintainability:**
+1. **Industry Standard**: Easy to find developers familiar with shadcn/ui
+2. **No Vendor Lock-in**: Components live in your codebase
+3. **Gradual Migration**: Can replace individual components as needed
+4. **Community Support**: Large ecosystem and extensive documentation
+5. **Future-Proof**: Built on stable, well-maintained foundations
+
+**Risk Mitigation:**
+- No runtime dependencies means no breaking changes from external updates
+- Copy-paste architecture allows incremental improvements
+- Tailwind CSS ensures styling remains maintainable
+- TypeScript provides compile-time safety for component APIs
+
+This decision aligns with the project requirement to use "popular, common web frameworks" while avoiding bespoke solutions. shadcn/ui provides the perfect balance of functionality, maintainability, and industry adoption for the Madison Ultimate Player Portal.

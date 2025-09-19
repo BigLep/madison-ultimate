@@ -9,14 +9,23 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
+    "@radix-ui/react-label": "^2.1.7",
+    "@radix-ui/react-slot": "^1.2.3",
     "autoprefixer": "^10.4.21",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "csv-parser": "^3.2.0",
     "fast-levenshtein": "^3.0.0",
     "google-auth-library": "^10.3.0",
     "googleapis": "^159.0.0",
+    "lucide-react": "^0.544.0",
     "next": "15.5.2",
     "react": "^18.3.0",
-    "react-dom": "^18.3.0"
+    "react-dom": "^18.3.0",
+    "react-hook-form": "^7.62.0",
+    "tailwind-merge": "^3.3.1",
+    "zod": "^4.1.9"
   },
   "devDependencies": {
     "@types/fast-levenshtein": "^0.0.4",
