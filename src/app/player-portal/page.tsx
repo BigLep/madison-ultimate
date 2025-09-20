@@ -143,15 +143,12 @@ export default function PlayerPortalLogin() {
           </form>
 
           <div className="mt-6 text-center text-sm text-gray-700">
-            <p className="font-medium">
-              Need help?{' '}
-              <a
-                href="mailto:madisonultimate@gmail.com"
-                className="text-blue-600 hover:text-blue-800 underline font-semibold"
-              >
-                Contact your coach or team admin
-              </a>
-            </p>
+            <a
+              href="mailto:madisonultimate@gmail.com"
+              className="text-blue-600 hover:text-blue-800 underline font-semibold"
+            >
+              Need help?
+            </a>
           </div>
         </CardContent>
       </Card>

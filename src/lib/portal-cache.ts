@@ -86,9 +86,23 @@ async function refreshPortalCache(): Promise<void> {
       console.log(`Found Portal columns: Lookup Key at ${lookupKeyIndex}, Portal ID at ${portalIdIndex}`);
 
       // Step 2: Get just the Portal columns for all rows
-      // Use exact column ranges for AQ and AR (the Portal columns)
-      const lookupData = await getSheetData(ROSTER_SHEET_ID, 'AQ5:AQ1000');
-      const portalData = await getSheetData(ROSTER_SHEET_ID, 'AR5:AR1000');
+      // Convert column indices to Excel column letters (supports columns beyond Z)
+      function getColumnLetter(columnIndex: number): string {
+        let result = '';
+        while (columnIndex >= 0) {
+          result = String.fromCharCode(65 + (columnIndex % 26)) + result;
+          columnIndex = Math.floor(columnIndex / 26) - 1;
+        }
+        return result;
+      }
+
+      const lookupColumnLetter = getColumnLetter(lookupKeyIndex);
+      const portalColumnLetter = getColumnLetter(portalIdIndex);
+
+      console.log(`Using columns: ${lookupColumnLetter} (index ${lookupKeyIndex}) and ${portalColumnLetter} (index ${portalIdIndex})`);
+
+      const lookupData = await getSheetData(ROSTER_SHEET_ID, `${lookupColumnLetter}5:${lookupColumnLetter}1000`);
+      const portalData = await getSheetData(ROSTER_SHEET_ID, `${portalColumnLetter}5:${portalColumnLetter}1000`);
 
       // Step 3: Build cache entries
       const entries: PortalEntry[] = [];
