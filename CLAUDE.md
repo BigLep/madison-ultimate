@@ -34,6 +34,14 @@ git commit -m "docs: update documentation 📚"
 - Use placeholder/anonymized data for development and testing
 - Always verify `.gitignore` includes sensitive data directories before committing
 
+## Credential Security Guidelines
+
+**CRITICAL**: Never commit authentication credentials to the repository:
+- `.google-service-account.json` - Service account credentials (in `.gitignore`)
+- `.google-oauth.json` - OAuth client credentials (in `.gitignore`)
+- `.env.local` - Environment variables including refresh tokens (in `.gitignore`)
+- Never include actual tokens, keys, or credentials in documentation or code comments
+
 ## Data Sources for Stage 1
 
 1. **SPS Final Forms** - Google Drive exports (CSV format)
@@ -46,3 +54,4 @@ git commit -m "docs: update documentation 📚"
 2. Implement data fetching and processing
 3. Build signup status table component
 4. Deploy to Vercel
+

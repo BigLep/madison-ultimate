@@ -6,6 +6,7 @@ function createGoogleAuth(): GoogleAuth {
   const scopes = [
     'https://www.googleapis.com/auth/spreadsheets',
     'https://www.googleapis.com/auth/drive.readonly',
+    'https://www.googleapis.com/auth/gmail.readonly',
   ];
 
   // Check if direct JSON content is provided (for Vercel deployment)
@@ -34,6 +35,9 @@ function createGoogleAuth(): GoogleAuth {
 }
 
 const auth = createGoogleAuth();
+
+// Export auth for other services
+export const getAuth = () => auth;
 
 // Initialize Google Sheets and Drive APIs
 export const sheets = google.sheets({ version: 'v4', auth });

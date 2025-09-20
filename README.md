@@ -67,7 +67,7 @@ madison-ultimate/
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
 - **Deployment**: Vercel (planned)
-- **Data Sources**: Google Sheets API, Google Drive API (planned)
+- **Data Sources**: Google Sheets API, Google Drive API, Gmail API
 
 ## Development Workflow
 
@@ -179,3 +179,47 @@ You must share each Google resource with the service account email (found in the
 - It's automatically ignored by git (listed in `.gitignore`)
 - Never commit this file to version control
 - For production deployment, use secure environment variable storage
+
+## Authentication Setup
+
+This application uses **dual authentication** for different Google APIs:
+
+- **Service Account**: For Google Sheets and Drive APIs
+- **OAuth 2.0**: For Gmail API (team message access)
+
+For complete authentication setup instructions, see [AUTHENTICATION_SETUP.md](./AUTHENTICATION_SETUP.md).
+
+## Deployment (Vercel)
+
+### Required Environment Variables
+
+Set these in Vercel Dashboard → Project → Settings → Environment Variables:
+
+```env
+# Service Account
+GOOGLE_SERVICE_ACCOUNT_KEY=<full-json-content-as-string>
+
+# Gmail OAuth
+GMAIL_REFRESH_TOKEN=<your-refresh-token-from-oauth-flow>
+
+# Resource IDs
+ROSTER_SHEET_ID=<sheet-id>
+SPS_FINAL_FORMS_FOLDER_ID=<folder-id>
+TEAM_MAILING_LIST_FOLDER_ID=<folder-id>
+ADDITIONAL_QUESTIONNAIRE_SHEET_ID=<sheet-id>
+```
+
+### Deployment Steps
+
+1. **Complete authentication setup** following [AUTHENTICATION_SETUP.md](./AUTHENTICATION_SETUP.md)
+
+2. **Update OAuth redirect URI** in Google Cloud Console:
+   - Add production domain: `https://your-app.vercel.app/api/auth/callback`
+
+3. **Set environment variables** in Vercel dashboard
+
+4. **Deploy and test**:
+   ```bash
+   # Test the application APIs
+   curl https://your-app.vercel.app/api/group-messages
+   ```

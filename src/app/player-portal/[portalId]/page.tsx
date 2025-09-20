@@ -193,37 +193,85 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
 }
 
 function SeasonInfoScreen() {
+  // URL constants for easy maintenance
+  const SEASON_INFO_URL = 'https://madisonultimate.notion.site/2025-Fall-Madison-Ultimate-265c4da46f7580e8ad0cc5c3fb2315f5';
+
+  const [messages, setMessages] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMessages = async () => {
+      try {
+        const response = await fetch('/api/group-messages?maxResults=3');
+        const data = await response.json();
+        if (data.success) {
+          setMessages(data.messages);
+        }
+      } catch (error) {
+        console.error('Error fetching messages:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMessages();
+  }, []);
+
   return (
     <div className="space-y-6">
       <Card className="shadow-lg" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
         <CardHeader>
           <CardTitle style={{color: 'var(--page-title)'}}>Welcome to Madison Ultimate!</CardTitle>
-          <CardDescription style={{color: 'var(--secondary-header)'}}>Fall 2024 Season</CardDescription>
+          <CardDescription style={{color: 'var(--secondary-header)'}}>Fall 2025 Season</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <h3 className="font-semibold mb-2" style={{color: 'var(--primary-text)'}}>Season Schedule</h3>
-            <p style={{color: 'var(--secondary-text)'}}>Practices: Tuesdays & Thursdays, 3:30-5:00 PM</p>
-            <p style={{color: 'var(--secondary-text)'}}>Games: Saturdays (schedule varies)</p>
+            <p style={{color: 'var(--primary-text)'}}>
+              You can learn more about the season at our{' '}
+              <a
+                href={SEASON_INFO_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{color: 'var(--accent)', textDecoration: 'underline'}}
+              >
+                team site
+              </a>
+              . This portal contains player specific information.
+            </p>
           </div>
+        </CardContent>
+      </Card>
 
-          <div>
-            <h3 className="font-semibold mb-2" style={{color: 'var(--primary-text)'}}>Important Dates</h3>
-            <ul className="space-y-1" style={{color: 'var(--secondary-text)'}}>
-              <li>• Team Photos: October 15th</li>
-              <li>• End of Season Tournament: November 20th</li>
-              <li>• Awards Ceremony: December 5th</li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="font-semibold mb-2" style={{color: 'var(--primary-text)'}}>What to Bring</h3>
-            <ul className="space-y-1" style={{color: 'var(--secondary-text)'}}>
-              <li>• Water bottle</li>
-              <li>• Athletic shoes with cleats (recommended)</li>
-              <li>• Weather-appropriate clothing</li>
-            </ul>
-          </div>
+      <Card className="shadow-lg" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
+        <CardHeader>
+          <CardTitle style={{color: 'var(--page-title)'}}>Recent Team Updates</CardTitle>
+          <CardDescription style={{color: 'var(--secondary-header)'}}>Messages from the team mailing list</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="text-center py-4" style={{color: 'var(--secondary-text)'}}>
+              Loading recent updates...
+            </div>
+          ) : messages.length > 0 ? (
+            <div className="space-y-4">
+              {messages.map((message, index) => (
+                <div key={message.id} className="pb-4 border-b last:border-b-0" style={{borderColor: 'var(--border)'}}>
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="font-medium text-sm" style={{color: 'var(--primary-text)'}}>{message.subject}</h4>
+                    <span className="text-xs" style={{color: 'var(--secondary-text)'}}>
+                      {new Date(message.date).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <p className="text-xs mb-1" style={{color: 'var(--secondary-text)'}}>From: {message.from}</p>
+                  <p className="text-sm" style={{color: 'var(--primary-text)'}}>{message.snippet}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-4" style={{color: 'var(--secondary-text)'}}>
+              No recent team updates available.
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
