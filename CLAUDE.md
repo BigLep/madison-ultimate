@@ -8,6 +8,25 @@ This file contains development guidelines and commands for working with Claude C
 - `npm run build` - Build for production
 - `npm run lint` - Check code quality
 
+## API Endpoints for Development
+
+- `/api/diagnostics` - Comprehensive system health check (environment variables, credentials, API access)
+- `/api/group-messages` - Fetch recent team messages from Google Groups
+- `/api/auth/gmail` - Get Gmail OAuth authorization URL (for setup only)
+- `/api/auth/callback` - OAuth callback handler (for setup only)
+
+## Troubleshooting
+
+**Run diagnostics first**: Use `curl http://localhost:3001/api/diagnostics | jq '.'` to check system health:
+- **Environment**: Verifies all required environment variables are set
+- **Credentials**: Validates service account and OAuth credential files
+- **Sheets Access**: Tests Google Sheets API access to roster and questionnaire
+- **Drive Access**: Tests Google Drive API access to SPS and mailing list folders
+- **Gmail Access**: Tests Gmail API authentication and message search
+- **System**: Checks Node.js version, timezone, and memory usage
+
+Look for `"status": "fail"` items to identify configuration issues.
+
 ## Commit Message Guidelines
 
 Use conventional commits with emojis for fun:
