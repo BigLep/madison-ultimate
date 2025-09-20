@@ -72,20 +72,27 @@ export default function PlayerPortalLogin() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-gray-900">
+    <div className="min-h-screen flex items-center justify-center p-4" style={{background: 'var(--primary-bg)'}}>
+      <Card className="w-full max-w-md shadow-lg" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
+        <CardHeader className="text-center space-y-4">
+          <div className="mx-auto w-20 h-20 mb-2">
+            <img
+              src="/images/MadisonSchoolLogo.webp"
+              alt="Madison School Logo"
+              className="w-full h-full object-contain"
+            />
+          </div>
+          <CardTitle className="text-2xl font-bold" style={{color: 'var(--page-title)'}}>
             Madison Ultimate
           </CardTitle>
-          <CardDescription className="font-semibold text-gray-700">
+          <CardDescription className="font-semibold" style={{color: 'var(--secondary-header)'}}>
             Player Portal Login
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="lastName" className="font-semibold text-gray-800">Player Last Name</Label>
+              <Label htmlFor="lastName" className="font-semibold" style={{color: 'var(--primary-text)'}}>Player Last Name</Label>
               <Input
                 id="lastName"
                 type="text"
@@ -94,19 +101,32 @@ export default function PlayerPortalLogin() {
                 placeholder="Enter player last name"
                 required
                 disabled={isLoading}
+                className="border"
+                style={{
+                  background: 'var(--card-bg)',
+                  borderColor: 'var(--border)',
+                  color: 'var(--primary-text)'
+                }}
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="birthMonth" className="font-semibold text-gray-800">Player Birth Month</Label>
+                <Label htmlFor="birthMonth" className="font-semibold" style={{color: 'var(--primary-text)'}}>Player Birth Month</Label>
                 <Select value={birthMonth} onValueChange={setBirthMonth} disabled={isLoading}>
-                  <SelectTrigger className="data-[placeholder]:text-gray-600">
-                    <SelectValue placeholder="Select month" className="text-gray-800" />
+                  <SelectTrigger
+                    className="border"
+                    style={{
+                      background: 'var(--card-bg)',
+                      borderColor: 'var(--border)',
+                      color: 'var(--primary-text)'
+                    }}
+                  >
+                    <SelectValue placeholder="Select month" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
                     {months.map((month) => (
-                      <SelectItem key={month.value} value={month.value} className="text-gray-800 font-medium">
+                      <SelectItem key={month.value} value={month.value}>
                         {month.label}
                       </SelectItem>
                     ))}
@@ -115,14 +135,21 @@ export default function PlayerPortalLogin() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="birthYear" className="font-semibold text-gray-800">Player Birth Year</Label>
+                <Label htmlFor="birthYear" className="font-semibold" style={{color: 'var(--primary-text)'}}>Player Birth Year</Label>
                 <Select value={birthYear} onValueChange={setBirthYear} disabled={isLoading}>
-                  <SelectTrigger className="data-[placeholder]:text-gray-600">
-                    <SelectValue placeholder="Select year" className="text-gray-800" />
+                  <SelectTrigger
+                    className="border"
+                    style={{
+                      background: 'var(--card-bg)',
+                      borderColor: 'var(--border)',
+                      color: 'var(--primary-text)'
+                    }}
+                  >
+                    <SelectValue placeholder="Select year" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
                     {years.map((year) => (
-                      <SelectItem key={year.value} value={year.value} className="text-gray-800 font-medium">
+                      <SelectItem key={year.value} value={year.value}>
                         {year.label}
                       </SelectItem>
                     ))}
@@ -132,20 +159,30 @@ export default function PlayerPortalLogin() {
             </div>
 
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded font-medium">
+              <div className="border px-4 py-3 rounded font-medium" style={{
+                backgroundColor: '#fef2f2',
+                borderColor: '#fecaca',
+                color: '#dc2626'
+              }}>
                 {error}
               </div>
             )}
 
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="w-full text-white font-semibold hover:opacity-90 transition-opacity"
+              style={{background: 'var(--accent)'}}
+              disabled={isLoading}
+            >
               {isLoading ? 'Logging in...' : 'Login'}
             </Button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-gray-700">
+          <div className="mt-6 text-center text-sm">
             <a
               href="mailto:madisonultimate@gmail.com"
-              className="text-blue-600 hover:text-blue-800 underline font-semibold"
+              className="underline font-semibold transition-colors hover:opacity-70"
+              style={{color: 'var(--accent)'}}
             >
               Need help?
             </a>

@@ -85,10 +85,10 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading player portal...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading player portal...</p>
         </div>
       </div>
     )
@@ -96,16 +96,16 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
 
   if (error || !player) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="w-full max-w-md shadow-xl border-border/50 backdrop-blur-sm bg-card/95">
           <CardHeader>
-            <CardTitle className="text-red-600">Error</CardTitle>
+            <CardTitle className="text-destructive">Error</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-700">{error}</p>
+            <p className="text-card-foreground">{error}</p>
             <Button
               onClick={() => window.location.href = '/player-portal'}
-              className="w-full mt-4"
+              className="w-full mt-4 madison-gradient text-white hover:opacity-90"
             >
               Return to Login
             </Button>
@@ -138,19 +138,19 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{background: 'var(--primary-bg)'}}>
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="shadow-sm border-b" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
         <div className="max-w-lg mx-auto px-4 py-4">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center shadow-lg" style={{background: 'var(--accent)'}}>
               <span className="text-white font-semibold text-sm">
                 {player.firstName[0]}{player.lastName[0]}
               </span>
             </div>
             <div>
-              <h1 className="font-semibold text-gray-900">{player.fullName}</h1>
-              <p className="text-sm text-gray-600">Grade {player.grade}</p>
+              <h1 className="font-semibold" style={{color: 'var(--page-title)'}}>{player.fullName}</h1>
+              <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Grade {player.grade}</p>
             </div>
           </div>
         </div>
@@ -162,7 +162,7 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg">
+      <div className="fixed bottom-0 left-0 right-0 border-t shadow-lg" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
         <div className="max-w-lg mx-auto">
           <nav className="flex">
             {navItems.map((item) => {
@@ -172,11 +172,11 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
                 <button
                   key={item.id}
                   onClick={() => setActiveScreen(item.id)}
-                  className={`flex-1 py-3 px-2 text-center transition-colors ${
-                    isActive
-                      ? 'text-blue-600 bg-blue-50'
-                      : 'text-gray-600 hover:text-blue-600'
-                  }`}
+                  className="flex-1 py-3 px-2 text-center transition-colors"
+                  style={{
+                    color: isActive ? 'var(--page-title)' : 'var(--secondary-text)',
+                    backgroundColor: isActive ? 'var(--primary-bg)' : 'transparent'
+                  }}
                 >
                   <Icon className="w-6 h-6 mx-auto mb-1" />
                   <span className="text-xs font-medium">{item.label}</span>
@@ -193,21 +193,21 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
 function SeasonInfoScreen() {
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="shadow-lg" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
         <CardHeader>
-          <CardTitle>Welcome to Madison Ultimate!</CardTitle>
-          <CardDescription>Fall 2024 Season</CardDescription>
+          <CardTitle style={{color: 'var(--page-title)'}}>Welcome to Madison Ultimate!</CardTitle>
+          <CardDescription style={{color: 'var(--secondary-header)'}}>Fall 2024 Season</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <h3 className="font-semibold text-gray-900 mb-2">Season Schedule</h3>
-            <p className="text-gray-600">Practices: Tuesdays & Thursdays, 3:30-5:00 PM</p>
-            <p className="text-gray-600">Games: Saturdays (schedule varies)</p>
+            <h3 className="font-semibold mb-2" style={{color: 'var(--primary-text)'}}>Season Schedule</h3>
+            <p style={{color: 'var(--secondary-text)'}}>Practices: Tuesdays & Thursdays, 3:30-5:00 PM</p>
+            <p style={{color: 'var(--secondary-text)'}}>Games: Saturdays (schedule varies)</p>
           </div>
 
           <div>
-            <h3 className="font-semibold text-gray-900 mb-2">Important Dates</h3>
-            <ul className="text-gray-600 space-y-1">
+            <h3 className="font-semibold mb-2" style={{color: 'var(--primary-text)'}}>Important Dates</h3>
+            <ul className="space-y-1" style={{color: 'var(--secondary-text)'}}>
               <li>• Team Photos: October 15th</li>
               <li>• End of Season Tournament: November 20th</li>
               <li>• Awards Ceremony: December 5th</li>
@@ -215,8 +215,8 @@ function SeasonInfoScreen() {
           </div>
 
           <div>
-            <h3 className="font-semibold text-gray-900 mb-2">What to Bring</h3>
-            <ul className="text-gray-600 space-y-1">
+            <h3 className="font-semibold mb-2" style={{color: 'var(--primary-text)'}}>What to Bring</h3>
+            <ul className="space-y-1" style={{color: 'var(--secondary-text)'}}>
               <li>• Water bottle</li>
               <li>• Athletic shoes with cleats (recommended)</li>
               <li>• Weather-appropriate clothing</li>
@@ -231,73 +231,76 @@ function SeasonInfoScreen() {
 function PlayerInfoScreen({ player }: { player: PlayerData }) {
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="shadow-lg" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
         <CardHeader>
-          <CardTitle>Player Information</CardTitle>
+          <CardTitle style={{color: 'var(--page-title)'}}>Player Information</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-sm text-gray-600">Full Name</p>
-              <p className="font-medium">{player.fullName}</p>
+              <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Full Name</p>
+              <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.fullName}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Grade</p>
-              <p className="font-medium">{player.grade}</p>
+              <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Grade</p>
+              <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.grade}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Birth Date</p>
-              <p className="font-medium">{player.dateOfBirth}</p>
+              <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Birth Date</p>
+              <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.dateOfBirth}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Jersey Size</p>
-              <p className="font-medium">{player.additionalInfo?.jerseySize || 'Not specified'}</p>
+              <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Jersey Size</p>
+              <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.additionalInfo?.jerseySize || 'Not specified'}</p>
             </div>
           </div>
 
           {player.additionalInfo?.pronouns && (
             <div>
-              <p className="text-sm text-gray-600">Pronouns</p>
-              <p className="font-medium">{player.additionalInfo.pronouns}</p>
+              <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Pronouns</p>
+              <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.additionalInfo.pronouns}</p>
             </div>
           )}
 
           {player.additionalInfo?.allergies && (
             <div>
-              <p className="text-sm text-gray-600">Allergies</p>
-              <p className="font-medium">{player.additionalInfo.allergies}</p>
+              <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Allergies</p>
+              <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.additionalInfo.allergies}</p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="shadow-lg" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
         <CardHeader>
-          <CardTitle>Final Forms Status</CardTitle>
+          <CardTitle style={{color: 'var(--page-title)'}}>Final Forms Status</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
-              <span>Parent Signed</span>
-              <span className={`px-2 py-1 rounded text-sm ${
-                player.finalFormsStatus.parentSigned ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-              }`}>
+              <span style={{color: 'var(--primary-text)'}}>Parent Signed</span>
+              <span className="px-2 py-1 rounded text-sm font-medium" style={{
+                backgroundColor: player.finalFormsStatus.parentSigned ? '#dcfce7' : '#fef2f2',
+                color: player.finalFormsStatus.parentSigned ? '#166534' : '#dc2626'
+              }}>
                 {player.finalFormsStatus.parentSigned ? 'Complete' : 'Pending'}
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span>Student Signed</span>
-              <span className={`px-2 py-1 rounded text-sm ${
-                player.finalFormsStatus.studentSigned ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-              }`}>
+              <span style={{color: 'var(--primary-text)'}}>Student Signed</span>
+              <span className="px-2 py-1 rounded text-sm font-medium" style={{
+                backgroundColor: player.finalFormsStatus.studentSigned ? '#dcfce7' : '#fef2f2',
+                color: player.finalFormsStatus.studentSigned ? '#166534' : '#dc2626'
+              }}>
                 {player.finalFormsStatus.studentSigned ? 'Complete' : 'Pending'}
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span>Physical Clearance</span>
-              <span className={`px-2 py-1 rounded text-sm ${
-                player.finalFormsStatus.physicalCleared ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-              }`}>
+              <span style={{color: 'var(--primary-text)'}}>Physical Clearance</span>
+              <span className="px-2 py-1 rounded text-sm font-medium" style={{
+                backgroundColor: player.finalFormsStatus.physicalCleared ? '#dcfce7' : '#fef2f2',
+                color: player.finalFormsStatus.physicalCleared ? '#166534' : '#dc2626'
+              }}>
                 {player.finalFormsStatus.physicalCleared ? 'Cleared' : 'Pending'}
               </span>
             </div>
@@ -305,24 +308,24 @@ function PlayerInfoScreen({ player }: { player: PlayerData }) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="shadow-lg" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
         <CardHeader>
-          <CardTitle>Contact Information</CardTitle>
+          <CardTitle style={{color: 'var(--page-title)'}}>Contact Information</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {player.contacts.parent1 && (
             <div>
-              <p className="text-sm text-gray-600">Parent/Guardian 1</p>
-              <p className="font-medium">{player.contacts.parent1.firstName} {player.contacts.parent1.lastName}</p>
-              <p className="text-gray-600">{player.contacts.parent1.email}</p>
+              <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Parent/Guardian 1</p>
+              <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.contacts.parent1.firstName} {player.contacts.parent1.lastName}</p>
+              <p style={{color: 'var(--secondary-text)'}}>{player.contacts.parent1.email}</p>
             </div>
           )}
 
           {player.contacts.parent2 && (
             <div>
-              <p className="text-sm text-gray-600">Parent/Guardian 2</p>
-              <p className="font-medium">{player.contacts.parent2.firstName} {player.contacts.parent2.lastName}</p>
-              <p className="text-gray-600">{player.contacts.parent2.email}</p>
+              <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Parent/Guardian 2</p>
+              <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.contacts.parent2.firstName} {player.contacts.parent2.lastName}</p>
+              <p style={{color: 'var(--secondary-text)'}}>{player.contacts.parent2.email}</p>
             </div>
           )}
         </CardContent>
@@ -334,13 +337,13 @@ function PlayerInfoScreen({ player }: { player: PlayerData }) {
 function PracticeAvailabilityScreen() {
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="shadow-lg" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
         <CardHeader>
-          <CardTitle>Practice Availability</CardTitle>
-          <CardDescription>Mark your availability for upcoming practices</CardDescription>
+          <CardTitle style={{color: 'var(--page-title)'}}>Practice Availability</CardTitle>
+          <CardDescription style={{color: 'var(--secondary-header)'}}>Mark your availability for upcoming practices</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8" style={{color: 'var(--secondary-text)'}}>
             <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
             <p>Practice availability tracking</p>
             <p className="text-sm">Coming soon!</p>
@@ -354,13 +357,13 @@ function PracticeAvailabilityScreen() {
 function GameAvailabilityScreen() {
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="shadow-lg" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
         <CardHeader>
-          <CardTitle>Game Availability</CardTitle>
-          <CardDescription>Mark your availability for upcoming games</CardDescription>
+          <CardTitle style={{color: 'var(--page-title)'}}>Game Availability</CardTitle>
+          <CardDescription style={{color: 'var(--secondary-header)'}}>Mark your availability for upcoming games</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8" style={{color: 'var(--secondary-text)'}}>
             <Trophy className="w-12 h-12 mx-auto mb-4 opacity-50" />
             <p>Game availability tracking</p>
             <p className="text-sm">Coming soon!</p>
