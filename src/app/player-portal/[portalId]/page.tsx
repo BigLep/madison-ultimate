@@ -12,6 +12,7 @@ interface PlayerData {
   fullName: string;
   grade: number;
   gender: string;
+  genderIdentification: string;
   dateOfBirth: string;
   finalFormsStatus: {
     parentSigned: boolean;
@@ -46,6 +47,7 @@ interface PlayerData {
     playingExperience?: string;
     playerHopes?: string;
     otherInfo?: string;
+    questionnaireFilledOut?: boolean;
   };
   photos?: {
     download?: string;
@@ -229,6 +231,19 @@ function SeasonInfoScreen() {
 }
 
 function PlayerInfoScreen({ player }: { player: PlayerData }) {
+  // URL constants for easy maintenance
+  const ADDITIONAL_INFO_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfOO0ybkvfs0GTBvP6tC95HT3JlGVWkSzlYghDITpw_38_hPA/viewform?usp=dialog';
+  const MAILING_LIST_INFO_URL = 'https://madisonultimate.notion.site/More-Season-Info-265c4da46f7580668995df287590039f#265c4da46f75812981c1ee2b8d88e956';
+
+  // Helper function to get mailing list status indicator
+  const getMailingListIndicator = (status: string) => {
+    const lowerStatus = status?.toLowerCase();
+    if (lowerStatus === 'member') return '✅';
+    if (lowerStatus === 'invited') return '⚠️';
+    if (lowerStatus === 'not a member') return '❌';
+    return '❓';
+  };
+
   return (
     <div className="space-y-6">
       <Card className="shadow-lg" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
@@ -246,63 +261,26 @@ function PlayerInfoScreen({ player }: { player: PlayerData }) {
               <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.grade}</p>
             </div>
             <div>
-              <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Birth Date</p>
-              <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.dateOfBirth}</p>
+              <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Gender Identification</p>
+              <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.genderIdentification || 'Not specified'}</p>
             </div>
-            <div>
-              <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Jersey Size</p>
-              <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.additionalInfo?.jerseySize || 'Not specified'}</p>
-            </div>
-          </div>
-
-          {player.additionalInfo?.pronouns && (
             <div>
               <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Pronouns</p>
-              <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.additionalInfo.pronouns}</p>
+              <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.additionalInfo?.pronouns || 'Not specified'}</p>
             </div>
-          )}
-
-          {player.additionalInfo?.allergies && (
+            <div>
+              <p className="text-sm" style={{color: 'var(--secondary-text)'}}>
+                <a href={ADDITIONAL_INFO_FORM_URL} target="_blank" rel="noopener noreferrer" style={{color: 'var(--accent)', textDecoration: 'underline'}}>
+                  Additional Info Form
+                </a>
+              </p>
+              <p className="font-medium" style={{color: 'var(--primary-text)'}}>
+                {player.additionalInfo?.questionnaireFilledOut ? '✅ Yes' : 'No'}
+              </p>
+            </div>
             <div>
               <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Allergies</p>
-              <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.additionalInfo.allergies}</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card className="shadow-lg" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
-        <CardHeader>
-          <CardTitle style={{color: 'var(--page-title)'}}>Final Forms Status</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span style={{color: 'var(--primary-text)'}}>Parent Signed</span>
-              <span className="px-2 py-1 rounded text-sm font-medium" style={{
-                backgroundColor: player.finalFormsStatus.parentSigned ? '#dcfce7' : '#fef2f2',
-                color: player.finalFormsStatus.parentSigned ? '#166534' : '#dc2626'
-              }}>
-                {player.finalFormsStatus.parentSigned ? 'Complete' : 'Pending'}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span style={{color: 'var(--primary-text)'}}>Student Signed</span>
-              <span className="px-2 py-1 rounded text-sm font-medium" style={{
-                backgroundColor: player.finalFormsStatus.studentSigned ? '#dcfce7' : '#fef2f2',
-                color: player.finalFormsStatus.studentSigned ? '#166534' : '#dc2626'
-              }}>
-                {player.finalFormsStatus.studentSigned ? 'Complete' : 'Pending'}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span style={{color: 'var(--primary-text)'}}>Physical Clearance</span>
-              <span className="px-2 py-1 rounded text-sm font-medium" style={{
-                backgroundColor: player.finalFormsStatus.physicalCleared ? '#dcfce7' : '#fef2f2',
-                color: player.finalFormsStatus.physicalCleared ? '#166534' : '#dc2626'
-              }}>
-                {player.finalFormsStatus.physicalCleared ? 'Cleared' : 'Pending'}
-              </span>
+              <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.additionalInfo?.allergies || 'None reported'}</p>
             </div>
           </div>
         </CardContent>
@@ -315,17 +293,51 @@ function PlayerInfoScreen({ player }: { player: PlayerData }) {
         <CardContent className="space-y-4">
           {player.contacts.parent1 && (
             <div>
-              <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Parent/Guardian 1</p>
+              <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Caretaker 1</p>
               <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.contacts.parent1.firstName} {player.contacts.parent1.lastName}</p>
               <p style={{color: 'var(--secondary-text)'}}>{player.contacts.parent1.email}</p>
+              <p className="text-xs" style={{color: 'var(--secondary-text)'}}>
+                <a href={MAILING_LIST_INFO_URL} target="_blank" rel="noopener noreferrer" style={{color: 'var(--accent)', textDecoration: 'underline'}}>
+                  Mailing List
+                </a>: {getMailingListIndicator(player.contacts.parent1.mailingListStatus)} {player.contacts.parent1.mailingListStatus || 'Unknown'}
+              </p>
             </div>
           )}
 
           {player.contacts.parent2 && (
             <div>
-              <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Parent/Guardian 2</p>
+              <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Caretaker 2</p>
               <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.contacts.parent2.firstName} {player.contacts.parent2.lastName}</p>
               <p style={{color: 'var(--secondary-text)'}}>{player.contacts.parent2.email}</p>
+              <p className="text-xs" style={{color: 'var(--secondary-text)'}}>
+                <a href={MAILING_LIST_INFO_URL} target="_blank" rel="noopener noreferrer" style={{color: 'var(--accent)', textDecoration: 'underline'}}>
+                  Mailing List
+                </a>: {getMailingListIndicator(player.contacts.parent2.mailingListStatus)} {player.contacts.parent2.mailingListStatus || 'Unknown'}
+              </p>
+            </div>
+          )}
+
+          {player.contacts.studentEmails.spsEmail && (
+            <div>
+              <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Student SPS Email</p>
+              <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.contacts.studentEmails.spsEmail}</p>
+              <p className="text-xs" style={{color: 'var(--secondary-text)'}}>
+                <a href={MAILING_LIST_INFO_URL} target="_blank" rel="noopener noreferrer" style={{color: 'var(--accent)', textDecoration: 'underline'}}>
+                  Mailing List
+                </a>: n/a
+              </p>
+            </div>
+          )}
+
+          {player.contacts.studentEmails.personalEmail && (
+            <div>
+              <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Student Personal Email</p>
+              <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.contacts.studentEmails.personalEmail}</p>
+              <p className="text-xs" style={{color: 'var(--secondary-text)'}}>
+                <a href={MAILING_LIST_INFO_URL} target="_blank" rel="noopener noreferrer" style={{color: 'var(--accent)', textDecoration: 'underline'}}>
+                  Mailing List
+                </a>: {getMailingListIndicator(player.contacts.studentEmails.personalEmailMailingStatus)} {player.contacts.studentEmails.personalEmailMailingStatus || 'Unknown'}
+              </p>
             </div>
           )}
         </CardContent>

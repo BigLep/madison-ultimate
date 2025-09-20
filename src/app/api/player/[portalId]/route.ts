@@ -11,6 +11,7 @@ interface PlayerData {
   fullName: string;
   grade: number;
   gender: string;
+  genderIdentification: string;
   dateOfBirth: string;
   finalFormsStatus: {
     parentSigned: boolean;
@@ -45,6 +46,7 @@ interface PlayerData {
     playingExperience?: string;
     playerHopes?: string;
     otherInfo?: string;
+    questionnaireFilledOut?: boolean;
   };
   photos?: {
     download?: string;
@@ -125,6 +127,7 @@ export async function GET(
       fullName: getValue('Full Name'),
       grade: parseInt(getValue('Grade')) || 0,
       gender: getValue('Gender'),
+      genderIdentification: getValue('Gender Identification'),
       dateOfBirth: getValue('Date of Birth'),
       finalFormsStatus: {
         parentSigned: getBooleanValue('Are All Forms Parent Signed'),
@@ -140,13 +143,14 @@ export async function GET(
         },
       },
       additionalInfo: {
-        pronouns: getValue('Player Pronouns (select all that apply)'),
+        pronouns: getValue('Pronouns'),
         allergies: getValue('Player Allergies'),
         competingSports: getValue('Competing Sports and Activities'),
         jerseySize: getValue('Jersey Size'),
         playingExperience: getValue('Playing Experience'),
         playerHopes: getValue('Player hopes for the season'),
         otherInfo: getValue('Other Player Info'),
+        questionnaireFilledOut: getBooleanValue('Additional Info Questionnaire Filled Out?'),
       },
       photos: {
         download: getValue('Photo Download'),
