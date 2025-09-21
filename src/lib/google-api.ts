@@ -153,6 +153,45 @@ export async function downloadCsvFromDrive(fileId: string): Promise<string | nul
   }
 }
 
+// Helper function to get sheet data with hyperlink information
+export async function getSheetDataWithHyperlinks(sheetId: string, sheetName: string, range: string = 'A:Z') {
+  try {
+    const response = await sheets.spreadsheets.get({
+      spreadsheetId: sheetId,
+      ranges: [`'${sheetName}'!${range}`],
+      includeGridData: true,
+    });
+
+    const sheet = response.data.sheets?.[0];
+    const gridData = sheet?.data?.[0];
+
+    if (!gridData?.rowData) {
+      return [];
+    }
+
+    // Convert grid data to our expected format, preserving hyperlinks
+    const rows = gridData.rowData.map(row => {
+      return (row.values || []).map(cell => {
+        const displayValue = cell.formattedValue || cell.effectiveValue?.stringValue || '';
+
+        // If cell has a hyperlink, return an object with both text and URL
+        if (cell.hyperlink) {
+          return {
+            text: displayValue,
+            url: cell.hyperlink
+          };
+        }
+        return displayValue;
+      });
+    });
+
+    return rows;
+  } catch (error) {
+    console.error(`Error fetching sheet data with hyperlinks for ${sheetId}:`, error);
+    return [];
+  }
+}
+
 // Helper function to get sheet metadata (dimensions, sheet names, etc.)
 export async function getSheetMetadata(sheetId: string) {
   try {

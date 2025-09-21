@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSheetData, updateSheetData } from '../../../../lib/google-api';
+import { getSheetData, getSheetDataWithHyperlinks, updateSheetData } from '../../../../lib/google-api';
 import { findPortalEntryByPortalId } from '../../../../lib/portal-cache';
 import { SHEET_CONFIG } from '../../../../lib/sheet-config';
 import {
@@ -51,10 +51,11 @@ export async function GET(
       console.log('Could not fetch player full name, using lookup key as fallback');
     }
 
-    // Step 2: Get Practice Info data
-    const practiceInfoData = await getSheetData(
+    // Step 2: Get Practice Info data with hyperlinks
+    const practiceInfoData = await getSheetDataWithHyperlinks(
       ROSTER_SHEET_ID,
-      `'${PRACTICE_CONFIG.PRACTICE_INFO_SHEET}'!A:E`
+      PRACTICE_CONFIG.PRACTICE_INFO_SHEET,
+      'A:E'
     );
 
     if (!practiceInfoData || practiceInfoData.length < 2) {
@@ -71,14 +72,25 @@ export async function GET(
       if (!row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.DATE]) continue;
 
       const date = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.DATE];
-      const location = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.LOCATION] || '';
+      const locationData = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.LOCATION];
       const startTime = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.START] || '';
       const endTime = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.END] || '';
       const note = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.NOTE] || '';
 
+      // Handle location data - could be string or object with text/url
+      let location, locationUrl;
+      if (typeof locationData === 'object' && locationData?.text && locationData?.url) {
+        location = locationData.text;
+        locationUrl = locationData.url;
+      } else {
+        location = locationData || '';
+        locationUrl = null;
+      }
+
       practices.push({
         date,
         location,
+        locationUrl,
         startTime,
         endTime,
         note,

@@ -56,6 +56,7 @@ export const PRACTICE_CONFIG = {
 export interface Practice {
   date: string;
   location: string;
+  locationUrl?: string | null;
   startTime: string;
   endTime: string;
   note?: string;
@@ -97,23 +98,36 @@ export function formatPracticeDate(date: string): string {
 }
 
 export function formatPracticeTime(startTime: string, endTime: string): string {
-  // Convert "8:15" and "9:00" to "8:15 - 9:00 AM"
-  const formatTime = (time: string) => {
+  // Handle times that might already be formatted (e.g., "3:55 PM") or raw (e.g., "15:55")
+  const parseAndFormatTime = (time: string) => {
+    // If time already contains AM/PM, return as-is
+    if (time.match(/\s*(AM|PM)\s*$/i)) {
+      return time.trim();
+    }
+
+    // Otherwise, parse and format
     const [hours, minutes] = time.split(':').map(Number);
+
+    // Handle invalid parsing
+    if (isNaN(hours) || isNaN(minutes)) {
+      return time; // Return original if we can't parse
+    }
+
     const period = hours >= 12 ? 'PM' : 'AM';
     const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours;
     return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
   };
 
-  const startFormatted = formatTime(startTime);
-  const endFormatted = formatTime(endTime);
+  const startFormatted = parseAndFormatTime(startTime);
+  const endFormatted = parseAndFormatTime(endTime);
+
+  // Extract periods for comparison
+  const startPeriod = startFormatted.match(/(AM|PM)/i)?.[0];
+  const endPeriod = endFormatted.match(/(AM|PM)/i)?.[0];
 
   // If both times have same period, only show period on end time
-  const startPeriod = startTime.split(':')[0] >= '12' ? 'PM' : 'AM';
-  const endPeriod = endTime.split(':')[0] >= '12' ? 'PM' : 'AM';
-
-  if (startPeriod === endPeriod) {
-    const startWithoutPeriod = startFormatted.replace(/ (AM|PM)/, '');
+  if (startPeriod && endPeriod && startPeriod === endPeriod) {
+    const startWithoutPeriod = startFormatted.replace(/\s*(AM|PM)\s*/i, '');
     return `${startWithoutPeriod} - ${endFormatted}`;
   }
 

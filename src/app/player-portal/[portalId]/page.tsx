@@ -660,6 +660,34 @@ function PracticeCard({
     }
   }, [debouncedNote, practice.date, selectedAvailability, practice.availability.note, onUpdateAvailability, isUpdating]);
 
+  // Helper function to check if a string is a URL
+  const isUrl = (text: string) => {
+    try {
+      new URL(text);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  // Helper function to render location as link if it has a URL
+  const renderLocation = (location: string, locationUrl?: string | null) => {
+    if (locationUrl) {
+      return (
+        <a
+          href={locationUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline hover:no-underline"
+          style={{color: 'var(--accent)'}}
+        >
+          {location}
+        </a>
+      );
+    }
+    return location;
+  };
+
   // Helper function to get button styling based on availability
   const getButtonStyle = (value: string, isSelected: boolean) => {
     if (!isSelected) {
@@ -700,7 +728,7 @@ function PracticeCard({
         <div className="flex items-center gap-4 text-sm" style={{color: 'var(--secondary-text)'}}>
           <div className="flex items-center gap-1">
             <MapPin className="w-4 h-4" />
-            {practice.location}
+            {renderLocation(practice.location, practice.locationUrl)}
           </div>
           <div className="flex items-center gap-1">
             <Clock className="w-4 h-4" />
