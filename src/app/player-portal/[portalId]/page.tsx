@@ -95,6 +95,46 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
+  // Hash-to-screen mapping
+  const hashToScreen: Record<string, PortalScreen> = {
+    '#season': 'season-info',
+    '#player': 'player-info',
+    '#practices': 'practice-availability',
+    '#games': 'game-availability'
+  }
+
+  const screenToHash: Record<PortalScreen, string> = {
+    'season-info': '#season',
+    'player-info': '#player',
+    'practice-availability': '#practices',
+    'game-availability': '#games'
+  }
+
+  // Handle initial hash and hash changes
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash
+      const screen = hashToScreen[hash]
+      if (screen) {
+        setActiveScreen(screen)
+      }
+    }
+
+    // Set initial screen from hash
+    handleHashChange()
+
+    // Listen for hash changes
+    window.addEventListener('hashchange', handleHashChange)
+    return () => window.removeEventListener('hashchange', handleHashChange)
+  }, [])
+
+  // Update hash when screen changes programmatically
+  const changeScreen = (screen: PortalScreen) => {
+    const hash = screenToHash[screen]
+    window.location.hash = hash
+    setActiveScreen(screen)
+  }
+
   useEffect(() => {
     const fetchPlayer = async () => {
       try {
@@ -205,7 +245,7 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
               return (
                 <button
                   key={item.id}
-                  onClick={() => setActiveScreen(item.id)}
+                  onClick={() => changeScreen(item.id)}
                   className="flex-1 py-3 px-2 text-center transition-colors"
                   style={{
                     color: isActive ? 'var(--page-title)' : 'var(--secondary-text)',
