@@ -99,6 +99,22 @@ interface PracticeData {
 
 type PortalScreen = 'season-info' | 'player-info' | 'practice-availability' | 'game-availability'
 
+// Helper function to get team display
+const getTeamDisplay = (team?: string) => {
+  if (!team) return 'Not assigned';
+
+  switch (team.toLowerCase()) {
+    case 'blue':
+      return '🟦 Blue';
+    case 'gold':
+      return '🟨 Gold';
+    case 'practice squad':
+      return '🏋️ Practice Squad';
+    default:
+      return team;
+  }
+};
+
 export default function PlayerPortal({ params }: { params: Promise<{ portalId: string }> }) {
   const [player, setPlayer] = useState<PlayerData | null>(null)
   const [activeScreen, setActiveScreen] = useState<PortalScreen>('season-info')
@@ -324,7 +340,9 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
             </div>
             <div>
               <h1 className="font-semibold" style={{color: 'var(--page-title)'}}>{player.fullName}</h1>
-              <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Grade {player.grade}</p>
+              <p className="text-sm" style={{color: 'var(--secondary-text)'}}>
+                {((player as any).team ? getTeamDisplay((player as any).team) : 'Not assigned')} | {player.genderIdentification || 'Not specified'} | Grade {player.grade}
+              </p>
             </div>
           </div>
         </div>
@@ -561,6 +579,7 @@ function PlayerInfoScreen({ player }: { player: PlayerData }) {
     return '❓';
   };
 
+
   return (
     <div className="space-y-6">
       <Card className="shadow-lg" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
@@ -574,9 +593,15 @@ function PlayerInfoScreen({ player }: { player: PlayerData }) {
               <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.fullName}</p>
             </div>
             <div>
-              <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Grade</p>
-              <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.grade}</p>
+              <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Team</p>
+              <p className="font-medium" style={{color: 'var(--primary-text)'}}>{getTeamDisplay((player as any).team)}</p>
             </div>
+          </div>
+          <div>
+            <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Grade</p>
+            <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.grade}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Gender Identification</p>
               <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.genderIdentification || 'Not specified'}</p>
@@ -634,29 +659,41 @@ function PlayerInfoScreen({ player }: { player: PlayerData }) {
             </div>
           )}
 
-          {player.contacts.studentEmails.spsEmail && (
-            <div>
-              <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Student SPS Email</p>
-              <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.contacts.studentEmails.spsEmail}</p>
-              <p className="text-xs" style={{color: 'var(--secondary-text)'}}>
-                <a href={MAILING_LIST_INFO_URL} target="_blank" rel="noopener noreferrer" style={{color: 'var(--accent)', textDecoration: 'underline'}}>
-                  Mailing List
-                </a>: n/a
-              </p>
-            </div>
-          )}
+          <div>
+            <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Player SPS Email</p>
+            <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.contacts.studentEmails.spsEmail || 'Not provided'}</p>
+            <p className="text-xs" style={{color: 'var(--secondary-text)'}}>
+              <a href={MAILING_LIST_INFO_URL} target="_blank" rel="noopener noreferrer" style={{color: 'var(--accent)', textDecoration: 'underline'}}>
+                Mailing List
+              </a>: n/a
+            </p>
+          </div>
 
-          {player.contacts.studentEmails.personalEmail && (
-            <div>
-              <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Student Personal Email</p>
-              <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.contacts.studentEmails.personalEmail}</p>
-              <p className="text-xs" style={{color: 'var(--secondary-text)'}}>
-                <a href={MAILING_LIST_INFO_URL} target="_blank" rel="noopener noreferrer" style={{color: 'var(--accent)', textDecoration: 'underline'}}>
-                  Mailing List
-                </a>: {getMailingListIndicator(player.contacts.studentEmails.personalEmailMailingStatus || '')} {player.contacts.studentEmails.personalEmailMailingStatus || 'Unknown'}
-              </p>
-            </div>
-          )}
+          <div>
+            <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Player Personal Email</p>
+            <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.contacts.studentEmails.personalEmail || 'Not provided'}</p>
+            <p className="text-xs" style={{color: 'var(--secondary-text)'}}>
+              <a href={MAILING_LIST_INFO_URL} target="_blank" rel="noopener noreferrer" style={{color: 'var(--accent)', textDecoration: 'underline'}}>
+                Mailing List
+              </a>: {getMailingListIndicator(player.contacts.studentEmails.personalEmailMailingStatus || '')} {player.contacts.studentEmails.personalEmailMailingStatus || 'Unknown'}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-lg" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
+        <CardContent className="pt-6">
+          <p className="text-sm text-center" style={{color: 'var(--secondary-text)'}}>
+            Email{' '}
+            <a
+              href="mailto:madisonultimate@gmail.com"
+              style={{color: 'var(--accent)', textDecoration: 'underline'}}
+              className="hover:opacity-80 transition-opacity"
+            >
+              Madison Coaches
+            </a>
+            {' '}if any of this information is incorrect.
+          </p>
         </CardContent>
       </Card>
     </div>
