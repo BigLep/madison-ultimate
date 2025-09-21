@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useDebounce } from 'use-debounce'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Home, User, Calendar, Trophy, Clock, MapPin, MessageSquare } from 'lucide-react'
@@ -637,6 +638,9 @@ function PracticeCard({
   const [selectedAvailability, setSelectedAvailability] = useState(practice.availability.availability);
   const [note, setNote] = useState(practice.availability.note);
 
+  // Debounce the note value - wait 800ms after user stops typing
+  const [debouncedNote] = useDebounce(note, 800);
+
   const handleAvailabilityChange = (availability: string) => {
     setSelectedAvailability(availability);
     onUpdateAvailability(practice.date, availability, note);
@@ -644,8 +648,17 @@ function PracticeCard({
 
   const handleNoteChange = (newNote: string) => {
     setNote(newNote);
-    onUpdateAvailability(practice.date, selectedAvailability, newNote);
+    // Note: We don't call onUpdateAvailability here anymore - it's handled by the useEffect below
   };
+
+  // Auto-save when debounced note changes
+  useEffect(() => {
+    // Only save if the debounced note is different from the initial note
+    // and we're not currently updating
+    if (debouncedNote !== practice.availability.note && !isUpdating) {
+      onUpdateAvailability(practice.date, selectedAvailability, debouncedNote);
+    }
+  }, [debouncedNote, practice.date, selectedAvailability, practice.availability.note, onUpdateAvailability, isUpdating]);
 
   // Helper function to get button styling based on availability
   const getButtonStyle = (value: string, isSelected: boolean) => {
