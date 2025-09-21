@@ -2,6 +2,76 @@
 
 This document outlines the technical implementation details, data processing pipeline, and architectural decisions for the Madison Ultimate signup tracking application.
 
+## Core Design Philosophy: Family-Centric Multi-Player Support
+
+### Primary Design Goal
+A fundamental design principle of this application is to make it **easy for families to manage multiple players from the same household**. Many families have multiple children participating in Madison Ultimate, and the system is architected to accommodate this reality seamlessly.
+
+### Family-Friendly Features
+
+#### Player-Specific PWAs (Progressive Web Apps)
+- **Individual App Installations**: Each player gets their own installable PWA with personalized naming
+- **App Name Format**: "Madison Ultimate - [Player Name]" (e.g., "Madison Ultimate - Alex Smith")
+- **Separate App Icons**: Each family member appears as a distinct app on home screens and app drawers
+- **Independent Management**: Parents can install separate apps for each child, making it easy to switch between players
+
+#### Dynamic Page Titles for Easy Bookmarking
+- **Player-Specific Titles**: Browser tabs and bookmarks show "Madison Ultimate - [Player Name]"
+- **Easy Identification**: When multiple tabs/bookmarks are open, parents can quickly identify which child's portal they're viewing
+- **Bookmark Organization**: Browser bookmarks automatically organize by player name
+
+#### Portal-Based Architecture
+- **Unique URLs**: Each player has their own portal ID (e.g., `/player-portal/abc123`)
+- **Direct Access**: Parents can bookmark or share direct links to specific player portals
+- **Independent Sessions**: Multiple browser tabs can be open for different players simultaneously
+
+### Technical Implementation
+
+#### PWA Manifest Generation
+- **Dynamic API**: `/api/manifest/[portalId]` generates player-specific manifests
+- **Personalized Metadata**: Each app has unique name, short name, and start URL
+- **Scoped Installation**: Each PWA is scoped to its specific player portal
+
+#### Page Title Management
+- **Dynamic Updates**: `document.title` changes based on logged-in player
+- **Cleanup on Navigation**: Title resets when leaving player-specific areas
+- **Bookmark-Friendly**: Consistent naming for easy identification
+
+### User Experience Benefits
+
+#### For Parents Managing Multiple Players
+- **Clear Visual Separation**: Each child appears as a distinct app
+- **Quick Switching**: Easy to jump between children's information
+- **Reduced Confusion**: No accidental cross-player data entry
+- **Mobile-Friendly**: Touch-optimized interface for parent devices
+
+#### For Families with Multiple Players
+- **Scalable Design**: Works equally well for 1 child or 5+ children
+- **Independent Tracking**: Each player's availability, forms, and info managed separately
+- **Shared Device Support**: Multiple family members can use the same device with distinct experiences
+
+### Design Decisions Rationale
+
+#### Why Player-Specific PWAs Instead of Multi-Player Dashboard?
+- **Cognitive Load**: Separate apps reduce mental overhead when managing specific player's needs
+- **Mobile UX**: Dedicated apps feel more native and focused on mobile devices
+- **Future Notifications**: Player-specific push notifications become possible
+- **Sharing**: Easy to share specific player's portal with other caregivers (grandparents, etc.)
+
+#### Why Portal-Based URLs?
+- **Bookmarkability**: Parents can bookmark each child's portal independently
+- **Direct Links**: Coaches can send player-specific links
+- **Security**: Portal IDs provide secure, unguessable access without complex authentication
+- **Analytics**: Track usage patterns per player for future improvements
+
+### Future Family-Centric Enhancements
+- **Family Dashboard**: Optional overview showing all family players
+- **Cross-Player Calendar**: Combined view of all children's games/practices
+- **Batch Operations**: Update availability for multiple players simultaneously
+- **Parent Notifications**: Push notifications about upcoming events for any family player
+
+This family-centric approach ensures Madison Ultimate scales naturally with families and adapts to real-world usage patterns, reducing friction for busy parents managing multiple young athletes.
+
 ## Data Source Mapping
 
 The application integrates data from three sources to create a comprehensive signup status report. Here's the exact mapping from source columns to report columns:
