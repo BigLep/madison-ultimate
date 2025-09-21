@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+// PWA Manifest versioning - increment this when making significant changes
+// This helps ensure PWA installations get updated manifests when the app changes
+// Examples of when to increment:
+//   - Icon changes: 1.0.0 -> 1.1.0
+//   - App name changes: 1.1.0 -> 1.2.0
+//   - Major feature additions: 1.2.0 -> 2.0.0
+const MANIFEST_VERSION = "1.0.0"
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ portalId: string }> }
@@ -24,6 +32,7 @@ export async function GET(
       name: `Madison Ultimate - ${playerName}`,
       short_name: `MU - ${player.firstName}`,
       description: `Player portal for ${playerName} - Madison Middle School Ultimate Frisbee`,
+      version: MANIFEST_VERSION,
       start_url: `/player-portal/${portalId}`,
       display: "standalone",
       background_color: "#f8fafc",

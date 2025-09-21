@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Home, User, Calendar, Trophy, Clock, MapPin, MessageSquare } from 'lucide-react'
 import { AvailabilityCard } from '../../../components/availability-card'
 import { AvailabilitySummary } from '../../../components/availability-summary'
+import { PWAInstallBanner } from '../../../components/pwa-install-banner'
 import { PRACTICE_CONFIG } from '../../../lib/practice-config'
 
 // URL constants for easy maintenance
@@ -358,6 +359,9 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
           </nav>
         </div>
       </div>
+
+      {/* PWA Installation Banner */}
+      <PWAInstallBanner playerName={player.fullName} />
     </div>
   )
 }
