@@ -1,4 +1,5 @@
-import { getSheetData } from './google-api';
+import { getSheetData, getSheetMetadata } from './google-api';
+import { SHEET_CONFIG } from './sheet-config';
 
 const ROSTER_SHEET_ID = process.env.ROSTER_SHEET_ID || '1ZZA5TxHu8nmtyNORm3xYtN5rzP3p1jtW178UgRcxLA8';
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
@@ -56,8 +57,36 @@ async function refreshPortalCache(): Promise<void> {
     try {
       console.log('Refreshing portal cache...');
 
-      // Step 1: Get metadata to find Portal columns
-      const metadataRows = await getSheetData(ROSTER_SHEET_ID, 'A1:AZ4');
+      // Step 1: Get sheet metadata to understand dimensions
+      const sheetMetadata = await getSheetMetadata(ROSTER_SHEET_ID);
+      if (!sheetMetadata) {
+        throw new Error('Unable to fetch sheet metadata');
+      }
+
+      // Find the main roster sheet
+      const rosterSheet = sheetMetadata.sheets.find(sheet =>
+        sheet.title === SHEET_CONFIG.ROSTER_SHEET_NAME || sheet.title.includes('Roster')
+      ) || sheetMetadata.sheets[0]; // fallback to first sheet
+
+      if (!rosterSheet) {
+        throw new Error('No roster sheet found');
+      }
+
+      console.log(`Found roster sheet: "${rosterSheet.title}" with ${rosterSheet.rowCount} rows and ${rosterSheet.columnCount} columns`);
+
+      // Step 2: Get metadata to find Portal columns (use actual sheet dimensions)
+      const maxColumn = Math.min(rosterSheet.columnCount, 702); // 702 = ZZ column, reasonable limit
+      function getColumnLetterForIndex(index: number): string {
+        let result = '';
+        while (index >= 0) {
+          result = String.fromCharCode(65 + (index % 26)) + result;
+          index = Math.floor(index / 26) - 1;
+        }
+        return result;
+      }
+      const columnLetter = getColumnLetterForIndex(maxColumn - 1);
+      const metadataRange = `A1:${columnLetter}4`;  // Use actual column range
+      const metadataRows = await getSheetData(ROSTER_SHEET_ID, metadataRange);
 
       if (metadataRows.length < 4) {
         throw new Error('Invalid roster metadata structure');
@@ -101,8 +130,10 @@ async function refreshPortalCache(): Promise<void> {
 
       console.log(`Using columns: ${lookupColumnLetter} (index ${lookupKeyIndex}) and ${portalColumnLetter} (index ${portalIdIndex})`);
 
-      const lookupData = await getSheetData(ROSTER_SHEET_ID, `${lookupColumnLetter}5:${lookupColumnLetter}1000`);
-      const portalData = await getSheetData(ROSTER_SHEET_ID, `${portalColumnLetter}5:${portalColumnLetter}1000`);
+      // Use actual sheet dimensions to avoid exceeding limits
+      const maxRow = Math.max(SHEET_CONFIG.DATA_START_ROW, rosterSheet.rowCount - 1); // Ensure we have at least data start row, but don't exceed actual rows
+      const lookupData = await getSheetData(ROSTER_SHEET_ID, `${lookupColumnLetter}${SHEET_CONFIG.DATA_START_ROW}:${lookupColumnLetter}${maxRow}`);
+      const portalData = await getSheetData(ROSTER_SHEET_ID, `${portalColumnLetter}${SHEET_CONFIG.DATA_START_ROW}:${portalColumnLetter}${maxRow}`);
 
       // Step 3: Build cache entries
       const entries: PortalEntry[] = [];
@@ -121,7 +152,7 @@ async function refreshPortalCache(): Promise<void> {
           entries.push({
             lookupKey,
             portalId,
-            rowIndex: i + 5 // Actual sheet row (accounting for metadata)
+            rowIndex: i + SHEET_CONFIG.DATA_START_ROW // Actual sheet row (accounting for metadata)
           });
         }
       }

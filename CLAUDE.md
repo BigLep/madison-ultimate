@@ -45,6 +45,56 @@ git commit -m "docs: update documentation 📚"
 - Use fuzzy matching for joining player data across different sources
 - Mobile-first responsive design approach with Tailwind CSS
 
+## Design Decision Documentation
+
+**CRITICAL**: Always document important architectural decisions in `DESIGN.md`:
+
+### When to Document
+- New authentication/authorization patterns
+- Data flow changes between APIs
+- Major UI/UX architectural choices
+- Performance optimization strategies
+- Security design decisions
+- API design patterns
+
+### How to Document
+1. Add to the appropriate section in `DESIGN.md`
+2. Include rationale for the decision
+3. Document alternatives considered and why they were rejected
+4. Provide concrete examples of implementation
+5. Note any trade-offs or limitations
+
+### Example Design Decisions Already Documented
+- Player Portal authentication strategy (Portal ID vs Full Name lookup)
+- shadcn/ui framework selection with alternatives analysis
+- Caching strategy for serverless deployment
+- Data source integration patterns
+
+This ensures architectural knowledge is preserved and new developers understand the reasoning behind implementation choices.
+
+## Configuration Management Guidelines
+
+**CRITICAL**: Always use centralized configuration instead of hardcoded values:
+
+### Sheet Names
+- **NEVER** hardcode sheet names like `'📋 Roster'`, `'📍Practice Info'`, `'Practice Availability'`
+- **ALWAYS** use values from `SHEET_CONFIG` in `/src/lib/sheet-config.ts`
+- Example: Use `SHEET_CONFIG.ROSTER_SHEET_NAME` instead of `'📋 Roster'`
+
+### Row Numbers and Metadata
+- **NEVER** hardcode row numbers like `5`, `A5:`, `:5`, etc.
+- **ALWAYS** use metadata constants from `SHEET_CONFIG`:
+  - Use `SHEET_CONFIG.DATA_START_ROW` (1-indexed, for ranges like `A5:Z100`)
+  - Use `SHEET_CONFIG.DATA_START_ROW_INDEX` (0-indexed, for array operations)
+  - Use `SHEET_CONFIG.METADATA_ROWS` for metadata range operations
+- Example: Use `A${SHEET_CONFIG.DATA_START_ROW}:Z100` instead of `A5:Z100`
+
+### Sheet IDs
+- **NEVER** hardcode sheet IDs or duplicate environment variable fallbacks
+- **ALWAYS** use `SHEET_CONFIG.ROSTER_SHEET_ID` which handles the environment variable centrally
+
+This ensures consistency across the application and makes it easy to update configuration without hunting through code files.
+
 ## Data Privacy Guidelines
 
 **CRITICAL**: Never commit personal or student information to the repository:

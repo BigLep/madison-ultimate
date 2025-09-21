@@ -432,3 +432,63 @@ src/
 - TypeScript provides compile-time safety for component APIs
 
 This decision aligns with the project requirement to use "popular, common web frameworks" while avoiding bespoke solutions. shadcn/ui provides the perfect balance of functionality, maintainability, and industry adoption for the Madison Ultimate Player Portal.
+
+## Player Authentication & Identification
+
+### Portal ID vs Player Name Lookup Strategy
+
+The application uses a hybrid approach for player identification to balance security and simplicity:
+
+#### Initial Portal Access
+- **Route**: `/player-portal/{playerPortalId}`
+- **Method**: Portal ID lookup via `findPortalEntryByPortalId()`
+- **Purpose**: Secure initial authentication to verify the player has access
+- **Data Source**: Portal cache (roster sheet Portal columns)
+
+#### Subsequent API Calls
+- **Routes**: `/api/practice/{portalId}` (POST), `/api/other-features/{portalId}` (POST)
+- **Method**: Full name passed in request body
+- **Purpose**: Direct sheet operations without repeated portal cache lookups
+- **Rationale**: This is a casual webapp - simplicity over robustness
+
+#### Design Benefits
+1. **Security**: Portal ID required for initial access
+2. **Simplicity**: POST requests use human-readable full names
+3. **Performance**: Avoids portal cache lookups on every mutation
+4. **Maintainability**: Clear separation between authentication and operations
+
+#### Example Flow
+```
+1. User visits: /player-portal/8l06b12
+2. System validates portal ID "8l06b12" → finds "Eli Loeppky"
+3. User submits practice availability
+4. Frontend sends: { fullName: "Eli Loeppky", availability: "👍 Planning to be there" }
+5. Backend finds "Eli Loeppky" in Practice Availability sheet
+```
+
+### Data Sources for Player Portal
+
+#### Portal Cache
+- **Source**: Roster sheet Portal columns (Lookup Key, Portal ID)
+- **Purpose**: Map portal IDs to player lookup keys
+- **Usage**: Initial authentication only
+
+#### Player Data
+- **Source**: Full roster sheet via `/api/player/{portalId}`
+- **Purpose**: Complete player information
+- **Usage**: Displaying player details
+
+#### Practice Availability
+- **Source**: Practice Availability sheet
+- **Key**: Full Name column
+- **Purpose**: Store and retrieve practice attendance responses
+
+### Authentication Philosophy for Player Portal
+
+This is designed as a casual team management app, not a high-security system. The portal ID serves as a simple access token - if you have the URL, you can access that player's portal. This design prioritizes:
+
+- **Ease of use**: Parents/players just need to bookmark their portal URL
+- **Simplicity**: Minimal authentication overhead
+- **Maintainability**: Straightforward troubleshooting and support
+
+For a production system requiring higher security, consider implementing proper user accounts, sessions, and role-based access control.

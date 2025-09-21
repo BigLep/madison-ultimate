@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Home, User, Calendar, Trophy } from 'lucide-react'
+import { Home, User, Calendar, Trophy, Clock, MapPin, MessageSquare } from 'lucide-react'
 
 interface PlayerData {
   studentId: string;
@@ -52,6 +52,38 @@ interface PlayerData {
   photos?: {
     download?: string;
     thumbnail?: string;
+  };
+}
+
+interface Practice {
+  date: string;
+  location: string;
+  startTime: string;
+  endTime: string;
+  note?: string;
+  isPast: boolean;
+  availabilityColumnIndex: number;
+  noteColumnIndex: number;
+  formattedDate: string;
+  formattedTime: string;
+  availability: {
+    practiceDate: string;
+    availability: string;
+    note: string;
+  };
+}
+
+interface PracticeData {
+  player: {
+    fullName: string;
+    portalId: string;
+  };
+  practices: Practice[];
+  availabilityOptions: {
+    PLANNING: string;
+    CANT_MAKE: string;
+    NOT_SURE: string;
+    OTHER: string;
   };
 }
 
@@ -131,7 +163,7 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
       case 'player-info':
         return <PlayerInfoScreen player={player} />
       case 'practice-availability':
-        return <PracticeAvailabilityScreen />
+        return <PracticeAvailabilityScreen params={params} />
       case 'game-availability':
         return <GameAvailabilityScreen />
       default:
@@ -394,24 +426,314 @@ function PlayerInfoScreen({ player }: { player: PlayerData }) {
   )
 }
 
-function PracticeAvailabilityScreen() {
+function PracticeAvailabilityScreen({ params }: { params: Promise<{ portalId: string }> }) {
+  const [practiceData, setPracticeData] = useState<PracticeData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [updating, setUpdating] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchPractices = async () => {
+      try {
+        const resolvedParams = await params;
+        const response = await fetch(`/api/practice/${resolvedParams.portalId}`);
+        const data = await response.json();
+
+        if (data.success) {
+          setPracticeData(data);
+        } else {
+          setError(data.error || 'Failed to load practice data');
+        }
+      } catch (err) {
+        setError('Network error. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPractices();
+  }, [params]);
+
+  const updateAvailability = async (practiceDate: string, availability: string, note: string = '') => {
+    setUpdating(practiceDate);
+    try {
+      const resolvedParams = await params;
+      const response = await fetch(`/api/practice/${resolvedParams.portalId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          practiceDate,
+          availability,
+          note,
+          fullName: practiceData?.player.fullName,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Update local state
+        setPracticeData(prev => {
+          if (!prev) return prev;
+
+          return {
+            ...prev,
+            practices: prev.practices.map(practice =>
+              practice.date === practiceDate
+                ? {
+                    ...practice,
+                    availability: {
+                      practiceDate,
+                      availability,
+                      note,
+                    }
+                  }
+                : practice
+            )
+          };
+        });
+      } else {
+        setError(data.error || 'Failed to update availability');
+      }
+    } catch (err) {
+      setError('Network error. Please try again.');
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Card className="shadow-lg" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
+          <CardContent className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p style={{color: 'var(--secondary-text)'}}>Loading practices...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (error || !practiceData) {
+    return (
+      <div className="space-y-6">
+        <Card className="shadow-lg" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
+          <CardContent className="text-center py-8">
+            <p style={{color: 'var(--error-text)'}}>{error}</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const { practices, availabilityOptions } = practiceData;
+  const upcomingPractices = practices.filter(p => !p.isPast);
+  const pastPractices = practices.filter(p => p.isPast);
+
   return (
     <div className="space-y-6">
-      <Card className="shadow-lg" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
-        <CardHeader>
-          <CardTitle style={{color: 'var(--page-title)'}}>Practice Availability</CardTitle>
-          <CardDescription style={{color: 'var(--secondary-header)'}}>Mark your availability for upcoming practices</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8" style={{color: 'var(--secondary-text)'}}>
-            <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>Practice availability tracking</p>
-            <p className="text-sm">Coming soon!</p>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Upcoming Practices */}
+      {upcomingPractices.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold" style={{color: 'var(--page-title)'}}>Upcoming Practices</h2>
+          {upcomingPractices.map((practice) => (
+            <PracticeCard
+              key={practice.date}
+              practice={practice}
+              availabilityOptions={availabilityOptions}
+              onUpdateAvailability={updateAvailability}
+              isUpdating={updating === practice.date}
+              isEditable={true}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Past Practices */}
+      {pastPractices.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold" style={{color: 'var(--page-title)'}}>Past Practices</h2>
+          {pastPractices.map((practice) => (
+            <PracticeCard
+              key={practice.date}
+              practice={practice}
+              availabilityOptions={availabilityOptions}
+              onUpdateAvailability={updateAvailability}
+              isUpdating={false}
+              isEditable={false}
+            />
+          ))}
+        </div>
+      )}
+
+      {practices.length === 0 && (
+        <Card className="shadow-lg" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
+          <CardContent className="text-center py-8">
+            <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" style={{color: 'var(--secondary-text)'}} />
+            <p style={{color: 'var(--secondary-text)'}}>No practices scheduled yet.</p>
+          </CardContent>
+        </Card>
+      )}
     </div>
-  )
+  );
+}
+
+function PracticeCard({
+  practice,
+  availabilityOptions,
+  onUpdateAvailability,
+  isUpdating,
+  isEditable
+}: {
+  practice: Practice;
+  availabilityOptions: PracticeData['availabilityOptions'];
+  onUpdateAvailability: (date: string, availability: string, note: string) => void;
+  isUpdating: boolean;
+  isEditable: boolean;
+}) {
+  const [selectedAvailability, setSelectedAvailability] = useState(practice.availability.availability);
+  const [note, setNote] = useState(practice.availability.note);
+
+  const handleAvailabilityChange = (availability: string) => {
+    setSelectedAvailability(availability);
+    onUpdateAvailability(practice.date, availability, note);
+  };
+
+  const handleNoteChange = (newNote: string) => {
+    setNote(newNote);
+    onUpdateAvailability(practice.date, selectedAvailability, newNote);
+  };
+
+  // Helper function to get button styling based on availability
+  const getButtonStyle = (value: string, isSelected: boolean) => {
+    if (!isSelected) {
+      return "bg-white border-gray-300 text-gray-700 hover:bg-gray-50";
+    }
+
+    if (value === availabilityOptions.PLANNING) {
+      return "bg-green-100 border-green-300 text-green-800 hover:bg-green-200";
+    } else if (value === availabilityOptions.CANT_MAKE) {
+      return "bg-red-100 border-red-300 text-red-800 hover:bg-red-200";
+    } else {
+      return "bg-yellow-100 border-yellow-300 text-yellow-800 hover:bg-yellow-200";
+    }
+  };
+
+  return (
+    <Card className="shadow-lg" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
+      <CardHeader className="pb-3">
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="text-lg" style={{color: 'var(--page-title)'}}>
+              {practice.formattedDate}
+            </CardTitle>
+            <CardDescription style={{color: 'var(--secondary-header)'}}>
+              {practice.formattedTime}
+            </CardDescription>
+          </div>
+          {practice.isPast && (
+            <span className="text-xs px-2 py-1 rounded-full bg-gray-200 text-gray-600">
+              Past
+            </span>
+          )}
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        {/* Practice Details */}
+        <div className="flex items-center gap-4 text-sm" style={{color: 'var(--secondary-text)'}}>
+          <div className="flex items-center gap-1">
+            <MapPin className="w-4 h-4" />
+            {practice.location}
+          </div>
+          <div className="flex items-center gap-1">
+            <Clock className="w-4 h-4" />
+            {practice.formattedTime}
+          </div>
+        </div>
+
+        {/* Coach Note */}
+        {practice.note && (
+          <div className="p-3 rounded-lg" style={{background: 'var(--secondary-bg)'}}>
+            <p className="text-sm" style={{color: 'var(--secondary-text)'}}>
+              <strong>Coach Note:</strong> {practice.note}
+            </p>
+          </div>
+        )}
+
+        {/* Availability Selection */}
+        {isEditable ? (
+          <div className="space-y-3">
+            <p className="text-sm font-medium" style={{color: 'var(--primary-text)'}}>
+              Your availability:
+            </p>
+            <div className="space-y-2">
+              {Object.entries(availabilityOptions).map(([key, value]) => {
+                const isSelected = selectedAvailability === value;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => handleAvailabilityChange(value)}
+                    disabled={isUpdating}
+                    className={`w-full text-left justify-start py-3 px-4 rounded-lg border transition-colors ${getButtonStyle(value, isSelected)}`}
+                  >
+                    <span className="text-sm font-medium">{value}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Note Input - Always Visible */}
+            <div className="space-y-2">
+              <label className="text-xs font-medium" style={{color: 'var(--primary-text)'}}>
+                Note (optional):
+              </label>
+              <input
+                type="text"
+                value={note}
+                onChange={(e) => handleNoteChange(e.target.value)}
+                placeholder="Add a note..."
+                className="w-full px-3 py-2 text-sm border rounded-md"
+                style={{
+                  background: 'var(--card-bg)',
+                  borderColor: 'var(--border)',
+                  color: 'var(--primary-text)'
+                }}
+                disabled={isUpdating}
+              />
+            </div>
+
+            {isUpdating && (
+              <div className="flex items-center gap-2 text-sm" style={{color: 'var(--secondary-text)'}}>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                Updating...
+              </div>
+            )}
+          </div>
+        ) : (
+          // Read-only display for past practices
+          <div className="space-y-2">
+            <p className="text-sm font-medium" style={{color: 'var(--primary-text)'}}>
+              Your response:
+            </p>
+            <div className="p-2 rounded-md" style={{background: 'var(--secondary-bg)'}}>
+              <p className="text-sm" style={{color: 'var(--primary-text)'}}>
+                {selectedAvailability || 'No response'}
+              </p>
+              {note && (
+                <p className="text-xs mt-1" style={{color: 'var(--secondary-text)'}}>
+                  Note: {note}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
 function GameAvailabilityScreen() {

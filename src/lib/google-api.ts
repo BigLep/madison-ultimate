@@ -153,6 +153,31 @@ export async function downloadCsvFromDrive(fileId: string): Promise<string | nul
   }
 }
 
+// Helper function to get sheet metadata (dimensions, sheet names, etc.)
+export async function getSheetMetadata(sheetId: string) {
+  try {
+    const response = await sheets.spreadsheets.get({
+      spreadsheetId: sheetId,
+    });
+
+    const sheetList = response.data.sheets || [];
+    const metadata = sheetList.map(sheet => ({
+      title: sheet.properties?.title || '',
+      sheetId: sheet.properties?.sheetId || 0,
+      rowCount: sheet.properties?.gridProperties?.rowCount || 0,
+      columnCount: sheet.properties?.gridProperties?.columnCount || 0,
+    }));
+
+    return {
+      spreadsheetTitle: response.data.properties?.title || '',
+      sheets: metadata,
+    };
+  } catch (error) {
+    console.error(`Error fetching sheet metadata for ${sheetId}:`, error);
+    return null;
+  }
+}
+
 // Helper function to get Google Sheets data
 export async function getSheetData(sheetId: string, range: string = 'A:Z') {
   try {

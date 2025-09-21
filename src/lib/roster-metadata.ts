@@ -1,4 +1,5 @@
 import { getSheetData } from './google-api';
+import { SHEET_CONFIG } from './sheet-config';
 
 export interface RosterColumnMetadata {
   columnName: string;
@@ -13,17 +14,16 @@ export interface RosterMetadata {
   dataStartRow: number; // Row where actual player data starts (after metadata)
 }
 
-const ROSTER_SHEET_ID = process.env.ROSTER_SHEET_ID || '1ZZA5TxHu8nmtyNORm3xYtN5rzP3p1jtW178UgRcxLA8';
-const METADATA_ROWS = 4;
+const ROSTER_SHEET_ID = SHEET_CONFIG.ROSTER_SHEET_ID;
 
-// Parse the first 4 rows of the roster sheet to understand column structure
+// Parse the metadata rows of the roster sheet to understand column structure
 export async function getRosterMetadata(): Promise<RosterMetadata> {
   try {
-    // Get the first 4 rows which contain metadata
-    const metadataRows = await getSheetData(ROSTER_SHEET_ID, `A1:Z${METADATA_ROWS}`);
+    // Get the metadata rows
+    const metadataRows = await getSheetData(ROSTER_SHEET_ID, `A1:Z${SHEET_CONFIG.METADATA_ROWS}`);
     
-    if (metadataRows.length < METADATA_ROWS) {
-      throw new Error(`Expected ${METADATA_ROWS} metadata rows, got ${metadataRows.length}`);
+    if (metadataRows.length < SHEET_CONFIG.METADATA_ROWS) {
+      throw new Error(`Expected ${SHEET_CONFIG.METADATA_ROWS} metadata rows, got ${metadataRows.length}`);
     }
 
     const [columnNameRow, typeRow, sourceRow, additionalNoteRow] = metadataRows;
@@ -46,7 +46,7 @@ export async function getRosterMetadata(): Promise<RosterMetadata> {
 
     return {
       columns,
-      dataStartRow: METADATA_ROWS + 1, // Data starts after metadata rows
+      dataStartRow: SHEET_CONFIG.DATA_START_ROW, // Data starts after metadata rows
     };
   } catch (error) {
     console.error('Error fetching roster metadata:', error);

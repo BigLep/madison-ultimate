@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSheetData } from '../../../../lib/google-api';
 import { findPortalEntryByPortalId } from '../../../../lib/portal-cache';
+import { SHEET_CONFIG } from '../../../../lib/sheet-config';
 
-const ROSTER_SHEET_ID = process.env.ROSTER_SHEET_ID || '1ZZA5TxHu8nmtyNORm3xYtN5rzP3p1jtW178UgRcxLA8';
+const ROSTER_SHEET_ID = SHEET_CONFIG.ROSTER_SHEET_ID;
 
 interface PlayerData {
   studentId: string;
