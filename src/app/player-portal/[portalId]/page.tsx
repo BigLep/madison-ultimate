@@ -5,6 +5,8 @@ import { useDebounce } from 'use-debounce'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Home, User, Calendar, Trophy, Clock, MapPin, MessageSquare } from 'lucide-react'
+import { AvailabilityCard } from '../../../components/availability-card'
+import { AvailabilitySummary } from '../../../components/availability-summary'
 
 interface PlayerData {
   studentId: string;
@@ -206,7 +208,7 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
       case 'practice-availability':
         return <PracticeAvailabilityScreen params={params} />
       case 'game-availability':
-        return <GameAvailabilityScreen />
+        return <GameAvailabilityScreen params={params} />
       default:
         return <SeasonInfoScreen />
     }
@@ -893,22 +895,199 @@ function PracticeCard({
   );
 }
 
-function GameAvailabilityScreen() {
+function GameAvailabilityScreen({ params }: { params: Promise<{ portalId: string }> }) {
+  const [gameData, setGameData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchGameData = async () => {
+      try {
+        const resolvedParams = await params;
+        const response = await fetch(`/api/game/${resolvedParams.portalId}`);
+        const data = await response.json();
+
+        if (data.success) {
+          setGameData(data);
+        } else {
+          console.error('Failed to fetch game data:', data.error);
+        }
+      } catch (error) {
+        console.error('Error fetching game data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGameData();
+  }, [params]);
+
+  const updateAvailability = async (gameKey: string, availability: string, note: string) => {
+    if (!gameData?.player?.fullName) {
+      console.error('Cannot update availability: player data not loaded yet');
+      return;
+    }
+
+    setUpdating(gameKey);
+    try {
+      const resolvedParams = await params;
+      const requestBody = {
+        gameKey,
+        availability,
+        note,
+        fullName: gameData.player.fullName,
+      };
+
+      // Debug logging
+      console.log('Sending request body:', requestBody);
+
+      const response = await fetch(`/api/game/${resolvedParams.portalId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        // Update the local state
+        setGameData((prev: any) => ({
+          ...prev,
+          games: prev.games.map((game: any) =>
+            game.gameKey === gameKey
+              ? { ...game, availability: { gameKey, availability, note } }
+              : game
+          )
+        }));
+      } else {
+        console.error('Failed to update availability:', result.error);
+      }
+    } catch (error) {
+      console.error('Error updating availability:', error);
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Card className="shadow-lg" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
+          <CardContent className="text-center py-8">
+            <Trophy className="w-12 h-12 mx-auto mb-4 opacity-50" style={{color: 'var(--secondary-text)'}} />
+            <p style={{color: 'var(--secondary-text)'}}>Loading game information...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!gameData) {
+    return (
+      <div className="space-y-6">
+        <Card className="shadow-lg" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
+          <CardContent className="text-center py-8">
+            <Trophy className="w-12 h-12 mx-auto mb-4 opacity-50" style={{color: 'var(--secondary-text)'}} />
+            <p style={{color: 'var(--secondary-text)'}}>Unable to load game information.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const { games, availabilityOptions, player } = gameData;
+  const upcomingGames = games.filter((g: any) => !g.isPast);
+  const pastGames = games.filter((g: any) => g.isPast);
+
+  // Check if all upcoming games have responses
+  const allUpcomingResponded = upcomingGames.length > 0 && upcomingGames.filter((g: any) => !g.availability.availability).length === 0;
+
   return (
     <div className="space-y-6">
-      <Card className="shadow-lg" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
-        <CardHeader>
-          <CardTitle style={{color: 'var(--page-title)'}}>Game Availability</CardTitle>
-          <CardDescription style={{color: 'var(--secondary-header)'}}>Mark your availability for upcoming games</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8" style={{color: 'var(--secondary-text)'}}>
-            <Trophy className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>Game availability tracking</p>
-            <p className="text-sm">Coming soon!</p>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Game Summary Stats */}
+      {(upcomingGames.length > 0 || pastGames.length > 0) && (
+        <AvailabilitySummary
+          title={`${player.team} Team Game Summary`}
+          upcomingItems={upcomingGames}
+          pastItems={pastGames}
+          availabilityOptions={availabilityOptions}
+          allUpcomingResponded={allUpcomingResponded}
+        />
+      )}
+
+      {/* Upcoming Games */}
+      {upcomingGames.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold" style={{color: 'var(--page-title)'}}>Upcoming Games</h2>
+          {upcomingGames.map((game: any) => (
+            <AvailabilityCard
+              key={game.gameKey}
+              title={`${game.team} Game #${game.gameNumber}: ${game.formattedDate}`}
+              subtitle=""
+              location={game.location}
+              locationUrl={game.locationUrl}
+              availabilityOptions={availabilityOptions}
+              currentAvailability={game.availability.availability}
+              currentNote={game.availability.note}
+              onUpdateAvailability={(availability, note) => updateAvailability(game.gameKey, availability, note)}
+              isUpdating={updating === game.gameKey}
+              isEditable={true}
+            >
+              <div className="space-y-1">
+                <div>Arrival for warmups: {game.formattedWarmupTime}</div>
+                <div>Game start: {game.formattedGameStart}</div>
+                <div>Done by: {game.formattedDoneBy}</div>
+                {game.note && (
+                  <div className="text-xs italic mt-2" style={{color: 'var(--secondary-text)'}}>
+                    Coach note: {game.note}
+                  </div>
+                )}
+              </div>
+            </AvailabilityCard>
+          ))}
+        </div>
+      )}
+
+      {/* Past Games */}
+      {pastGames.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold" style={{color: 'var(--page-title)'}}>Past Games</h2>
+          {pastGames.map((game: any) => (
+            <AvailabilityCard
+              key={game.gameKey}
+              title={`${game.team} Game #${game.gameNumber}: ${game.formattedDate}`}
+              subtitle=""
+              location={game.location}
+              locationUrl={game.locationUrl}
+              availabilityOptions={availabilityOptions}
+              currentAvailability={game.availability.availability}
+              currentNote={game.availability.note}
+              onUpdateAvailability={() => {}} // No updates for past games
+              isUpdating={false}
+              isEditable={false}
+            >
+              <div className="space-y-1">
+                <div>Arrival for warmups: {game.formattedWarmupTime}</div>
+                <div>Game start: {game.formattedGameStart}</div>
+                <div>Done by: {game.formattedDoneBy}</div>
+                {game.note && (
+                  <div className="text-xs italic mt-2" style={{color: 'var(--secondary-text)'}}>
+                    Coach note: {game.note}
+                  </div>
+                )}
+              </div>
+            </AvailabilityCard>
+          ))}
+        </div>
+      )}
+
+      {games.length === 0 && (
+        <Card className="shadow-lg" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
+          <CardContent className="text-center py-8">
+            <Trophy className="w-12 h-12 mx-auto mb-4 opacity-50" style={{color: 'var(--secondary-text)'}} />
+            <p style={{color: 'var(--secondary-text)'}}>No games scheduled for the {player.team} team yet.</p>
+          </CardContent>
+        </Card>
+      )}
     </div>
-  )
+  );
 }

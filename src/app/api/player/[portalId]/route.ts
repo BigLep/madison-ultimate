@@ -14,6 +14,7 @@ interface PlayerData {
   gender: string;
   genderIdentification: string;
   dateOfBirth: string;
+  team: string;
   finalFormsStatus: {
     parentSigned: boolean;
     studentSigned: boolean;
@@ -130,6 +131,7 @@ export async function GET(
       gender: getValue('Gender'),
       genderIdentification: getValue('Gender Identification'),
       dateOfBirth: getValue('Date of Birth'),
+      team: getValue('Team'),
       finalFormsStatus: {
         parentSigned: getBooleanValue('Are All Forms Parent Signed'),
         studentSigned: getBooleanValue('Are All Forms Student Signed'),

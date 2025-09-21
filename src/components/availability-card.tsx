@@ -1,0 +1,148 @@
+import { useState, useEffect } from 'react';
+import { useDebounce } from 'use-debounce';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+interface AvailabilityCardProps {
+  title: string;
+  subtitle: string;
+  location?: string;
+  locationUrl?: string | null;
+  availabilityOptions: Record<string, string>;
+  currentAvailability: string;
+  currentNote: string;
+  onUpdateAvailability: (availability: string, note: string) => void;
+  isUpdating: boolean;
+  isEditable: boolean;
+  children?: React.ReactNode; // For additional content like time details
+}
+
+export function AvailabilityCard({
+  title,
+  subtitle,
+  location,
+  locationUrl,
+  availabilityOptions,
+  currentAvailability,
+  currentNote,
+  onUpdateAvailability,
+  isUpdating,
+  isEditable,
+  children
+}: AvailabilityCardProps) {
+  const [selectedAvailability, setSelectedAvailability] = useState(currentAvailability);
+  const [note, setNote] = useState(currentNote);
+  // Debounce the note value - wait 800ms after user stops typing
+  const [debouncedNote] = useDebounce(note, 800);
+
+  const handleAvailabilityChange = (availability: string) => {
+    setSelectedAvailability(availability);
+    onUpdateAvailability(availability, note);
+  };
+
+  const handleNoteChange = (newNote: string) => {
+    setNote(newNote);
+    // Note: We don't call onUpdateAvailability here anymore - it's handled by the useEffect below
+  };
+
+  // Auto-save when debounced note changes
+  useEffect(() => {
+    if (debouncedNote !== currentNote) {
+      onUpdateAvailability(selectedAvailability, debouncedNote);
+    }
+  }, [debouncedNote, selectedAvailability, currentNote, onUpdateAvailability]);
+
+  // Update local state when props change (e.g., after successful save)
+  useEffect(() => {
+    setSelectedAvailability(currentAvailability);
+    setNote(currentNote);
+  }, [currentAvailability, currentNote]);
+
+  const getButtonStyle = (value: string) => {
+    const isSelected = selectedAvailability === value;
+    if (!isSelected) {
+      return "bg-white border-gray-300 text-gray-700 hover:bg-gray-50";
+    }
+    if (value === availabilityOptions.PLANNING) {
+      return "bg-green-100 border-green-300 text-green-800 hover:bg-green-200";
+    } else if (value === availabilityOptions.CANT_MAKE) {
+      return "bg-red-100 border-red-300 text-red-800 hover:bg-red-200";
+    } else {
+      return "bg-yellow-100 border-yellow-300 text-yellow-800 hover:bg-yellow-200";
+    }
+  };
+
+  return (
+    <Card className="shadow-lg" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base font-semibold" style={{color: 'var(--page-title)'}}>
+          {title}
+        </CardTitle>
+        <div className="text-sm space-y-1" style={{color: 'var(--secondary-text)'}}>
+          <div>{subtitle}</div>
+          {location && (
+            <div className="flex items-center gap-1">
+              <span>Location:</span>
+              {locationUrl ? (
+                <a href={locationUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">
+                  {location}
+                </a>
+              ) : (
+                <span>{location}</span>
+              )}
+            </div>
+          )}
+          {children}
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Availability Selection */}
+        <div className="space-y-3">
+          <div className="text-sm font-medium" style={{color: 'var(--primary-text)'}}>Your availability:</div>
+          <div className="grid grid-cols-1 gap-2">
+            {Object.entries(availabilityOptions).map(([key, value]) => (
+              <button
+                key={key}
+                onClick={() => isEditable && handleAvailabilityChange(value)}
+                disabled={!isEditable || isUpdating}
+                className={`
+                  px-3 py-2 text-sm font-medium border rounded-lg transition-colors text-left
+                  ${getButtonStyle(value)}
+                  ${!isEditable ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
+                  ${isUpdating ? 'opacity-50' : ''}
+                `}
+              >
+                {value}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Note Section */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium" style={{color: 'var(--primary-text)'}}>
+            Note (optional):
+          </label>
+          <textarea
+            value={note}
+            onChange={(e) => isEditable && handleNoteChange(e.target.value)}
+            placeholder={isEditable ? "Add any additional comments..." : "No note provided"}
+            disabled={!isEditable || isUpdating}
+            rows={3}
+            className="w-full px-3 py-2 text-sm border rounded-md resize-none"
+            style={{
+              backgroundColor: isEditable ? 'var(--card-bg)' : 'var(--primary-bg)',
+              borderColor: 'var(--border)',
+              color: 'var(--primary-text)'
+            }}
+          />
+        </div>
+
+        {isUpdating && (
+          <div className="text-xs text-center" style={{color: 'var(--secondary-text)'}}>
+            Saving...
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

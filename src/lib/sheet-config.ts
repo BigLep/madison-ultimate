@@ -6,6 +6,8 @@ export const SHEET_CONFIG = {
   ROSTER_SHEET_NAME: '📋 Roster',
   PRACTICE_INFO_SHEET_NAME: '📍Practice Info',
   PRACTICE_AVAILABILITY_SHEET_NAME: 'Practice Availability',
+  GAME_INFO_SHEET_NAME: '📍Game Info',
+  GAME_AVAILABILITY_SHEET_NAME: 'Game Availability',
 
   // Metadata Configuration
   METADATA_ROWS: 4,
