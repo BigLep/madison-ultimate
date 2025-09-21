@@ -3,6 +3,21 @@ import { getGmailClient } from './gmail-oauth';
 
 const GOOGLE_GROUP_EMAIL = 'madisonultimatefall25@googlegroups.com';
 
+// Gmail API caching configuration
+export const GMAIL_CACHE_CONFIG = {
+  CACHE_DURATION_MS: 5 * 60 * 1000, // 5 minutes in milliseconds
+  MAX_RESULTS_DEFAULT: 10, // Default number of messages to fetch
+} as const;
+
+// In-memory cache for Gmail messages
+interface CacheEntry {
+  data: GroupMessage[];
+  timestamp: number;
+  maxResults: number;
+}
+
+let messageCache: CacheEntry | null = null;
+
 export interface GroupMessage {
   id: string;
   threadId: string;
@@ -14,8 +29,26 @@ export interface GroupMessage {
   htmlBody?: string;
 }
 
-export async function getGroupMessages(maxResults: number = 10): Promise<GroupMessage[]> {
+// Helper function to check if cache is valid
+function isCacheValid(maxResults: number): boolean {
+  if (!messageCache) return false;
+
+  const now = Date.now();
+  const cacheAge = now - messageCache.timestamp;
+
+  // Cache is valid if it's within the duration and maxResults matches or exceeds what we need
+  return cacheAge < GMAIL_CACHE_CONFIG.CACHE_DURATION_MS && messageCache.maxResults >= maxResults;
+}
+
+export async function getGroupMessages(maxResults: number = GMAIL_CACHE_CONFIG.MAX_RESULTS_DEFAULT): Promise<GroupMessage[]> {
   try {
+    // Check cache first
+    if (isCacheValid(maxResults)) {
+      console.log('Gmail cache hit - returning cached messages');
+      return messageCache!.data.slice(0, maxResults);
+    }
+
+    console.log('Gmail cache miss - fetching from API');
     const gmail = await getGmailClient();
 
     // Search for messages sent by madisonultimate@gmail.com to the group
@@ -106,10 +139,42 @@ export async function getGroupMessages(maxResults: number = 10): Promise<GroupMe
     }
 
     // Sort by date (newest first)
-    return messages.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const sortedMessages = messages.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    // Cache the messages (always cache the full result regardless of maxResults requested)
+    messageCache = {
+      data: sortedMessages,
+      timestamp: Date.now(),
+      maxResults: maxResults,
+    };
+
+    console.log(`Gmail messages cached - ${sortedMessages.length} messages for ${maxResults} maxResults`);
+
+    return sortedMessages;
 
   } catch (error) {
     console.error('Error fetching group messages:', error);
     return [];
   }
+}
+
+// Function to manually clear the Gmail cache (useful for debugging or forced refresh)
+export function clearGmailCache(): void {
+  messageCache = null;
+  console.log('Gmail cache cleared');
+}
+
+// Function to get cache status (useful for debugging)
+export function getGmailCacheStatus(): { cached: boolean; age?: number; messageCount?: number; maxResults?: number } {
+  if (!messageCache) {
+    return { cached: false };
+  }
+
+  const age = Date.now() - messageCache.timestamp;
+  return {
+    cached: true,
+    age,
+    messageCount: messageCache.data.length,
+    maxResults: messageCache.maxResults,
+  };
 }

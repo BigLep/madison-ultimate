@@ -1,16 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getGroupMessages } from '../../../lib/gmail-api';
+import { getGroupMessages, getGmailCacheStatus, GMAIL_CACHE_CONFIG } from '../../../lib/gmail-api';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const maxResults = parseInt(searchParams.get('maxResults') || '5');
+    const maxResults = parseInt(searchParams.get('maxResults') || GMAIL_CACHE_CONFIG.MAX_RESULTS_DEFAULT.toString());
 
+    const cacheStatusBefore = getGmailCacheStatus();
     const messages = await getGroupMessages(maxResults);
+    const cacheStatusAfter = getGmailCacheStatus();
 
     return NextResponse.json({
       success: true,
-      messages
+      messages,
+      cache: {
+        wasCached: cacheStatusBefore.cached,
+        isNowCached: cacheStatusAfter.cached,
+        messageCount: cacheStatusAfter.messageCount,
+        cacheAge: cacheStatusAfter.age,
+      }
     });
 
   } catch (error) {
