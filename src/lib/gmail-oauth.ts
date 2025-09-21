@@ -7,11 +7,11 @@ import * as path from 'path';
 const SCOPES = ['https://www.googleapis.com/auth/gmail.readonly'];
 
 // Load OAuth credentials from file
-function loadOAuthCredentials() {
-  const credentialsPath = path.join(process.cwd(), '.google-oauth.json');
+function loadOAuthCredentialsFromFile() {
+  const credentialsPath = process.env.GOOGLE_OAUTH_JSON_PATH || path.join(process.cwd(), '.google-oauth.json');
 
   if (!fs.existsSync(credentialsPath)) {
-    throw new Error('OAuth credentials file not found. Please ensure .google-oauth.json exists in the project root.');
+    throw new Error(`OAuth credentials file not found at: ${credentialsPath}`);
   }
 
   const credentials = JSON.parse(fs.readFileSync(credentialsPath, 'utf8'));
@@ -23,10 +23,40 @@ function loadOAuthCredentials() {
   return credentials.web;
 }
 
+// Get OAuth credentials from environment variables or file
+function getOAuthCredentials() {
+  const clientId = process.env.GMAIL_CLIENT_ID;
+  const clientSecret = process.env.GMAIL_CLIENT_SECRET;
+
+  // Option 1: Use individual environment variables
+  if (clientId && clientSecret) {
+    return { client_id: clientId, client_secret: clientSecret };
+  }
+
+  // Option 2: Use OAuth JSON file path (only if explicitly set)
+  if (process.env.GOOGLE_OAUTH_JSON_PATH) {
+    try {
+      return loadOAuthCredentialsFromFile();
+    } catch (error) {
+      throw new Error(`Failed to load OAuth credentials from file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  // Neither option available
+  throw new Error(
+    'Gmail OAuth credentials not configured. Please set either:\n' +
+    '1. GMAIL_CLIENT_ID and GMAIL_CLIENT_SECRET environment variables, or\n' +
+    '2. GOOGLE_OAUTH_JSON_PATH environment variable pointing to your OAuth JSON file'
+  );
+}
+
 // Create OAuth2 client
 function createOAuth2Client(): OAuth2Client {
-  const credentials = loadOAuthCredentials();
-  const redirectUri = 'http://localhost:3001/api/auth/callback';
+  const credentials = getOAuthCredentials();
+
+  const redirectUri = process.env.NODE_ENV === 'production'
+    ? 'https://madison-ultimate.vercel.app/api/auth/callback'
+    : 'http://localhost:3001/api/auth/callback';
 
   return new google.auth.OAuth2(
     credentials.client_id,
