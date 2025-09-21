@@ -492,3 +492,38 @@ This is designed as a casual team management app, not a high-security system. Th
 - **Maintainability**: Straightforward troubleshooting and support
 
 For a production system requiring higher security, consider implementing proper user accounts, sessions, and role-based access control.
+
+## Date Formatting Standards
+
+### Centralized Date Formatting Strategy
+
+The application uses a consistent date formatting approach to eliminate user confusion about event timing:
+
+#### Design Decision: Always Include Day of Week
+- **Problem**: Dates like "September 23" don't indicate which day of the week the event occurs
+- **Solution**: Always display as "Tuesday, September 23" format
+- **Implementation**: Centralized utilities in `/src/lib/date-formatters.ts`
+
+#### Available Formatters
+- `formatFullDate()` - **Primary**: "Tuesday, September 23"
+- `formatShortDate()` - **Mobile/limited space**: "Tue, Sep 23"
+- `formatFullDateWithYear()` - **Cross-year events**: "Tuesday, September 23, 2024"
+
+#### Usage Pattern
+```typescript
+import { formatFullDate } from '@/lib/date-formatters';
+
+// Practice dates
+const practiceDate = formatFullDate("9/23"); // "Tuesday, September 23"
+
+// Game dates (upcoming)
+const gameDate = formatFullDate("10/5"); // "Saturday, October 5"
+```
+
+#### Benefits
+1. **User Clarity**: Parents/players immediately know which day events occur
+2. **Consistency**: Same format across practices, games, and all features
+3. **Maintainability**: Single source of truth for date formatting logic
+4. **Mobile-Friendly**: Short format available when space is constrained
+
+This standardization is especially important for sports scheduling where day-of-week matters significantly for planning attendance.

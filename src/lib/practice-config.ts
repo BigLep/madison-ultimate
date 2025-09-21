@@ -2,6 +2,7 @@
 // Update these column names if the sheet structure changes
 
 import { SHEET_CONFIG } from './sheet-config';
+import { formatFullDate } from './date-formatters';
 
 export const PRACTICE_CONFIG = {
   // Sheet names (imported from central config)
@@ -90,14 +91,9 @@ export function isPracticeInPast(practiceDate: string): boolean {
 }
 
 export function formatPracticeDate(date: string): string {
-  // Convert "9/23" to "September 23"
-  const [month, day] = date.split('/').map(Number);
-  const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
-
-  return `${monthNames[month - 1]} ${day}`;
+  // Use the centralized date formatter for consistency
+  // Convert "9/23" to "Tuesday, September 23"
+  return formatFullDate(date);
 }
 
 export function formatPracticeTime(startTime: string, endTime: string): string {

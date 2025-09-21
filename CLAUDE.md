@@ -95,6 +95,32 @@ This ensures architectural knowledge is preserved and new developers understand 
 
 This ensures consistency across the application and makes it easy to update configuration without hunting through code files.
 
+## Date Formatting Convention
+
+**CRITICAL**: Always use full date formats including day of the week to avoid confusion:
+
+### Standard Date Display
+- **NEVER** use short formats like `"September 23"` or `"9/23"`
+- **ALWAYS** include day of the week: `"Tuesday, September 23"`
+- **USE** centralized date formatters from `/src/lib/date-formatters.ts`
+
+### Available Formatters
+- `formatFullDate(dateString)` - **Default**: `"Tuesday, September 23"`
+- `formatShortDate(dateString)` - **Space-limited**: `"Tue, Sep 23"`
+- `formatFullDateWithYear(dateString, year?)` - **With year**: `"Tuesday, September 23, 2024"`
+
+### Examples
+```typescript
+// ❌ Avoid - unclear what day this falls on
+const badDate = "September 23";
+
+// ✅ Good - clear day of the week included
+import { formatFullDate } from '@/lib/date-formatters';
+const goodDate = formatFullDate("9/23"); // "Tuesday, September 23"
+```
+
+This convention eliminates ambiguity about which day of the week events occur.
+
 ## Data Privacy Guidelines
 
 **CRITICAL**: Never commit personal or student information to the repository:
