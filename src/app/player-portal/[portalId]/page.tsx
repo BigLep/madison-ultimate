@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Home, User, Calendar, Trophy, Clock, MapPin, MessageSquare } from 'lucide-react'
 import { AvailabilityCard } from '../../../components/availability-card'
 import { AvailabilitySummary } from '../../../components/availability-summary'
+import { PRACTICE_CONFIG } from '../../../lib/practice-config'
 
 interface PlayerData {
   studentId: string;
@@ -160,6 +161,20 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
     fetchPlayer()
   }, [params])
 
+  // Update page title when player data is loaded
+  useEffect(() => {
+    if (player?.fullName) {
+      document.title = `Madison Ultimate - ${player.fullName}`
+    } else {
+      document.title = 'Madison Ultimate'
+    }
+
+    // Cleanup function to reset title when component unmounts
+    return () => {
+      document.title = 'Madison Ultimate'
+    }
+  }, [player?.fullName])
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -195,7 +210,7 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
   const navItems = [
     { id: 'season-info' as const, label: 'Season Info', icon: Home },
     { id: 'player-info' as const, label: 'Player Info', icon: User },
-    { id: 'practice-availability' as const, label: 'Practice', icon: Calendar },
+    { id: 'practice-availability' as const, label: 'Practices', icon: Calendar },
     { id: 'game-availability' as const, label: 'Games', icon: Trophy },
   ]
 
@@ -716,8 +731,8 @@ function PracticeCard({
   const [selectedAvailability, setSelectedAvailability] = useState(practice.availability.availability);
   const [note, setNote] = useState(practice.availability.note);
 
-  // Debounce the note value - wait 800ms after user stops typing
-  const [debouncedNote] = useDebounce(note, 800);
+  // Debounce the note value - wait before auto-saving
+  const [debouncedNote] = useDebounce(note, PRACTICE_CONFIG.NOTE_DEBOUNCE_DELAY);
 
   const handleAvailabilityChange = (availability: string) => {
     setSelectedAvailability(availability);

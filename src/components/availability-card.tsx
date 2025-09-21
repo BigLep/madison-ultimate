@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useDebounce } from 'use-debounce';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { PRACTICE_CONFIG } from '@/lib/practice-config';
 
 interface AvailabilityCardProps {
   title: string;
@@ -31,8 +32,8 @@ export function AvailabilityCard({
 }: AvailabilityCardProps) {
   const [selectedAvailability, setSelectedAvailability] = useState(currentAvailability);
   const [note, setNote] = useState(currentNote);
-  // Debounce the note value - wait 800ms after user stops typing
-  const [debouncedNote] = useDebounce(note, 800);
+  // Debounce the note value - wait before auto-saving
+  const [debouncedNote] = useDebounce(note, PRACTICE_CONFIG.NOTE_DEBOUNCE_DELAY);
 
   const handleAvailabilityChange = (availability: string) => {
     setSelectedAvailability(availability);

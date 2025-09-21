@@ -9,6 +9,9 @@ export const PRACTICE_CONFIG = {
   PRACTICE_INFO_SHEET: SHEET_CONFIG.PRACTICE_INFO_SHEET_NAME,
   PRACTICE_AVAILABILITY_SHEET: SHEET_CONFIG.PRACTICE_AVAILABILITY_SHEET_NAME,
 
+  // UI Configuration
+  NOTE_DEBOUNCE_DELAY: 2500, // Milliseconds to wait before auto-saving notes
+
   // Practice Info sheet columns (0-indexed)
   PRACTICE_INFO_COLUMNS: {
     DATE: 0,        // "Date" - practice date
