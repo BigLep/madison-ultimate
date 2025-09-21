@@ -79,7 +79,8 @@ export async function GET(
     const gameInfoColumnMap: Record<string, number> = {};
     const headerRow = gameInfoData[0];
     for (let i = 0; i < headerRow.length; i++) {
-      const columnName = headerRow[i]?.trim();
+      const cellValue = headerRow[i];
+      const columnName = typeof cellValue === 'string' ? cellValue.trim() : cellValue?.text?.trim();
       if (columnName) {
         gameInfoColumnMap[columnName] = i;
       }
@@ -124,12 +125,12 @@ export async function GET(
         const locationData = row[gameInfoColumnMap[locationColumnName]];
 
         // Handle location data - could be string or object with text/url
-        let location, locationUrl;
+        let location: string, locationUrl: string | null;
         if (typeof locationData === 'object' && locationData?.text && locationData?.url) {
           location = locationData.text;
           locationUrl = locationData.url;
         } else {
-          location = locationData || '';
+          location = (typeof locationData === 'string' ? locationData : '') || '';
           locationUrl = null;
         }
 
@@ -318,7 +319,8 @@ export async function POST(
     const gameInfoColumnMap: Record<string, number> = {};
     const headerRow = gameInfoData[0];
     for (let i = 0; i < headerRow.length; i++) {
-      const columnName = headerRow[i]?.trim();
+      const cellValue = headerRow[i];
+      const columnName = typeof cellValue === 'string' ? cellValue.trim() : cellValue?.text?.trim();
       if (columnName) {
         gameInfoColumnMap[columnName] = i;
       }

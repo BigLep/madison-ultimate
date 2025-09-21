@@ -67,6 +67,7 @@ interface PlayerData {
 interface Practice {
   date: string;
   location: string;
+  locationUrl?: string | null;
   startTime: string;
   endTime: string;
   note?: string;
@@ -652,7 +653,7 @@ function PlayerInfoScreen({ player }: { player: PlayerData }) {
               <p className="text-xs" style={{color: 'var(--secondary-text)'}}>
                 <a href={MAILING_LIST_INFO_URL} target="_blank" rel="noopener noreferrer" style={{color: 'var(--accent)', textDecoration: 'underline'}}>
                   Mailing List
-                </a>: {getMailingListIndicator(player.contacts.studentEmails.personalEmailMailingStatus)} {player.contacts.studentEmails.personalEmailMailingStatus || 'Unknown'}
+                </a>: {getMailingListIndicator(player.contacts.studentEmails.personalEmailMailingStatus || '')} {player.contacts.studentEmails.personalEmailMailingStatus || 'Unknown'}
               </p>
             </div>
           )}

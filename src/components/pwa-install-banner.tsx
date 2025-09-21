@@ -76,16 +76,7 @@ export function PWAInstallBanner({ playerName }: PWAInstallBannerProps) {
     <>
       {/* iOS PWA Prompt - handled by react-ios-pwa-prompt library */}
       {showIOSPrompt && (
-        <PWAPrompt
-          timesToShow={3}
-          permanentlyHideOnDismiss={false}
-          copyTitle={`Add ${playerName}'s Portal`}
-          copyBody="Install this app for quick access and a better experience."
-          copyShareButtonLabel="Share"
-          copyAddHomeButtonLabel="Add to Home Screen"
-          copyClosePrompt="Close"
-          debug={false}
-        />
+        <PWAPrompt timesToShow={3} />
       )}
 
       {/* Android/Desktop PWA Banner */}

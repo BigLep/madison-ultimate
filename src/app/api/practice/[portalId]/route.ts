@@ -71,19 +71,23 @@ export async function GET(
       const row = practiceInfoData[i];
       if (!row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.DATE]) continue;
 
-      const date = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.DATE];
+      const dateValue = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.DATE];
+      const date = typeof dateValue === 'string' ? dateValue : dateValue?.text || '';
       const locationData = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.LOCATION];
-      const startTime = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.START] || '';
-      const endTime = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.END] || '';
-      const note = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.NOTE] || '';
+      const startTimeValue = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.START];
+      const startTime = typeof startTimeValue === 'string' ? startTimeValue : startTimeValue?.text || '';
+      const endTimeValue = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.END];
+      const endTime = typeof endTimeValue === 'string' ? endTimeValue : endTimeValue?.text || '';
+      const noteValue = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.NOTE];
+      const note = typeof noteValue === 'string' ? noteValue : noteValue?.text || '';
 
       // Handle location data - could be string or object with text/url
-      let location, locationUrl;
+      let location: string, locationUrl: string | null;
       if (typeof locationData === 'object' && locationData?.text && locationData?.url) {
         location = locationData.text;
         locationUrl = locationData.url;
       } else {
-        location = locationData || '';
+        location = (typeof locationData === 'string' ? locationData : '') || '';
         locationUrl = null;
       }
 
