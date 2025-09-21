@@ -9,6 +9,10 @@ import { AvailabilityCard } from '../../../components/availability-card'
 import { AvailabilitySummary } from '../../../components/availability-summary'
 import { PRACTICE_CONFIG } from '../../../lib/practice-config'
 
+// URL constants for easy maintenance
+const ADDITIONAL_INFO_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfOO0ybkvfs0GTBvP6tC95HT3JlGVWkSzlYghDITpw_38_hPA/viewform?usp=dialog';
+const MAILING_LIST_INFO_URL = 'https://madisonultimate.notion.site/More-Season-Info-265c4da46f7580668995df287590039f#265c4da46f75812981c1ee2b8d88e956';
+
 interface PlayerData {
   studentId: string;
   firstName: string;
@@ -288,6 +292,19 @@ function SeasonInfoScreen() {
 
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
+
+  const toggleMessage = (messageId: string) => {
+    setExpandedMessages(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(messageId)) {
+        newSet.delete(messageId);
+      } else {
+        newSet.add(messageId);
+      }
+      return newSet;
+    });
+  };
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -335,7 +352,17 @@ function SeasonInfoScreen() {
       <Card className="shadow-lg" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
         <CardHeader>
           <CardTitle style={{color: 'var(--page-title)'}}>Recent Team Updates</CardTitle>
-          <CardDescription style={{color: 'var(--secondary-header)'}}>Messages from the team mailing list</CardDescription>
+          <CardDescription style={{color: 'var(--secondary-header)'}}>
+            Messages from the{' '}
+            <a
+              href={MAILING_LIST_INFO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hyperlink"
+            >
+              team mailing list
+            </a>
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -344,18 +371,92 @@ function SeasonInfoScreen() {
             </div>
           ) : messages.length > 0 ? (
             <div className="space-y-4">
-              {messages.map((message, index) => (
-                <div key={message.id} className="pb-4 border-b last:border-b-0" style={{borderColor: 'var(--border)'}}>
-                  <div className="flex justify-between items-start mb-2">
-                    <h4 className="font-medium text-sm" style={{color: 'var(--primary-text)'}}>{message.subject}</h4>
-                    <span className="text-xs" style={{color: 'var(--secondary-text)'}}>
-                      {new Date(message.date).toLocaleDateString()}
-                    </span>
+              {messages.map((message, index) => {
+                const isExpanded = expandedMessages.has(message.id);
+                return (
+                  <div key={message.id} className="border border-gray-200 rounded-lg bg-white shadow-sm">
+                    <div
+                      className="p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                      onClick={() => toggleMessage(message.id)}
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-medium text-sm text-gray-900 pr-2">{message.subject}</h4>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className="text-xs text-gray-500">
+                            {new Date(message.date).toLocaleDateString()}
+                          </span>
+                          <span className="text-gray-400">
+                            {isExpanded ? '▼' : '▶'}
+                          </span>
+                        </div>
+                      </div>
+                      <p className="text-xs mb-2 text-gray-600">From: {message.from}</p>
+                      {!isExpanded && (
+                        <p className="text-sm text-gray-700 line-clamp-2">{message.snippet}</p>
+                      )}
+                    </div>
+
+                    {isExpanded && (
+                      <div className="border-t border-gray-100 p-4">
+                        <div className="text-xs text-gray-500 mb-3">
+                          Sent: {new Date(message.date).toLocaleString('en-US', {
+                            timeZone: 'America/Los_Angeles',
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            timeZoneName: 'short'
+                          })}
+                        </div>
+                        {message.htmlBody ? (
+                          <div>
+                            <style dangerouslySetInnerHTML={{
+                              __html: `
+                                .email-content ul {
+                                  list-style-type: disc !important;
+                                  margin-left: 1.5rem !important;
+                                  padding-left: 0.5rem !important;
+                                  margin-top: 0.75rem !important;
+                                  margin-bottom: 0.75rem !important;
+                                }
+                                .email-content ol {
+                                  list-style-type: decimal !important;
+                                  margin-left: 1.5rem !important;
+                                  padding-left: 0.5rem !important;
+                                  margin-top: 0.75rem !important;
+                                  margin-bottom: 0.75rem !important;
+                                }
+                                .email-content li {
+                                  margin-bottom: 0.25rem !important;
+                                  padding-left: 0.25rem !important;
+                                }
+                                .email-content p {
+                                  margin-top: 0.75rem !important;
+                                  margin-bottom: 0.75rem !important;
+                                }
+                              `
+                            }} />
+                            <div
+                              className="email-content prose prose-sm max-w-none text-gray-900"
+                              dangerouslySetInnerHTML={{ __html: message.htmlBody }}
+                              style={{
+                                backgroundColor: 'white',
+                                color: '#111827',
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <div className="whitespace-pre-wrap text-sm text-gray-900">
+                            {message.body || message.snippet}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <p className="text-xs mb-1" style={{color: 'var(--secondary-text)'}}>From: {message.from}</p>
-                  <p className="text-sm" style={{color: 'var(--primary-text)'}}>{message.snippet}</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-4" style={{color: 'var(--secondary-text)'}}>
@@ -369,9 +470,6 @@ function SeasonInfoScreen() {
 }
 
 function PlayerInfoScreen({ player }: { player: PlayerData }) {
-  // URL constants for easy maintenance
-  const ADDITIONAL_INFO_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfOO0ybkvfs0GTBvP6tC95HT3JlGVWkSzlYghDITpw_38_hPA/viewform?usp=dialog';
-  const MAILING_LIST_INFO_URL = 'https://madisonultimate.notion.site/More-Season-Info-265c4da46f7580668995df287590039f#265c4da46f75812981c1ee2b8d88e956';
 
   // Helper function to get mailing list status indicator
   const getMailingListIndicator = (status: string) => {

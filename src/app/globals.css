@@ -108,3 +108,14 @@ body {
   border-color: var(--status-neutral-border);
   color: var(--status-neutral-text);
 }
+
+/* Consistent Hyperlink Styling */
+.hyperlink {
+  color: var(--accent);
+  text-decoration: underline;
+  transition: opacity 0.2s ease;
+}
+
+.hyperlink:hover {
+  opacity: 0.8;
+}

@@ -84,7 +84,7 @@ export function AvailabilityCard({
             <div className="flex items-center gap-1">
               <span>Location:</span>
               {locationUrl ? (
-                <a href={locationUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">
+                <a href={locationUrl} target="_blank" rel="noopener noreferrer" className="hyperlink">
                   {location}
                 </a>
               ) : (

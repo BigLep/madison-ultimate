@@ -11,6 +11,7 @@ export interface GroupMessage {
   date: string;
   snippet: string;
   body?: string;
+  htmlBody?: string;
 }
 
 export async function getGroupMessages(maxResults: number = 10): Promise<GroupMessage[]> {
@@ -67,18 +68,29 @@ export async function getGroupMessages(maxResults: number = 10): Promise<GroupMe
       const from = headers.find(h => h.name === 'From')?.value || 'Unknown Sender';
       const date = headers.find(h => h.name === 'Date')?.value || '';
 
-      // Extract body text
+      // Extract body text and HTML with recursive part searching
       let body = '';
+      let htmlBody = '';
+
+      const extractFromParts = (parts: any[]): void => {
+        for (const part of parts) {
+          if (part.mimeType === 'text/plain' && part.body?.data && !body) {
+            body = Buffer.from(part.body.data, 'base64').toString('utf-8');
+          } else if (part.mimeType === 'text/html' && part.body?.data && !htmlBody) {
+            htmlBody = Buffer.from(part.body.data, 'base64').toString('utf-8');
+          } else if (part.parts) {
+            // Recursively search nested parts
+            extractFromParts(part.parts);
+          }
+        }
+      };
+
       if (messageDetail.data.payload?.body?.data) {
+        // Simple case: body is directly in payload
         body = Buffer.from(messageDetail.data.payload.body.data, 'base64').toString('utf-8');
       } else if (messageDetail.data.payload?.parts) {
-        // Look for text/plain part
-        const textPart = messageDetail.data.payload.parts.find(
-          part => part.mimeType === 'text/plain'
-        );
-        if (textPart?.body?.data) {
-          body = Buffer.from(textPart.body.data, 'base64').toString('utf-8');
-        }
+        // Complex case: search through parts (potentially nested)
+        extractFromParts(messageDetail.data.payload.parts);
       }
 
       messages.push({
@@ -88,7 +100,8 @@ export async function getGroupMessages(maxResults: number = 10): Promise<GroupMe
         from: from.replace(/.*<(.+)>.*/, '$1'), // Extract email from "Name <email>" format
         date: new Date(date).toISOString(),
         snippet: messageDetail.data.snippet || '',
-        body: body.substring(0, 500), // Limit body length
+        body: body, // Keep full body text
+        htmlBody: htmlBody, // Keep full HTML body
       });
     }
 
