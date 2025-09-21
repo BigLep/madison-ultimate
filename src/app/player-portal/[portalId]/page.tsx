@@ -165,19 +165,95 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
     fetchPlayer()
   }, [params])
 
-  // Update page title when player data is loaded
+  // Update page title and PWA metadata when player data is loaded
   useEffect(() => {
-    if (player?.fullName) {
-      document.title = `Madison Ultimate - ${player.fullName}`
-    } else {
-      document.title = 'Madison Ultimate'
+    const updatePWAMetadata = async () => {
+      if (player?.fullName) {
+        document.title = `Madison Ultimate - ${player.fullName}`
+
+        // Add PWA metadata
+        const resolvedParams = await params
+        const portalId = resolvedParams.portalId
+
+        // Add manifest link
+        let manifestLink = document.querySelector('link[rel="manifest"]') as HTMLLinkElement
+        if (!manifestLink) {
+          manifestLink = document.createElement('link')
+          manifestLink.rel = 'manifest'
+          document.head.appendChild(manifestLink)
+        }
+        manifestLink.href = `/api/manifest/${portalId}`
+
+        // Add theme color meta tag
+        let themeColorMeta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement
+        if (!themeColorMeta) {
+          themeColorMeta = document.createElement('meta')
+          themeColorMeta.name = 'theme-color'
+          document.head.appendChild(themeColorMeta)
+        }
+        themeColorMeta.content = '#1e3a8a'
+
+        // Add apple touch icon meta tags for iOS
+        let appleTouchIcon = document.querySelector('link[rel="apple-touch-icon"]') as HTMLLinkElement
+        if (!appleTouchIcon) {
+          appleTouchIcon = document.createElement('link')
+          appleTouchIcon.rel = 'apple-touch-icon'
+          document.head.appendChild(appleTouchIcon)
+        }
+        appleTouchIcon.href = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥏</text></svg>"
+
+        // Add apple mobile web app capable
+        let appleMobileCapable = document.querySelector('meta[name="apple-mobile-web-app-capable"]') as HTMLMetaElement
+        if (!appleMobileCapable) {
+          appleMobileCapable = document.createElement('meta')
+          appleMobileCapable.name = 'apple-mobile-web-app-capable'
+          document.head.appendChild(appleMobileCapable)
+        }
+        appleMobileCapable.content = 'yes'
+
+        // Add apple mobile web app status bar style
+        let appleStatusBar = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]') as HTMLMetaElement
+        if (!appleStatusBar) {
+          appleStatusBar = document.createElement('meta')
+          appleStatusBar.name = 'apple-mobile-web-app-status-bar-style'
+          document.head.appendChild(appleStatusBar)
+        }
+        appleStatusBar.content = 'default'
+
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration)
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError)
+            })
+        }
+      } else {
+        document.title = 'Madison Ultimate'
+      }
     }
 
-    // Cleanup function to reset title when component unmounts
+    updatePWAMetadata()
+
+    // Cleanup function to reset title and remove PWA metadata when component unmounts
     return () => {
       document.title = 'Madison Ultimate'
+      // Remove PWA-specific metadata on cleanup
+      const manifestLink = document.querySelector('link[rel="manifest"]')
+      const themeColorMeta = document.querySelector('meta[name="theme-color"]')
+      const appleTouchIcon = document.querySelector('link[rel="apple-touch-icon"]')
+      const appleMobileCapable = document.querySelector('meta[name="apple-mobile-web-app-capable"]')
+      const appleStatusBar = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')
+
+      manifestLink?.remove()
+      themeColorMeta?.remove()
+      appleTouchIcon?.remove()
+      appleMobileCapable?.remove()
+      appleStatusBar?.remove()
     }
-  }, [player?.fullName])
+  }, [player?.fullName, params])
 
   if (loading) {
     return (
