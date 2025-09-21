@@ -45,6 +45,37 @@ git commit -m "docs: update documentation 📚"
 - Use fuzzy matching for joining player data across different sources
 - Mobile-first responsive design approach with Tailwind CSS
 
+## Styling Guidelines
+
+**CRITICAL**: Prefer CSS classes and CSS variables over JavaScript-based styling:
+
+### CSS Classes vs JavaScript Functions
+- **NEVER** use JavaScript functions to generate style strings or class names dynamically
+- **ALWAYS** use CSS classes with conditional logic: `className={condition ? 'style-a' : 'style-b'}`
+- **PREFER** Tailwind CSS utility classes for consistent, maintainable styling
+
+### Principle
+- **REFER** to existing CSS patterns in the codebase for consistent styling
+- **LOOK** at similar components to understand the established visual language
+- **DEFINE** reusable CSS classes when patterns are repeated across components
+
+### Examples
+```typescript
+// ❌ Avoid - JavaScript function returning styles
+const getButtonStyle = (type) => {
+  switch(type) {
+    case 'success': return 'bg-green-100 text-green-800';
+    case 'error': return 'bg-red-100 text-red-800';
+  }
+};
+
+// ✅ Good - Direct CSS classes with conditional logic
+<div className={`base-classes ${isSuccess ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+
+// ✅ Best - CSS variables for dynamic values
+<div style={{color: 'var(--primary-text)'}} className="bg-green-100 border-green-300">
+```
+
 ## Design Decision Documentation
 
 **CRITICAL**: Always document important architectural decisions in `DESIGN.md`:

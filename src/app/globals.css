@@ -13,6 +13,27 @@
   --card-bg: #ffffff;             /* Pure white for cards/forms */
   --accent: #2563eb;              /* Blue for buttons/links */
   --border: #e2e8f0;              /* Light gray for borders */
+
+  /* Availability Status Colors - Matching Tailwind color palette */
+  --status-success-bg: #dcfce7;     /* green-100 */
+  --status-success-border: #86efac; /* green-300 */
+  --status-success-text: #166534;   /* green-800 */
+
+  --status-danger-bg: #fee2e2;      /* red-100 */
+  --status-danger-border: #fca5a5;  /* red-300 */
+  --status-danger-text: #991b1b;    /* red-800 */
+
+  --status-warning-bg: #fef3c7;     /* yellow-100 */
+  --status-warning-border: #fcd34d; /* yellow-300 */
+  --status-warning-text: #92400e;   /* yellow-800 */
+
+  --status-info-bg: #dbeafe;        /* blue-100 */
+  --status-info-border: #93c5fd;    /* blue-300 */
+  --status-info-text: #1e40af;      /* blue-800 */
+
+  --status-neutral-bg: #f9fafb;     /* gray-50 */
+  --status-neutral-border: #e5e7eb; /* gray-200 */
+  --status-neutral-text: #4b5563;   /* gray-600 */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -55,4 +76,35 @@ body {
 [role="option"]:hover {
   background-color: var(--primary-bg) !important;
   color: var(--primary-text) !important;
+}
+
+/* Availability Status Utility Classes */
+.status-missing {
+  background-color: var(--status-info-bg);
+  border-color: var(--status-info-border);
+  color: var(--status-info-text);
+}
+
+.status-planning {
+  background-color: var(--status-success-bg);
+  border-color: var(--status-success-border);
+  color: var(--status-success-text);
+}
+
+.status-cant-make {
+  background-color: var(--status-danger-bg);
+  border-color: var(--status-danger-border);
+  color: var(--status-danger-text);
+}
+
+.status-unsure {
+  background-color: var(--status-warning-bg);
+  border-color: var(--status-warning-border);
+  color: var(--status-warning-text);
+}
+
+.status-neutral {
+  background-color: var(--status-neutral-bg);
+  border-color: var(--status-neutral-border);
+  color: var(--status-neutral-text);
 }
