@@ -14,6 +14,7 @@ interface AvailabilityCardProps {
   onUpdateAvailability: (availability: string, note: string) => void;
   isUpdating: boolean;
   isEditable: boolean;
+  isBye?: boolean; // Whether this is a bye week (FYI only)
   children?: React.ReactNode; // For additional content like time details
 }
 
@@ -28,6 +29,7 @@ export function AvailabilityCard({
   onUpdateAvailability,
   isUpdating,
   isEditable,
+  isBye = false,
   children
 }: AvailabilityCardProps) {
   const [selectedAvailability, setSelectedAvailability] = useState(currentAvailability);
@@ -96,52 +98,67 @@ export function AvailabilityCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Availability Selection */}
-        <div className="space-y-3">
-          <div className="text-sm font-medium" style={{color: 'var(--primary-text)'}}>Your availability:</div>
-          <div className="grid grid-cols-1 gap-2">
-            {Object.entries(availabilityOptions).map(([key, value]) => (
-              <button
-                key={key}
-                onClick={() => isEditable && handleAvailabilityChange(value)}
+        {isBye ? (
+          /* Bye Week Display - No availability selection */
+          <div className="text-center py-4 px-6 rounded-lg" style={{backgroundColor: 'var(--secondary-bg)'}}>
+            <div className="text-lg mb-2">🗓️</div>
+            <div className="text-sm font-medium" style={{color: 'var(--primary-text)'}}>
+              Bye Week - No Game Scheduled
+            </div>
+            <div className="text-xs mt-1" style={{color: 'var(--secondary-text)'}}>
+              Enjoy your week off!
+            </div>
+          </div>
+        ) : (
+          /* Regular Game - Show availability selection */
+          <>
+            <div className="space-y-3">
+              <div className="text-sm font-medium" style={{color: 'var(--primary-text)'}}>Your availability:</div>
+              <div className="grid grid-cols-1 gap-2">
+                {Object.entries(availabilityOptions).map(([key, value]) => (
+                  <button
+                    key={key}
+                    onClick={() => isEditable && handleAvailabilityChange(value)}
+                    disabled={!isEditable || isUpdating}
+                    className={`
+                      px-3 py-2 text-sm font-medium border rounded-lg transition-colors text-left
+                      ${getButtonStyle(value)}
+                      ${!isEditable ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
+                      ${isUpdating ? 'opacity-50' : ''}
+                    `}
+                  >
+                    {value}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Note Section */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium" style={{color: 'var(--primary-text)'}}>
+                Note (optional):
+              </label>
+              <textarea
+                value={note}
+                onChange={(e) => isEditable && handleNoteChange(e.target.value)}
+                placeholder={isEditable ? "Add any additional comments..." : "No note provided"}
                 disabled={!isEditable || isUpdating}
-                className={`
-                  px-3 py-2 text-sm font-medium border rounded-lg transition-colors text-left
-                  ${getButtonStyle(value)}
-                  ${!isEditable ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
-                  ${isUpdating ? 'opacity-50' : ''}
-                `}
-              >
-                {value}
-              </button>
-            ))}
-          </div>
-        </div>
+                rows={3}
+                className="w-full px-3 py-2 text-sm border rounded-md resize-none"
+                style={{
+                  backgroundColor: isEditable ? 'var(--card-bg)' : 'var(--primary-bg)',
+                  borderColor: 'var(--border)',
+                  color: 'var(--primary-text)'
+                }}
+              />
+            </div>
 
-        {/* Note Section */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium" style={{color: 'var(--primary-text)'}}>
-            Note (optional):
-          </label>
-          <textarea
-            value={note}
-            onChange={(e) => isEditable && handleNoteChange(e.target.value)}
-            placeholder={isEditable ? "Add any additional comments..." : "No note provided"}
-            disabled={!isEditable || isUpdating}
-            rows={3}
-            className="w-full px-3 py-2 text-sm border rounded-md resize-none"
-            style={{
-              backgroundColor: isEditable ? 'var(--card-bg)' : 'var(--primary-bg)',
-              borderColor: 'var(--border)',
-              color: 'var(--primary-text)'
-            }}
-          />
-        </div>
-
-        {isUpdating && (
-          <div className="text-xs text-center" style={{color: 'var(--secondary-text)'}}>
-            Saving...
-          </div>
+            {isUpdating && (
+              <div className="text-xs text-center" style={{color: 'var(--secondary-text)'}}>
+                Saving...
+              </div>
+            )}
+          </>
         )}
       </CardContent>
     </Card>

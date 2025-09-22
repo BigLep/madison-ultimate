@@ -21,6 +21,7 @@ export const GAME_CONFIG = {
     GOLD_LOCATION: "Gold Location",
     GOLD_SNACK: "Gold Snack Owner",
     GOLD_DISC: "Gold DiscNW Page",
+    GOLD_GAME_NOTE: "Gold Game Note",
     // Blue team columns
     BLUE_WARMUP: "Blue Warmup Arrival",
     BLUE_START: "Blue Game Start",
@@ -28,6 +29,7 @@ export const GAME_CONFIG = {
     BLUE_LOCATION: "Blue Location",
     BLUE_SNACK: "Blue Snack Owner",
     BLUE_DISC: "Blue DiscNW Page",
+    BLUE_GAME_NOTE: "Blue Game Note",
   },
 
   // Game Availability sheet column names for dynamic discovery
@@ -81,6 +83,8 @@ export interface Game {
   gameStart: string;
   doneBy: string;
   note?: string;
+  gameNote?: string; // Team-specific game note from coach
+  isBye: boolean; // Whether this is a bye week
   isPast: boolean;
   availabilityColumnIndex: number;
   noteColumnIndex: number;

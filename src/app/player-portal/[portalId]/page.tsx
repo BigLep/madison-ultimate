@@ -1229,17 +1229,21 @@ function GameAvailabilityScreen({ params }: { params: Promise<{ portalId: string
   const upcomingGames = games.filter((g: any) => !g.isPast);
   const pastGames = games.filter((g: any) => g.isPast);
 
-  // Check if all upcoming games have responses
-  const allUpcomingResponded = upcomingGames.length > 0 && upcomingGames.filter((g: any) => !g.availability.availability).length === 0;
+  // Filter out byes for statistics (but keep them for display)
+  const upcomingGamesForStats = upcomingGames.filter((g: any) => !g.isBye);
+  const pastGamesForStats = pastGames.filter((g: any) => !g.isBye);
+
+  // Check if all upcoming games have responses (excluding byes)
+  const allUpcomingResponded = upcomingGamesForStats.length > 0 && upcomingGamesForStats.filter((g: any) => !g.availability.availability).length === 0;
 
   return (
     <div className="space-y-6">
       {/* Game Summary Stats */}
-      {(upcomingGames.length > 0 || pastGames.length > 0) && (
+      {(upcomingGamesForStats.length > 0 || pastGamesForStats.length > 0) && (
         <AvailabilitySummary
           title={`${player.team} Team Game Summary`}
-          upcomingItems={upcomingGames}
-          pastItems={pastGames}
+          upcomingItems={upcomingGamesForStats}
+          pastItems={pastGamesForStats}
           availabilityOptions={availabilityOptions}
           allUpcomingResponded={allUpcomingResponded}
         />
@@ -1252,7 +1256,7 @@ function GameAvailabilityScreen({ params }: { params: Promise<{ portalId: string
           {upcomingGames.map((game: any) => (
             <AvailabilityCard
               key={game.gameKey}
-              title={`${game.team} Game #${game.gameNumber}: ${game.formattedDate}`}
+              title={game.isBye ? game.formattedDate : `${game.team} Game #${game.gameNumber}: ${game.formattedDate}`}
               subtitle=""
               location={game.location}
               locationUrl={game.locationUrl}
@@ -1262,14 +1266,19 @@ function GameAvailabilityScreen({ params }: { params: Promise<{ portalId: string
               onUpdateAvailability={(availability, note) => updateAvailability(game.gameKey, availability, note)}
               isUpdating={updating === game.gameKey}
               isEditable={true}
+              isBye={game.isBye}
             >
               <div className="space-y-1">
-                <div>Arrival for warmups: {game.formattedWarmupTime}</div>
-                <div>Game start: {game.formattedGameStart}</div>
-                <div>Done by: {game.formattedDoneBy}</div>
-                {game.note && (
+                {!game.isBye && (
+                  <>
+                    <div>Arrival for warmups: {game.formattedWarmupTime}</div>
+                    <div>Game start: {game.formattedGameStart}</div>
+                    <div>Done by: {game.formattedDoneBy}</div>
+                  </>
+                )}
+                {game.gameNote && (
                   <div className="text-xs italic mt-2" style={{color: 'var(--secondary-text)'}}>
-                    Coach note: {game.note}
+                    Coach note: {game.gameNote}
                   </div>
                 )}
               </div>
@@ -1285,7 +1294,7 @@ function GameAvailabilityScreen({ params }: { params: Promise<{ portalId: string
           {pastGames.map((game: any) => (
             <AvailabilityCard
               key={game.gameKey}
-              title={`${game.team} Game #${game.gameNumber}: ${game.formattedDate}`}
+              title={game.isBye ? game.formattedDate : `${game.team} Game #${game.gameNumber}: ${game.formattedDate}`}
               subtitle=""
               location={game.location}
               locationUrl={game.locationUrl}
@@ -1295,14 +1304,19 @@ function GameAvailabilityScreen({ params }: { params: Promise<{ portalId: string
               onUpdateAvailability={() => {}} // No updates for past games
               isUpdating={false}
               isEditable={false}
+              isBye={game.isBye}
             >
               <div className="space-y-1">
-                <div>Arrival for warmups: {game.formattedWarmupTime}</div>
-                <div>Game start: {game.formattedGameStart}</div>
-                <div>Done by: {game.formattedDoneBy}</div>
-                {game.note && (
+                {!game.isBye && (
+                  <>
+                    <div>Arrival for warmups: {game.formattedWarmupTime}</div>
+                    <div>Game start: {game.formattedGameStart}</div>
+                    <div>Done by: {game.formattedDoneBy}</div>
+                  </>
+                )}
+                {game.gameNote && (
                   <div className="text-xs italic mt-2" style={{color: 'var(--secondary-text)'}}>
-                    Coach note: {game.note}
+                    Coach note: {game.gameNote}
                   </div>
                 )}
               </div>

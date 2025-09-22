@@ -118,11 +118,13 @@ export async function GET(
         const startColumnName = isGold ? GAME_CONFIG.GAME_INFO_COLUMN_NAMES.GOLD_START : GAME_CONFIG.GAME_INFO_COLUMN_NAMES.BLUE_START;
         const doneColumnName = isGold ? GAME_CONFIG.GAME_INFO_COLUMN_NAMES.GOLD_DONE : GAME_CONFIG.GAME_INFO_COLUMN_NAMES.BLUE_DONE;
         const locationColumnName = isGold ? GAME_CONFIG.GAME_INFO_COLUMN_NAMES.GOLD_LOCATION : GAME_CONFIG.GAME_INFO_COLUMN_NAMES.BLUE_LOCATION;
+        const gameNoteColumnName = isGold ? GAME_CONFIG.GAME_INFO_COLUMN_NAMES.GOLD_GAME_NOTE : GAME_CONFIG.GAME_INFO_COLUMN_NAMES.BLUE_GAME_NOTE;
 
         const warmupTime = getGameInfoValue(row, warmupColumnName);
         const gameStart = getGameInfoValue(row, startColumnName);
         const doneBy = getGameInfoValue(row, doneColumnName);
         const locationData = row[gameInfoColumnMap[locationColumnName]];
+        const gameNote = getGameInfoValue(row, gameNoteColumnName);
 
         // Handle location data - could be string or object with text/url
         let location: string, locationUrl: string | null;
@@ -134,6 +136,9 @@ export async function GET(
           locationUrl = null;
         }
 
+        // Check if this is a bye week
+        const isBye = gameNumber.toLowerCase() === 'bye';
+
         games.push({
           team,
           gameNumber,
@@ -144,6 +149,8 @@ export async function GET(
           gameStart,
           doneBy,
           note: '', // Games don't have notes in the info sheet
+          gameNote, // Team-specific game note from coach
+          isBye,
           isPast: isGameInPast(date),
           // We'll calculate these after we get the availability sheet structure
           availabilityColumnIndex: -1,
