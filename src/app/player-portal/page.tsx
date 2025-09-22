@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { APP_CONFIG } from '@/lib/app-config'
 
 export default function PlayerPortalLogin() {
   const [lastName, setLastName] = useState('')
@@ -180,7 +181,9 @@ export default function PlayerPortalLogin() {
 
           <div className="mt-6 text-center text-sm">
             <a
-              href="mailto:madisonultimate@gmail.com"
+              href={APP_CONFIG.PLAYER_PORTAL_DOCUMENTATION}
+              target="_blank"
+              rel="noopener noreferrer"
               className="underline font-semibold transition-colors hover:opacity-70"
               style={{color: 'var(--accent)'}}
             >
