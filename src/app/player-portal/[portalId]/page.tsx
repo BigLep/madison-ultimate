@@ -4,11 +4,12 @@ import { useState, useEffect, useCallback } from 'react'
 import { useDebounce } from 'use-debounce'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Home, User, Calendar, Trophy, Clock, MapPin, MessageSquare } from 'lucide-react'
+import { Home, User, Calendar, Trophy, Clock, MapPin, MessageSquare, HelpCircle } from 'lucide-react'
 import { AvailabilityCard } from '../../../components/availability-card'
 import { AvailabilitySummary } from '../../../components/availability-summary'
 import { PWAInstallBanner } from '../../../components/pwa-install-banner'
 import { PRACTICE_CONFIG } from '../../../lib/practice-config'
+import { APP_CONFIG } from '../../../lib/app-config'
 
 // URL constants for easy maintenance
 const ADDITIONAL_INFO_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfOO0ybkvfs0GTBvP6tC95HT3JlGVWkSzlYghDITpw_38_hPA/viewform?usp=dialog';
@@ -97,7 +98,7 @@ interface PracticeData {
   };
 }
 
-type PortalScreen = 'season-info' | 'player-info' | 'practice-availability' | 'game-availability'
+type PortalScreen = 'season-info' | 'player-info' | 'practice-availability' | 'game-availability' | 'help'
 
 // Helper function to get team display
 const getTeamDisplay = (team?: string) => {
@@ -126,14 +127,16 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
     '#season': 'season-info',
     '#player': 'player-info',
     '#practices': 'practice-availability',
-    '#games': 'game-availability'
+    '#games': 'game-availability',
+    '#help': 'help'
   }
 
   const screenToHash: Record<PortalScreen, string> = {
     'season-info': '#season',
     'player-info': '#player',
     'practice-availability': '#practices',
-    'game-availability': '#games'
+    'game-availability': '#games',
+    'help': '#help'
   }
 
   // Handle initial hash and hash changes
@@ -310,6 +313,7 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
     { id: 'player-info' as const, label: 'Player Info', icon: User },
     { id: 'practice-availability' as const, label: 'Practices', icon: Calendar },
     { id: 'game-availability' as const, label: 'Games', icon: Trophy },
+    { id: 'help' as const, label: 'Help', icon: HelpCircle },
   ]
 
   const renderContent = () => {
@@ -322,6 +326,8 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
         return <PracticeAvailabilityScreen params={params} />
       case 'game-availability':
         return <GameAvailabilityScreen params={params} />
+      case 'help':
+        return <HelpScreen />
       default:
         return <SeasonInfoScreen />
     }
@@ -383,6 +389,99 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
       <PWAInstallBanner playerName={player.fullName} />
     </div>
   )
+}
+
+function HelpScreen() {
+  return (
+    <div className="space-y-6 p-4">
+      {/* Header */}
+      <div className="text-center space-y-2">
+        <div className="w-16 h-16 mx-auto rounded-full bg-blue-100 flex items-center justify-center">
+          <HelpCircle className="w-8 h-8 text-blue-600" />
+        </div>
+        <h1 className="text-2xl font-bold" style={{color: 'var(--page-title)'}}>
+          Need Help?
+        </h1>
+        <p className="text-sm" style={{color: 'var(--secondary-text)'}}>
+          Here are some resources to help you use the Player Portal
+        </p>
+      </div>
+
+      {/* Help Cards */}
+      <div className="space-y-4">
+        {/* Documentation Card */}
+        <Card className="shadow-sm" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg" style={{color: 'var(--page-title)'}}>
+              📖 Player Portal Guide
+            </CardTitle>
+            <CardDescription style={{color: 'var(--secondary-text)'}}>
+              Learn how to use all the features of the Player Portal
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <a
+              href={APP_CONFIG.PLAYER_PORTAL_DOCUMENTATION}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hyperlink text-sm"
+            >
+              View the full Player Portal guide →
+            </a>
+          </CardContent>
+        </Card>
+
+        {/* Contact Card */}
+        <Card className="shadow-sm" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg" style={{color: 'var(--page-title)'}}>
+              📧 Contact Coach
+            </CardTitle>
+            <CardDescription style={{color: 'var(--secondary-text)'}}>
+              Have questions? Need help with something specific?
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm mb-3" style={{color: 'var(--primary-text)'}}>
+              Email&nbsp;
+              <a
+                href={`mailto:${APP_CONFIG.COACH_EMAIL}`}
+                className="hyperlink text-sm"
+              >
+                {APP_CONFIG.COACH_EMAIL}
+              </a>.
+            </p>
+            
+          </CardContent>
+        </Card>
+
+        {/* Quick Tips Card */}
+        <Card className="shadow-sm" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg" style={{color: 'var(--page-title)'}}>
+              💡 Quick Tips
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="space-y-2 text-sm" style={{color: 'var(--primary-text)'}}>
+              <div className="flex items-start gap-2">
+                <span className="text-green-600">✓</span>
+                <span>Update your practice/game availability as soon as possible.</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-green-600">✓</span>
+                <span>Check the Season Info tab for important announcements.</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-green-600">✓</span>
+                <span>Each player has a unique URL.  Add this site to your home screen or bookmarks for easy access.</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
 }
 
 function SeasonInfoScreen() {

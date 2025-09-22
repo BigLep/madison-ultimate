@@ -45,6 +45,13 @@ git commit -m "docs: update documentation 📚"
 - Use fuzzy matching for joining player data across different sources
 - Mobile-first responsive design approach with Tailwind CSS
 
+## Testing Guidelines
+
+**Puppeteer Screenshots**: Always use iPhone screen dimensions for testing mobile-first design:
+- Use width: 375, height: 812 for iPhone screen size
+- Example: `puppeteer_screenshot({name: "test", width: 375, height: 812})`
+- This ensures screenshots reflect the actual mobile user experience
+
 ## Styling Guidelines
 
 **CRITICAL**: Prefer CSS classes and CSS variables over JavaScript-based styling:
