@@ -109,6 +109,17 @@ body {
   color: var(--status-neutral-text);
 }
 
+/* Practice attendance status styles */
+.attendance-present.attendance-present {
+  background-color: #15803d; /* darker green */
+  border-color: #166534;
+}
+
+.attendance-absent.attendance-absent {
+  background-color: #b91c1c; /* darker red */
+  border-color: #991b1b;
+}
+
 /* Consistent Hyperlink Styling */
 .hyperlink {
   color: var(--accent);

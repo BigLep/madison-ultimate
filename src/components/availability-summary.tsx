@@ -1,7 +1,7 @@
 interface AvailabilitySummaryProps {
   title: string;
-  upcomingItems: Array<{ availability: { availability: string } }>;
-  pastItems: Array<{ availability: { availability: string } }>;
+  upcomingItems: Array<{ availability: { availability: string }, isBye?: boolean }>;
+  pastItems: Array<{ availability: { availability: string }, isBye?: boolean }>;
   availabilityOptions: Record<string, string>;
   allUpcomingResponded: boolean;
   pastPresentValue?: string;
@@ -17,13 +17,17 @@ export function AvailabilitySummary({
   pastPresentValue = 'Was there',
   pastAbsentValue = "Wasn't there"
 }: AvailabilitySummaryProps) {
-  // Calculate summary stats
-  const upcomingNoResponse = upcomingItems.filter(item => !item.availability.availability).length;
-  const upcomingPlanToMake = upcomingItems.filter(item => item.availability.availability === availabilityOptions.PLANNING).length;
-  const upcomingCantMake = upcomingItems.filter(item => item.availability.availability === availabilityOptions.CANT_MAKE).length;
-  const upcomingNotSure = upcomingItems.filter(item => item.availability.availability === availabilityOptions.NOT_SURE).length;
-  const pastWasPresent = pastItems.filter(item => item.availability.availability === pastPresentValue).length;
-  const pastWasntPresent = pastItems.filter(item => item.availability.availability === pastAbsentValue).length;
+  // Filter out byes for statistics calculations
+  const upcomingItemsForStats = upcomingItems.filter(item => !item.isBye);
+  const pastItemsForStats = pastItems.filter(item => !item.isBye);
+
+  // Calculate summary stats (excluding byes)
+  const upcomingNoResponse = upcomingItemsForStats.filter(item => !item.availability.availability).length;
+  const upcomingPlanToMake = upcomingItemsForStats.filter(item => item.availability.availability === availabilityOptions.PLANNING).length;
+  const upcomingCantMake = upcomingItemsForStats.filter(item => item.availability.availability === availabilityOptions.CANT_MAKE).length;
+  const upcomingNotSure = upcomingItemsForStats.filter(item => item.availability.availability === availabilityOptions.NOT_SURE).length;
+  const pastWasPresent = pastItemsForStats.filter(item => item.availability.availability === pastPresentValue).length;
+  const pastWasntPresent = pastItemsForStats.filter(item => item.availability.availability === pastAbsentValue).length;
 
   return (
     <div className="space-y-4">
@@ -35,7 +39,7 @@ export function AvailabilitySummary({
       </div>
       <div className="grid grid-cols-1 gap-2 text-sm">
         {/* Upcoming items stats - always show all */}
-        {upcomingItems.length > 0 && (
+        {upcomingItemsForStats.length > 0 && (
           <>
             <div className={`flex justify-between items-center py-2 px-3 rounded-lg border ${upcomingNoResponse > 0 ? 'bg-blue-100 border-blue-300' : 'bg-gray-50 border-gray-200'}`}>
               <div className="flex-1">
@@ -73,15 +77,21 @@ export function AvailabilitySummary({
           </>
         )}
         {/* Past items stats - always show all */}
-        {pastItems.length > 0 && (
+        {pastItemsForStats.length > 0 && (
           <>
-            <div className={`flex justify-between items-center py-2 px-3 rounded-lg border ${pastWasPresent > 0 ? 'bg-blue-100 border-blue-300' : 'bg-gray-50 border-gray-200'}`}>
-              <span className={pastWasPresent > 0 ? 'text-blue-800' : 'text-gray-600'}>Was present</span>
-              <span className={`font-semibold ${pastWasPresent > 0 ? 'text-blue-800' : 'text-gray-600'}`}>{pastWasPresent}</span>
+            <div className="flex justify-between items-center py-2 px-3 rounded-lg border attendance-present">
+              <span className="flex items-center gap-2 text-white">
+                <span>✅</span>
+                <span>Was present</span>
+              </span>
+              <span className="font-semibold text-white">{pastWasPresent}</span>
             </div>
-            <div className={`flex justify-between items-center py-2 px-3 rounded-lg border ${pastWasntPresent > 0 ? 'bg-gray-100 border-gray-300' : 'bg-gray-50 border-gray-200'}`}>
-              <span className={pastWasntPresent > 0 ? 'text-gray-800' : 'text-gray-600'}>Wasn't present</span>
-              <span className={`font-semibold ${pastWasntPresent > 0 ? 'text-gray-800' : 'text-gray-600'}`}>{pastWasntPresent}</span>
+            <div className="flex justify-between items-center py-2 px-3 rounded-lg border attendance-absent">
+              <span className="flex items-center gap-2 text-white">
+                <span>❌</span>
+                <span>Wasn't present</span>
+              </span>
+              <span className="font-semibold text-white">{pastWasntPresent}</span>
             </div>
           </>
         )}
