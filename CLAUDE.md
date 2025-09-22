@@ -37,18 +37,25 @@ git commit -m "fix: resolve bug 🔧"
 git commit -m "docs: update documentation 📚"
 ```
 
-**CRITICAL**: When committing changes, always provide a clear file summary:
-- List all modified files with their paths
-- Indicate whether each file was **Added**, **Updated**, or **Removed**
-- Include this summary before the commit command for transparency
+**CRITICAL COMMIT WORKFLOW**: Always show file changes summary AND execute commit commands in the same response:
 
-Example format:
+### Required Steps:
+1. **First**: Run `git status` and `git diff` to identify all changes
+2. **Then**: Present clear file summary in this format:
 ```
 Files changed:
 ✅ Added: src/lib/new-feature.ts
 📝 Updated: src/app/page.tsx
 ❌ Removed: src/old-file.ts
 ```
+3. **Immediately**: Execute `git add` and `git commit` commands in the same response
+4. **Result**: User can review the summary and cancel the commit if needed (before it completes)
+
+### Why This Workflow:
+- Shows transparency about what files are being committed
+- Usually commits are approved, so execution is immediate
+- User retains ability to cancel if they spot issues
+- Balances efficiency with user control over the commit process
 
 ## Claude Code Specific Notes
 
