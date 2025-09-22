@@ -1,181 +1,118 @@
-import { getSheetData, getSheetMetadata } from './google-api';
-import { SHEET_CONFIG } from './sheet-config';
-
-const ROSTER_SHEET_ID = process.env.ROSTER_SHEET_ID || '1ZZA5TxHu8nmtyNORm3xYtN5rzP3p1jtW178UgRcxLA8';
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+import { getCachedSheetData, findCachedSheetRow } from './sheet-cache';
 
 interface PortalEntry {
   lookupKey: string;
   portalId: string;
-  rowIndex: number; // For debugging and reference
+  rowIndex: number; // Row index in the sheet (0-based)
+  rowData: any[]; // Full row data for this player
 }
 
 interface PortalCache {
-  data: PortalEntry[];
+  entries: PortalEntry[];
+  columnMapping: Record<string, number>;
   lastUpdated: number;
-  isRefreshing: boolean;
 }
 
-// In-memory cache
-let portalCache: PortalCache = {
-  data: [],
-  lastUpdated: 0,
-  isRefreshing: false
-};
-
-// Active refresh promises to prevent duplicate fetches
-let refreshPromise: Promise<void> | null = null;
+// In-memory processed portal cache
+let portalCache: PortalCache | null = null;
 
 /**
- * Get cached portal data, refreshing if needed.
- * Blocks the request until cache is fresh if stale.
+ * Get portal cache with optimized sheet-based caching
  */
 export async function getPortalCache(): Promise<PortalEntry[]> {
+  // Check if we need to refresh the processed cache
   const now = Date.now();
-  const isStale = now - portalCache.lastUpdated > CACHE_DURATION;
+  const cacheAge = portalCache ? now - portalCache.lastUpdated : Infinity;
+  const PROCESSED_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-  if (isStale) {
-    // If cache is stale, block until we refresh
+  if (!portalCache || cacheAge > PROCESSED_CACHE_TTL) {
     await refreshPortalCache();
   }
 
-  return portalCache.data;
+  return portalCache!.entries;
 }
 
 /**
- * Refresh the portal cache from Google Sheets
+ * Refresh portal cache from sheet cache
  */
 async function refreshPortalCache(): Promise<void> {
-  // If already refreshing, wait for that operation
-  if (refreshPromise) {
-    return refreshPromise;
-  }
+  console.log('Refreshing portal cache from sheet data...');
 
-  portalCache.isRefreshing = true;
+  try {
+    // Get the full roster sheet (this uses the sheet cache)
+    const rosterData = await getCachedSheetData('ROSTER');
 
-  refreshPromise = (async () => {
-    try {
-      console.log('Refreshing portal cache...');
-
-      // Step 1: Get sheet metadata to understand dimensions
-      const sheetMetadata = await getSheetMetadata(ROSTER_SHEET_ID);
-      if (!sheetMetadata) {
-        throw new Error('Unable to fetch sheet metadata');
-      }
-
-      // Find the main roster sheet
-      const rosterSheet = sheetMetadata.sheets.find(sheet =>
-        sheet.title === SHEET_CONFIG.ROSTER_SHEET_NAME || sheet.title.includes('Roster')
-      ) || sheetMetadata.sheets[0]; // fallback to first sheet
-
-      if (!rosterSheet) {
-        throw new Error('No roster sheet found');
-      }
-
-      console.log(`Found roster sheet: "${rosterSheet.title}" with ${rosterSheet.rowCount} rows and ${rosterSheet.columnCount} columns`);
-
-      // Step 2: Get metadata to find Portal columns (use actual sheet dimensions)
-      const maxColumn = Math.min(rosterSheet.columnCount, 702); // 702 = ZZ column, reasonable limit
-      function getColumnLetterForIndex(index: number): string {
-        let result = '';
-        while (index >= 0) {
-          result = String.fromCharCode(65 + (index % 26)) + result;
-          index = Math.floor(index / 26) - 1;
-        }
-        return result;
-      }
-      const columnLetter = getColumnLetterForIndex(maxColumn - 1);
-      const metadataRange = `A1:${columnLetter}4`;  // Use actual column range
-      const metadataRows = await getSheetData(ROSTER_SHEET_ID, metadataRange);
-
-      if (metadataRows.length < 4) {
-        throw new Error('Invalid roster metadata structure');
-      }
-
-      const [columnNameRow] = metadataRows;
-
-      // Find Portal columns dynamically
-      let lookupKeyIndex = -1;
-      let portalIdIndex = -1;
-
-      for (let i = 0; i < columnNameRow.length; i++) {
-        const columnName = columnNameRow[i]?.toLowerCase().trim();
-        if (columnName.includes('portal') && columnName.includes('lookup')) {
-          lookupKeyIndex = i;
-        }
-        if (columnName.includes('portal') && columnName.includes('id') && !columnName.includes('lookup')) {
-          portalIdIndex = i;
-        }
-      }
-
-      if (lookupKeyIndex === -1 || portalIdIndex === -1) {
-        throw new Error('Portal columns not found in roster metadata');
-      }
-
-      console.log(`Found Portal columns: Lookup Key at ${lookupKeyIndex}, Portal ID at ${portalIdIndex}`);
-
-      // Step 2: Get just the Portal columns for all rows
-      // Convert column indices to Excel column letters (supports columns beyond Z)
-      function getColumnLetter(columnIndex: number): string {
-        let result = '';
-        while (columnIndex >= 0) {
-          result = String.fromCharCode(65 + (columnIndex % 26)) + result;
-          columnIndex = Math.floor(columnIndex / 26) - 1;
-        }
-        return result;
-      }
-
-      const lookupColumnLetter = getColumnLetter(lookupKeyIndex);
-      const portalColumnLetter = getColumnLetter(portalIdIndex);
-
-      console.log(`Using columns: ${lookupColumnLetter} (index ${lookupKeyIndex}) and ${portalColumnLetter} (index ${portalIdIndex})`);
-
-      // Use actual sheet dimensions to avoid exceeding limits
-      const maxRow = Math.max(SHEET_CONFIG.DATA_START_ROW, rosterSheet.rowCount - 1); // Ensure we have at least data start row, but don't exceed actual rows
-      const lookupData = await getSheetData(ROSTER_SHEET_ID, `${lookupColumnLetter}${SHEET_CONFIG.DATA_START_ROW}:${lookupColumnLetter}${maxRow}`);
-      const portalData = await getSheetData(ROSTER_SHEET_ID, `${portalColumnLetter}${SHEET_CONFIG.DATA_START_ROW}:${portalColumnLetter}${maxRow}`);
-
-      // Step 3: Build cache entries
-      const entries: PortalEntry[] = [];
-      const maxRows = Math.max(lookupData.length, portalData.length);
-
-      for (let i = 0; i < maxRows; i++) {
-        const lookupKey = lookupData[i]?.[0]?.toString().trim();
-        const portalId = portalData[i]?.[0]?.toString().trim();
-
-        // Only include rows that have both values and look like valid data
-        // Skip header rows and test data
-        if (lookupKey && portalId &&
-            !lookupKey.includes('Portal') && // Skip header row
-            lookupKey.length > 3 && // Must be meaningful length
-            portalId.length > 3) { // Must be meaningful length
-          entries.push({
-            lookupKey,
-            portalId,
-            rowIndex: i + SHEET_CONFIG.DATA_START_ROW // Actual sheet row (accounting for metadata)
-          });
-        }
-      }
-
-      // Update cache
-      portalCache = {
-        data: entries,
-        lastUpdated: Date.now(),
-        isRefreshing: false
-      };
-
-      console.log(`Portal cache refreshed: ${entries.length} entries loaded`);
-
-    } catch (error) {
-      console.error('Error refreshing portal cache:', error);
-      portalCache.isRefreshing = false;
-      throw error;
-    } finally {
-      refreshPromise = null;
+    if (rosterData.length < 4) {
+      throw new Error('Invalid roster data structure');
     }
-  })();
 
-  return refreshPromise;
+    // Extract column mapping from the first row
+    const columnNameRow = rosterData[0];
+    const columnMapping: Record<string, number> = {};
+
+    for (let i = 0; i < columnNameRow.length; i++) {
+      const columnName = columnNameRow[i]?.toString().trim();
+      if (columnName) {
+        columnMapping[columnName] = i;
+      }
+    }
+
+    // Find portal columns
+    let lookupKeyIndex = -1;
+    let portalIdIndex = -1;
+
+    for (const [columnName, index] of Object.entries(columnMapping)) {
+      const lowerName = columnName.toLowerCase();
+      if (lowerName.includes('portal') && lowerName.includes('lookup')) {
+        lookupKeyIndex = index;
+      }
+      if (lowerName.includes('portal') && lowerName.includes('id') && !lowerName.includes('lookup')) {
+        portalIdIndex = index;
+      }
+    }
+
+    if (lookupKeyIndex === -1 || portalIdIndex === -1) {
+      throw new Error('Portal columns not found in roster data');
+    }
+
+    console.log(`Found Portal columns: Lookup Key at ${lookupKeyIndex}, Portal ID at ${portalIdIndex}`);
+
+    // Build portal entries from the data rows (skip header rows)
+    const entries: PortalEntry[] = [];
+    const dataStartIndex = 4; // Skip metadata rows
+
+    for (let i = dataStartIndex; i < rosterData.length; i++) {
+      const row = rosterData[i];
+      const lookupKey = row[lookupKeyIndex]?.toString().trim();
+      const portalId = row[portalIdIndex]?.toString().trim();
+
+      // Only include rows with valid portal data
+      if (lookupKey && portalId &&
+          !lookupKey.includes('Portal') && // Skip any header rows
+          lookupKey.length > 3 &&
+          portalId.length > 3) {
+        entries.push({
+          lookupKey,
+          portalId,
+          rowIndex: i,
+          rowData: row
+        });
+      }
+    }
+
+    // Update cache
+    portalCache = {
+      entries,
+      columnMapping,
+      lastUpdated: Date.now()
+    };
+
+    console.log(`Portal cache refreshed: ${entries.length} entries loaded`);
+
+  } catch (error) {
+    console.error('Error refreshing portal cache:', error);
+    throw error;
+  }
 }
 
 /**
@@ -196,25 +133,62 @@ export async function findPortalEntryByPortalId(portalId: string): Promise<Porta
 }
 
 /**
- * Get cache stats for debugging
+ * Get player data by portal ID from cached roster
  */
-export function getPortalCacheStats() {
-  const age = Date.now() - portalCache.lastUpdated;
-  const isStale = age > CACHE_DURATION;
+export async function getPlayerDataByPortalId(portalId: string): Promise<any | null> {
+  const entry = await findPortalEntryByPortalId(portalId);
+  if (!entry) {
+    return null;
+  }
 
+  // Return the full row data along with column mapping for easy access
   return {
-    entryCount: portalCache.data.length,
-    lastUpdated: new Date(portalCache.lastUpdated).toISOString(),
-    ageMs: age,
-    isStale,
-    isRefreshing: portalCache.isRefreshing
+    rowData: entry.rowData,
+    rowIndex: entry.rowIndex,
+    columnMapping: portalCache!.columnMapping
   };
 }
 
 /**
- * Force refresh the cache (for debugging/admin use)
+ * Get column value from player data
+ */
+export function getColumnValue(playerData: any, columnName: string): string | null {
+  const columnIndex = playerData.columnMapping[columnName];
+  if (columnIndex === undefined) {
+    return null;
+  }
+  return playerData.rowData[columnIndex]?.toString().trim() || null;
+}
+
+/**
+ * Get cache stats for debugging
+ */
+export function getPortalCacheStats() {
+  if (!portalCache) {
+    return {
+      entryCount: 0,
+      lastUpdated: null,
+      ageMs: 0,
+      isStale: true
+    };
+  }
+
+  const age = Date.now() - portalCache.lastUpdated;
+  const isStale = age > 5 * 60 * 1000; // 5 minutes
+
+  return {
+    entryCount: portalCache.entries.length,
+    lastUpdated: new Date(portalCache.lastUpdated).toISOString(),
+    ageMs: age,
+    isStale,
+    columnCount: Object.keys(portalCache.columnMapping).length
+  };
+}
+
+/**
+ * Force refresh the portal cache
  */
 export async function forceRefreshPortalCache(): Promise<void> {
-  portalCache.lastUpdated = 0; // Force stale
+  portalCache = null; // Force refresh
   await refreshPortalCache();
 }

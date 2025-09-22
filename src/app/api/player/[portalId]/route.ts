@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSheetData } from '../../../../lib/google-api';
-import { findPortalEntryByPortalId } from '../../../../lib/portal-cache';
-import { SHEET_CONFIG } from '../../../../lib/sheet-config';
-
-const ROSTER_SHEET_ID = SHEET_CONFIG.ROSTER_SHEET_ID;
+import { getPlayerDataByPortalId, getColumnValue } from '../../../../lib/portal-cache';
 
 interface PlayerData {
   studentId: string;
@@ -70,123 +66,70 @@ export async function GET(
       }, { status: 400 });
     }
 
-    // Step 1: Validate Portal ID exists in cache and get row info
-    const portalEntry = await findPortalEntryByPortalId(portalId);
+    console.log(`Fetching player details for Portal ID: ${portalId}`);
 
-    if (!portalEntry) {
+    // Step 1: Get player data from cache (includes full row data and column mapping)
+    const playerData = await getPlayerDataByPortalId(portalId);
+
+    if (!playerData) {
       return NextResponse.json({
         success: false,
         error: 'Player not found with the provided Portal ID'
       }, { status: 404 });
     }
 
-    // Step 2: Get metadata to understand column structure
-    const metadataRows = await getSheetData(ROSTER_SHEET_ID, 'A1:AZ4');
-
-    if (metadataRows.length < 4) {
-      return NextResponse.json({
-        success: false,
-        error: 'Invalid roster metadata structure'
-      }, { status: 500 });
-    }
-
-    const [columnNameRow] = metadataRows;
-
-    // Create column mapping (dynamic discovery)
-    const columnMap: Record<string, number> = {};
-    for (let i = 0; i < columnNameRow.length; i++) {
-      const columnName = columnNameRow[i]?.trim();
-      if (columnName) {
-        columnMap[columnName] = i;
-      }
-    }
-
-    // Step 3: Get the specific player's row data
-    const playerRow = await getSheetData(ROSTER_SHEET_ID, `A${portalEntry.rowIndex}:AZ${portalEntry.rowIndex}`);
-
-    if (!playerRow || playerRow.length === 0) {
-      return NextResponse.json({
-        success: false,
-        error: 'Player data not found'
-      }, { status: 404 });
-    }
-
-    // Step 4: Map row data to structured player object using dynamic column discovery
-    const getValue = (columnName: string): string => {
-      const index = columnMap[columnName];
-      return index !== undefined ? (playerRow[0][index]?.toString().trim() || '') : '';
-    };
-
-    const getBooleanValue = (columnName: string): boolean => {
-      const value = getValue(columnName).toLowerCase();
-      return value === 'true' || value === 'yes';
-    };
-
+    // Step 2: Extract player information using the cached data
+    // This eliminates the need for additional API calls since we have the full row
     const player: PlayerData = {
-      studentId: getValue('StudentID'),
-      firstName: getValue('First Name'),
-      lastName: getValue('Last Name'),
-      fullName: getValue('Full Name'),
-      grade: parseInt(getValue('Grade')) || 0,
-      gender: getValue('Gender'),
-      genderIdentification: getValue('Gender Identification'),
-      dateOfBirth: getValue('Date of Birth'),
-      team: getValue('Team'),
+      studentId: getColumnValue(playerData, 'Student ID') || '',
+      firstName: getColumnValue(playerData, 'First Name') || '',
+      lastName: getColumnValue(playerData, 'Last Name') || '',
+      fullName: getColumnValue(playerData, 'Full Name') || '',
+      grade: parseInt(getColumnValue(playerData, 'Grade') || '0'),
+      gender: getColumnValue(playerData, 'Gender') || '',
+      genderIdentification: getColumnValue(playerData, 'Gender Identification') || '',
+      dateOfBirth: getColumnValue(playerData, 'Date of Birth') || '',
+      team: getColumnValue(playerData, 'Team') || '',
       finalFormsStatus: {
-        parentSigned: getBooleanValue('Are All Forms Parent Signed'),
-        studentSigned: getBooleanValue('Are All Forms Student Signed'),
-        physicalCleared: getBooleanValue('Physical Cleared'),
-        allCleared: getBooleanValue('Final Forms Cleared?'),
+        parentSigned: getColumnValue(playerData, 'Parent Signed') === 'TRUE',
+        studentSigned: getColumnValue(playerData, 'Student Signed') === 'TRUE',
+        physicalCleared: getColumnValue(playerData, 'Physical Cleared') === 'TRUE',
+        allCleared: getColumnValue(playerData, 'All Cleared') === 'TRUE'
       },
       contacts: {
-        studentEmails: {
-          spsEmail: getValue('Student SPS Email'),
-          personalEmail: getValue('Student Personal Email'),
-          personalEmailMailingStatus: getValue('Student Personal Email On Mailing List?'),
+        parent1: {
+          firstName: getColumnValue(playerData, 'Parent 1 First Name') || '',
+          lastName: getColumnValue(playerData, 'Parent 1 Last Name') || '',
+          email: getColumnValue(playerData, 'Parent 1 Email') || '',
+          mailingListStatus: getColumnValue(playerData, 'Parent 1 Mailing List Status') || ''
         },
-      },
-      additionalInfo: {
-        pronouns: getValue('Pronouns'),
-        allergies: getValue('Player Allergies'),
-        competingSports: getValue('Competing Sports and Activities'),
-        jerseySize: getValue('Jersey Size'),
-        playingExperience: getValue('Playing Experience'),
-        playerHopes: getValue('Player hopes for the season'),
-        otherInfo: getValue('Other Player Info'),
-        questionnaireFilledOut: getBooleanValue('Additional Info Questionnaire Filled Out?'),
-      },
-      photos: {
-        download: getValue('Photo Download'),
-        thumbnail: getValue('Photo Thumbnail'),
-      },
+        parent2: {
+          firstName: getColumnValue(playerData, 'Parent 2 First Name') || '',
+          lastName: getColumnValue(playerData, 'Parent 2 Last Name') || '',
+          email: getColumnValue(playerData, 'Parent 2 Email') || '',
+          mailingListStatus: getColumnValue(playerData, 'Parent 2 Mailing List Status') || ''
+        },
+        studentEmails: {
+          spsEmail: getColumnValue(playerData, 'SPS Email') || undefined,
+          personalEmail: getColumnValue(playerData, 'Personal Email') || undefined,
+          personalEmailMailingStatus: getColumnValue(playerData, 'Personal Email Mailing Status') || undefined
+        }
+      }
     };
 
-    // Add parent contact information if available
-    const parent1FirstName = getValue('Parent 1 First Name');
-    const parent1LastName = getValue('Parent 1 Last Name');
-    const parent1Email = getValue('Parent 1 Email');
+    // Step 3: Get additional questionnaire data from roster columns
+    player.additionalInfo = {
+      pronouns: getColumnValue(playerData, 'Prounouns') || undefined,
+      allergies: getColumnValue(playerData, 'Player Allergies') || undefined,
+      competingSports: getColumnValue(playerData, 'Competing Sports and Activities') || undefined,
+      jerseySize: getColumnValue(playerData, 'Jersey Size') || undefined,
+      playingExperience: getColumnValue(playerData, 'Playing Experience') || undefined,
+      playerHopes: getColumnValue(playerData, 'Player hopes for the season') || undefined,
+      otherInfo: getColumnValue(playerData, 'Other Player Info') || undefined,
+      questionnaireFilledOut: getColumnValue(playerData, 'Additional Info Questionnaire Filled Out?') === 'TRUE'
+    };
 
-    if (parent1FirstName || parent1Email) {
-      player.contacts.parent1 = {
-        firstName: parent1FirstName,
-        lastName: parent1LastName,
-        email: parent1Email,
-        mailingListStatus: getValue('Parent 1 Email On Mailing List?'),
-      };
-    }
-
-    const parent2FirstName = getValue('Parent 2 First Name');
-    const parent2LastName = getValue('Parent 2 Last Name');
-    const parent2Email = getValue('Parent 2 Email');
-
-    if (parent2FirstName || parent2Email) {
-      player.contacts.parent2 = {
-        firstName: parent2FirstName,
-        lastName: parent2LastName,
-        email: parent2Email,
-        mailingListStatus: getValue('Parent 2 Email On Mailing List?'),
-      };
-    }
+    console.log(`Successfully fetched player details: ${player.fullName}`);
 
     return NextResponse.json({
       success: true,

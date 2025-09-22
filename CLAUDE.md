@@ -33,8 +33,21 @@ Use conventional commits with emojis for fun:
 
 ```bash
 git commit -m "feat: add new feature ✨"
-git commit -m "fix: resolve bug 🔧"  
+git commit -m "fix: resolve bug 🔧"
 git commit -m "docs: update documentation 📚"
+```
+
+**CRITICAL**: When committing changes, always provide a clear file summary:
+- List all modified files with their paths
+- Indicate whether each file was **Added**, **Updated**, or **Removed**
+- Include this summary before the commit command for transparency
+
+Example format:
+```
+Files changed:
+✅ Added: src/lib/new-feature.ts
+📝 Updated: src/app/page.tsx
+❌ Removed: src/old-file.ts
 ```
 
 ## Claude Code Specific Notes
