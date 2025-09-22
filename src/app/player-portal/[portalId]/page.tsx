@@ -892,185 +892,41 @@ function PracticeCard({
   isUpdating: boolean;
   isEditable: boolean;
 }) {
-  const [selectedAvailability, setSelectedAvailability] = useState(practice.availability.availability);
-  const [note, setNote] = useState(practice.availability.note);
-
-  // Debounce the note value - wait before auto-saving
-  const [debouncedNote] = useDebounce(note, PRACTICE_CONFIG.NOTE_DEBOUNCE_DELAY);
-
-  const handleAvailabilityChange = (availability: string) => {
-    setSelectedAvailability(availability);
+  const handleUpdateAvailability = (availability: string, note: string) => {
     onUpdateAvailability(practice.date, availability, note);
   };
 
-  const handleNoteChange = (newNote: string) => {
-    setNote(newNote);
-    // Note: We don't call onUpdateAvailability here anymore - it's handled by the useEffect below
-  };
-
-  // Auto-save when debounced note changes
-  useEffect(() => {
-    // Only save if the debounced note is different from the initial note
-    // and we're not currently updating
-    if (debouncedNote !== practice.availability.note && !isUpdating) {
-      onUpdateAvailability(practice.date, selectedAvailability, debouncedNote);
-    }
-  }, [debouncedNote, practice.date, selectedAvailability, practice.availability.note, onUpdateAvailability, isUpdating]);
-
-  // Helper function to check if a string is a URL
-  const isUrl = (text: string) => {
-    try {
-      new URL(text);
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
-  // Helper function to render location as link if it has a URL
-  const renderLocation = (location: string, locationUrl?: string | null) => {
-    if (locationUrl) {
-      return (
-        <a
-          href={locationUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline hover:no-underline"
-          style={{color: 'var(--accent)'}}
-        >
-          {location}
-        </a>
-      );
-    }
-    return location;
-  };
-
-  // Helper function to get button styling based on availability
-  const getButtonStyle = (value: string, isSelected: boolean) => {
-    if (!isSelected) {
-      return "bg-white border-gray-300 text-gray-700 hover:bg-gray-50";
-    }
-
-    if (value === availabilityOptions.PLANNING) {
-      return "bg-green-100 border-green-300 text-green-800 hover:bg-green-200";
-    } else if (value === availabilityOptions.CANT_MAKE) {
-      return "bg-red-100 border-red-300 text-red-800 hover:bg-red-200";
-    } else {
-      return "bg-yellow-100 border-yellow-300 text-yellow-800 hover:bg-yellow-200";
-    }
-  };
-
   return (
-    <Card className="shadow-lg" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
-      <CardHeader className="pb-3">
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-lg" style={{color: 'var(--page-title)'}}>
-              {practice.formattedDate}
-            </CardTitle>
-            <CardDescription style={{color: 'var(--secondary-header)'}}>
-              {practice.formattedTime}
-            </CardDescription>
-          </div>
-          {practice.isPast && (
-            <span className="text-xs px-2 py-1 rounded-full bg-gray-200 text-gray-600">
-              Past
-            </span>
-          )}
+    <AvailabilityCard
+      title={practice.formattedDate}
+      subtitle={practice.formattedTime}
+      location={practice.location}
+      locationUrl={practice.locationUrl}
+      availabilityOptions={availabilityOptions}
+      currentAvailability={practice.availability.availability}
+      currentNote={practice.availability.note}
+      onUpdateAvailability={handleUpdateAvailability}
+      isUpdating={isUpdating}
+      isEditable={isEditable}
+    >
+      {/* Coach Note */}
+      {practice.note && (
+        <div className="p-3 rounded-lg mt-2" style={{background: 'var(--secondary-bg)'}}>
+          <p className="text-sm" style={{color: 'var(--secondary-text)'}}>
+            <strong>Coach Note:</strong> {practice.note}
+          </p>
         </div>
-      </CardHeader>
+      )}
 
-      <CardContent className="space-y-4">
-        {/* Practice Details */}
-        <div className="flex items-center gap-4 text-sm" style={{color: 'var(--secondary-text)'}}>
-          <div className="flex items-center gap-1">
-            <MapPin className="w-4 h-4" />
-            {renderLocation(practice.location, practice.locationUrl)}
-          </div>
-          <div className="flex items-center gap-1">
-            <Clock className="w-4 h-4" />
-            {practice.formattedTime}
-          </div>
+      {/* Past indicator */}
+      {practice.isPast && (
+        <div className="text-right">
+          <span className="text-xs px-2 py-1 rounded-full bg-gray-200 text-gray-600">
+            Past
+          </span>
         </div>
-
-        {/* Coach Note */}
-        {practice.note && (
-          <div className="p-3 rounded-lg" style={{background: 'var(--secondary-bg)'}}>
-            <p className="text-sm" style={{color: 'var(--secondary-text)'}}>
-              <strong>Coach Note:</strong> {practice.note}
-            </p>
-          </div>
-        )}
-
-        {/* Availability Selection */}
-        {isEditable ? (
-          <div className="space-y-3">
-            <p className="text-sm font-medium" style={{color: 'var(--primary-text)'}}>
-              Your availability:
-            </p>
-            <div className="space-y-2">
-              {Object.entries(availabilityOptions).map(([key, value]) => {
-                const isSelected = selectedAvailability === value;
-                return (
-                  <button
-                    key={key}
-                    onClick={() => handleAvailabilityChange(value)}
-                    disabled={isUpdating}
-                    className={`w-full text-left justify-start py-3 px-4 rounded-lg border transition-colors ${getButtonStyle(value, isSelected)}`}
-                  >
-                    <span className="text-sm font-medium">{value}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Note Input - Always Visible */}
-            <div className="space-y-2">
-              <label className="text-xs font-medium" style={{color: 'var(--primary-text)'}}>
-                Note (optional):
-              </label>
-              <input
-                type="text"
-                value={note}
-                onChange={(e) => handleNoteChange(e.target.value)}
-                placeholder="Add a note..."
-                className="w-full px-3 py-2 text-sm border rounded-md"
-                style={{
-                  background: 'var(--card-bg)',
-                  borderColor: 'var(--border)',
-                  color: 'var(--primary-text)'
-                }}
-                disabled={isUpdating}
-              />
-            </div>
-
-            {isUpdating && (
-              <div className="flex items-center gap-2 text-sm" style={{color: 'var(--secondary-text)'}}>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                Updating...
-              </div>
-            )}
-          </div>
-        ) : (
-          // Read-only display for past practices
-          <div className="space-y-2">
-            <p className="text-sm font-medium" style={{color: 'var(--primary-text)'}}>
-              Your response:
-            </p>
-            <div className="p-2 rounded-md" style={{background: 'var(--secondary-bg)'}}>
-              <p className="text-sm" style={{color: 'var(--primary-text)'}}>
-                {selectedAvailability || 'No response'}
-              </p>
-              {note && (
-                <p className="text-xs mt-1" style={{color: 'var(--secondary-text)'}}>
-                  Note: {note}
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      )}
+    </AvailabilityCard>
   );
 }
 

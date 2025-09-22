@@ -112,46 +112,66 @@ export function AvailabilityCard({
         ) : (
           /* Regular Game - Show availability selection */
           <>
-            <div className="space-y-3">
-              <div className="text-sm font-medium" style={{color: 'var(--primary-text)'}}>Your availability:</div>
-              <div className="grid grid-cols-1 gap-2">
-                {Object.entries(availabilityOptions).map(([key, value]) => (
-                  <button
-                    key={key}
-                    onClick={() => isEditable && handleAvailabilityChange(value)}
-                    disabled={!isEditable || isUpdating}
-                    className={`
-                      px-3 py-2 text-sm font-medium border rounded-lg transition-colors text-left
-                      ${getButtonStyle(value)}
-                      ${!isEditable ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
-                      ${isUpdating ? 'opacity-50' : ''}
-                    `}
-                  >
-                    {value}
-                  </button>
-                ))}
+{isEditable ? (
+              <div className="space-y-3">
+                <div className="text-sm font-medium" style={{color: 'var(--primary-text)'}}>Your availability:</div>
+                <div className="grid grid-cols-1 gap-2">
+                  {Object.entries(availabilityOptions).map(([key, value]) => (
+                    <button
+                      key={key}
+                      onClick={() => handleAvailabilityChange(value)}
+                      disabled={isUpdating}
+                      className={`
+                        px-3 py-2 text-sm font-medium border rounded-lg transition-colors text-left
+                        ${getButtonStyle(value)}
+                        cursor-pointer
+                        ${isUpdating ? 'opacity-50' : ''}
+                      `}
+                    >
+                      {value}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : (
+              // Read-only display for past items
+              <div className="space-y-2">
+                <p className="text-sm font-medium" style={{color: 'var(--primary-text)'}}>
+                  Your attendance: {currentAvailability === 'Was there' ? '✅ ' : currentAvailability === "Wasn't there" ? '❌ ' : ''}{currentAvailability || 'No response'}
+                </p>
+              </div>
+            )}
 
-            {/* Note Section */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium" style={{color: 'var(--primary-text)'}}>
-                Note (optional):
-              </label>
-              <textarea
-                value={note}
-                onChange={(e) => isEditable && handleNoteChange(e.target.value)}
-                placeholder={isEditable ? "Add any additional comments..." : "No note provided"}
-                disabled={!isEditable || isUpdating}
-                rows={3}
-                className="w-full px-3 py-2 text-sm border rounded-md resize-none"
-                style={{
-                  backgroundColor: isEditable ? 'var(--card-bg)' : 'var(--primary-bg)',
-                  borderColor: 'var(--border)',
-                  color: 'var(--primary-text)'
-                }}
-              />
-            </div>
+{/* Note Section */}
+            {isEditable ? (
+              <div className="space-y-2">
+                <label className="text-sm font-medium" style={{color: 'var(--primary-text)'}}>
+                  Note (optional):
+                </label>
+                <textarea
+                  value={note}
+                  onChange={(e) => handleNoteChange(e.target.value)}
+                  placeholder="Add any additional comments..."
+                  disabled={isUpdating}
+                  rows={3}
+                  className="w-full px-3 py-2 text-sm border rounded-md resize-none"
+                  style={{
+                    backgroundColor: 'var(--card-bg)',
+                    borderColor: 'var(--border)',
+                    color: 'var(--primary-text)'
+                  }}
+                />
+              </div>
+            ) : (
+              // Show note below attendance for read-only
+              currentNote && (
+                <div className="p-2 rounded-md" style={{background: 'var(--secondary-bg)'}}>
+                  <p className="text-xs" style={{color: 'var(--secondary-text)'}}>
+                    {currentNote}
+                  </p>
+                </div>
+              )
+            )}
 
             {isUpdating && (
               <div className="text-xs text-center" style={{color: 'var(--secondary-text)'}}>
