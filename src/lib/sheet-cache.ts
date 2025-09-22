@@ -32,10 +32,11 @@ export const SHEET_CACHE_CONFIG: Record<string, SheetCacheConfig> = {
     cacheTTL: 5 * 60 * 1000, // 5 minutes - player list changes infrequently
     range: 'A:A', // Only cache the player name column
   },
-  GAME_AVAILABILITY: {
+  GAME_AVAILABILITY_PLAYERS: {
     sheetId: SHEET_CONFIG.ROSTER_SHEET_ID,
     sheetName: SHEET_CONFIG.GAME_AVAILABILITY_SHEET_NAME,
-    cacheTTL: 1 * 60 * 1000, // 1 minute - more dynamic data
+    cacheTTL: 5 * 60 * 1000, // 5 minutes - player list changes infrequently
+    range: 'A:A', // Only cache the player name column
   }
 };
 

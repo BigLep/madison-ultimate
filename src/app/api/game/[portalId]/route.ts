@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSheetData, getSheetDataWithHyperlinks, updateSheetData } from '../../../../lib/google-api';
+import { getSheetData, updateSheetData } from '../../../../lib/google-api';
 import { findPortalEntryByPortalId } from '../../../../lib/portal-cache';
+import { getCachedSheetData } from '../../../../lib/sheet-cache';
+import { getPlayerGameAvailability } from '../../../../lib/game-availability-helper';
 import { SHEET_CONFIG } from '../../../../lib/sheet-config';
 import {
   GAME_CONFIG,
@@ -61,12 +63,8 @@ export async function GET(
       }, { status: 404 });
     }
 
-    // Step 2: Get Game Info data with dynamic column discovery
-    const gameInfoData = await getSheetDataWithHyperlinks(
-      ROSTER_SHEET_ID,
-      GAME_CONFIG.GAME_INFO_SHEET,
-      'A:AZ'
-    );
+    // Step 2: Get Game Info data from cache
+    const gameInfoData = await getCachedSheetData('GAME_INFO');
 
     if (!gameInfoData || gameInfoData.length < 2) {
       return NextResponse.json({
@@ -79,8 +77,7 @@ export async function GET(
     const gameInfoColumnMap: Record<string, number> = {};
     const headerRow = gameInfoData[0];
     for (let i = 0; i < headerRow.length; i++) {
-      const cellValue = headerRow[i];
-      const columnName = typeof cellValue === 'string' ? cellValue.trim() : cellValue?.text?.trim();
+      const columnName = headerRow[i]?.toString().trim();
       if (columnName) {
         gameInfoColumnMap[columnName] = i;
       }
@@ -118,23 +115,15 @@ export async function GET(
         const startColumnName = isGold ? GAME_CONFIG.GAME_INFO_COLUMN_NAMES.GOLD_START : GAME_CONFIG.GAME_INFO_COLUMN_NAMES.BLUE_START;
         const doneColumnName = isGold ? GAME_CONFIG.GAME_INFO_COLUMN_NAMES.GOLD_DONE : GAME_CONFIG.GAME_INFO_COLUMN_NAMES.BLUE_DONE;
         const locationColumnName = isGold ? GAME_CONFIG.GAME_INFO_COLUMN_NAMES.GOLD_LOCATION : GAME_CONFIG.GAME_INFO_COLUMN_NAMES.BLUE_LOCATION;
+        const locationUrlColumnName = isGold ? GAME_CONFIG.GAME_INFO_COLUMN_NAMES.GOLD_LOCATION_URL : GAME_CONFIG.GAME_INFO_COLUMN_NAMES.BLUE_LOCATION_URL;
         const gameNoteColumnName = isGold ? GAME_CONFIG.GAME_INFO_COLUMN_NAMES.GOLD_GAME_NOTE : GAME_CONFIG.GAME_INFO_COLUMN_NAMES.BLUE_GAME_NOTE;
 
         const warmupTime = getGameInfoValue(row, warmupColumnName);
         const gameStart = getGameInfoValue(row, startColumnName);
         const doneBy = getGameInfoValue(row, doneColumnName);
-        const locationData = row[gameInfoColumnMap[locationColumnName]];
+        const location = getGameInfoValue(row, locationColumnName);
+        const locationUrl = getGameInfoValue(row, locationUrlColumnName) || null;
         const gameNote = getGameInfoValue(row, gameNoteColumnName);
-
-        // Handle location data - could be string or object with text/url
-        let location: string, locationUrl: string | null;
-        if (typeof locationData === 'object' && locationData?.text && locationData?.url) {
-          location = locationData.text;
-          locationUrl = locationData.url;
-        } else {
-          location = (typeof locationData === 'string' ? locationData : '') || '';
-          locationUrl = null;
-        }
 
         // Check if this is a bye week
         const isBye = gameNumber.toLowerCase() === 'bye';
@@ -186,43 +175,34 @@ export async function GET(
       }
     });
 
-    // Step 3: Get player's current availability responses with dynamic column discovery
-    const availabilityData = await getSheetData(
-      ROSTER_SHEET_ID,
-      `'${GAME_CONFIG.GAME_AVAILABILITY_SHEET}'!A:ZZ`
-    );
-
+    // Step 3: Get player's current availability responses (fresh data)
     let playerAvailability: PlayerGameAvailability[] = [];
 
-    if (availabilityData && availabilityData.length > 1) {
-      // Create column mapping for Game Availability sheet (dynamic discovery)
-      const availabilityColumnMap: Record<string, number> = {};
-      const availabilityHeaderRow = availabilityData[0];
-      for (let i = 0; i < availabilityHeaderRow.length; i++) {
-        const columnName = availabilityHeaderRow[i]?.trim();
-        if (columnName) {
-          availabilityColumnMap[columnName] = i;
+    try {
+      const availabilityResult = await getPlayerGameAvailability(playerFullName);
+
+      if (availabilityResult) {
+        const { headerRow, playerRow } = availabilityResult;
+
+        // Create column mapping for Game Availability sheet (dynamic discovery)
+        const availabilityColumnMap: Record<string, number> = {};
+        for (let i = 0; i < headerRow.length; i++) {
+          const columnName = headerRow[i]?.toString().trim();
+          if (columnName) {
+            availabilityColumnMap[columnName] = i;
+          }
         }
-      }
 
-      // Now update the games with their correct column indices
-      // The availability sheet uses dates as column headers, not full game keys
-      games.forEach(game => {
-        const dateKey = game.date; // e.g., "9/27"
-        const noteKey = `${game.date} Note`; // e.g., "9/27 Note"
+        // Now update the games with their correct column indices
+        // The availability sheet uses dates as column headers, not full game keys
+        games.forEach(game => {
+          const dateKey = game.date; // e.g., "9/27"
+          const noteKey = `${game.date} Note`; // e.g., "9/27 Note"
 
-        game.availabilityColumnIndex = availabilityColumnMap[dateKey] || -1;
-        game.noteColumnIndex = availabilityColumnMap[noteKey] || -1;
-      });
+          game.availabilityColumnIndex = availabilityColumnMap[dateKey] || -1;
+          game.noteColumnIndex = availabilityColumnMap[noteKey] || -1;
+        });
 
-      // Find player's row by matching full name
-      const fullNameColumnIndex = availabilityColumnMap[GAME_CONFIG.AVAILABILITY_COLUMN_NAMES.FULL_NAME];
-      const playerRow = availabilityData.find((row, index) => {
-        if (index === 0) return false; // Skip header
-        return row[fullNameColumnIndex] === playerFullName;
-      });
-
-      if (playerRow) {
         // Extract availability for each game
         playerAvailability = games.map(game => ({
           gameKey: getGameKey(game.team, game.gameNumber),
@@ -230,6 +210,9 @@ export async function GET(
           note: game.noteColumnIndex >= 0 ? (playerRow[game.noteColumnIndex] || '') : '',
         }));
       }
+    } catch (error) {
+      console.log('Could not fetch game availability:', error);
+      // Continue with empty availability - non-critical for page load
     }
 
     return NextResponse.json({
@@ -309,11 +292,8 @@ export async function POST(
       }, { status: 400 });
     }
 
-    // Get Game Info data to validate the game exists and check if it's in the past
-    const gameInfoData = await getSheetData(
-      ROSTER_SHEET_ID,
-      `'${GAME_CONFIG.GAME_INFO_SHEET}'!A:AZ`
-    );
+    // Get Game Info data from cache to validate the game exists and check if it's in the past
+    const gameInfoData = await getCachedSheetData('GAME_INFO');
 
     if (!gameInfoData || gameInfoData.length < 2) {
       return NextResponse.json({
@@ -326,8 +306,7 @@ export async function POST(
     const gameInfoColumnMap: Record<string, number> = {};
     const headerRow = gameInfoData[0];
     for (let i = 0; i < headerRow.length; i++) {
-      const cellValue = headerRow[i];
-      const columnName = typeof cellValue === 'string' ? cellValue.trim() : cellValue?.text?.trim();
+      const columnName = headerRow[i]?.toString().trim();
       if (columnName) {
         gameInfoColumnMap[columnName] = i;
       }
@@ -371,22 +350,20 @@ export async function POST(
       }, { status: 404 });
     }
 
-    // Get Game Availability data to find the player's row and use dynamic column discovery
-    const availabilityData = await getSheetData(
-      ROSTER_SHEET_ID,
-      `'${GAME_CONFIG.GAME_AVAILABILITY_SHEET}'!A:ZZ`
-    );
+    // Get fresh Game Availability data using cached player mappings
+    const availabilityResult = await getPlayerGameAvailability(fullName);
 
-    if (!availabilityData || availabilityData.length < 2) {
+    if (!availabilityResult) {
       return NextResponse.json({
         success: false,
-        error: 'Game availability sheet not found'
+        error: `Player "${fullName}" not found in game availability sheet`
       }, { status: 404 });
     }
 
+    const { headerRow: availabilityHeaderRow, rowIndex: playerRowIndex } = availabilityResult;
+
     // Create column mapping for Game Availability sheet (dynamic discovery)
     const availabilityColumnMap: Record<string, number> = {};
-    const availabilityHeaderRow = availabilityData[0];
     for (let i = 0; i < availabilityHeaderRow.length; i++) {
       const columnName = availabilityHeaderRow[i]?.trim();
       if (columnName) {
@@ -425,23 +402,8 @@ export async function POST(
       }, { status: 404 });
     }
 
-    // Find the player's row
-    const fullNameColumnIndex = availabilityColumnMap[GAME_CONFIG.AVAILABILITY_COLUMN_NAMES.FULL_NAME];
-    let playerRowIndex = -1;
-    for (let i = 1; i < availabilityData.length; i++) {
-      const playerName = availabilityData[i][fullNameColumnIndex];
-      if (playerName === fullName) {
-        playerRowIndex = i + 1; // +1 because sheet rows are 1-indexed
-        break;
-      }
-    }
-
-    if (playerRowIndex === -1) {
-      return NextResponse.json({
-        success: false,
-        error: `Player not found in availability sheet. Looking for: "${fullName}".`
-      }, { status: 404 });
-    }
+    // Player row index is already available from the helper function
+    // (playerRowIndex is already 1-indexed from getPlayerGameAvailability)
 
     // Convert column index to letter format (A, B, C, ...)
     const getColumnLetter = (index: number): string => {
