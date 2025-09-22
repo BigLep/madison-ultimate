@@ -67,6 +67,7 @@ export async function GET(request: NextRequest) {
   // Check Gmail OAuth credential configuration
   const gmailClientId = process.env.GMAIL_CLIENT_ID;
   const gmailClientSecret = process.env.GMAIL_CLIENT_SECRET;
+  const gmailRefreshToken = process.env.GMAIL_REFRESH_TOKEN;
   const oauthJsonPath = process.env.GOOGLE_OAUTH_JSON_PATH;
 
   if ((gmailClientId && gmailClientSecret) || oauthJsonPath) {
@@ -183,10 +184,6 @@ export async function GET(request: NextRequest) {
   }
 
   // 5. Gmail OAuth Configuration Check
-  const gmailClientId = process.env.GMAIL_CLIENT_ID;
-  const gmailClientSecret = process.env.GMAIL_CLIENT_SECRET;
-  const gmailRefreshToken = process.env.GMAIL_REFRESH_TOKEN;
-
   // First check if all required credentials are present
   if (!gmailClientId || !gmailClientSecret || !gmailRefreshToken) {
     const missing = [];
