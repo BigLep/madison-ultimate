@@ -199,7 +199,14 @@ Set these in Vercel Dashboard → Project → Settings → Environment Variables
 # Service Account
 GOOGLE_SERVICE_ACCOUNT_KEY=<full-json-content-as-string>
 
-# Gmail OAuth
+# Gmail OAuth (choose ONE option):
+# Option 1: OAuth JSON file path
+GOOGLE_OAUTH_JSON_PATH=.google-oauth.json
+# Option 2: Individual credentials
+GMAIL_CLIENT_ID=<your-oauth-client-id>
+GMAIL_CLIENT_SECRET=<your-oauth-client-secret>
+
+# Gmail Refresh Token (required for both options)
 GMAIL_REFRESH_TOKEN=<your-refresh-token-from-oauth-flow>
 
 # Resource IDs

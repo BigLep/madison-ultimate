@@ -34,6 +34,11 @@ yarn-error.log*
 .google-service-account.json
 *service-account*.json
 
+# Google OAuth key files
+*.google-oauth.json
+.google-oauth.json
+*oauth*.json
+
 # vercel
 .vercel
 
