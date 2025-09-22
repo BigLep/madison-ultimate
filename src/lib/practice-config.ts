@@ -16,9 +16,10 @@ export const PRACTICE_CONFIG = {
   PRACTICE_INFO_COLUMNS: {
     DATE: 0,        // "Date" - practice date
     LOCATION: 1,    // "Location" - where practice is held
-    START: 2,       // "Start" - start time
-    END: 3,         // "End" - end time
-    NOTE: 4,        // "Note" - coaches note (optional)
+    LOCATION_URL: 2, // "Location URL" - hyperlink to location
+    START: 3,       // "Start" - start time
+    END: 4,         // "End" - end time
+    NOTE: 5,        // "Note" - coaches note (optional)
   },
 
   // Practice Availability sheet columns

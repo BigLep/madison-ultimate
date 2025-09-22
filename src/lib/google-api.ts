@@ -232,6 +232,20 @@ export async function getSheetData(sheetId: string, range: string = 'A:Z') {
   }
 }
 
+// Batch get multiple ranges in a single API call
+export async function getBatchSheetData(sheetId: string, ranges: string[]) {
+  try {
+    const response = await sheets.spreadsheets.values.batchGet({
+      spreadsheetId: sheetId,
+      ranges,
+    });
+    return response.data.valueRanges?.map(range => range.values || []) || [];
+  } catch (error) {
+    console.error(`Error fetching batch sheet data for ${sheetId}:`, error);
+    return [];
+  }
+}
+
 // Helper function to update Google Sheets data (batch update)
 export async function updateSheetData(sheetId: string, range: string, values: any[][]) {
   try {

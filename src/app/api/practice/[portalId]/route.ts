@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSheetData, getSheetDataWithHyperlinks, updateSheetData } from '../../../../lib/google-api';
+import { getSheetData, updateSheetData } from '../../../../lib/google-api';
 import { findPortalEntryByPortalId } from '../../../../lib/portal-cache';
+import { getCachedSheetData } from '../../../../lib/sheet-cache';
+import { getPlayerPracticeAvailability } from '../../../../lib/practice-availability-helper';
 import { SHEET_CONFIG } from '../../../../lib/sheet-config';
 import {
   PRACTICE_CONFIG,
@@ -51,12 +53,8 @@ export async function GET(
       console.log('Could not fetch player full name, using lookup key as fallback');
     }
 
-    // Step 2: Get Practice Info data with hyperlinks
-    const practiceInfoData = await getSheetDataWithHyperlinks(
-      ROSTER_SHEET_ID,
-      PRACTICE_CONFIG.PRACTICE_INFO_SHEET,
-      'A:E'
-    );
+    // Step 2: Get Practice Info data from cache
+    const practiceInfoData = await getCachedSheetData('PRACTICE_INFO');
 
     if (!practiceInfoData || practiceInfoData.length < 2) {
       return NextResponse.json({
@@ -71,25 +69,13 @@ export async function GET(
       const row = practiceInfoData[i];
       if (!row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.DATE]) continue;
 
-      const dateValue = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.DATE];
-      const date = typeof dateValue === 'string' ? dateValue : dateValue?.text || '';
-      const locationData = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.LOCATION];
-      const startTimeValue = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.START];
-      const startTime = typeof startTimeValue === 'string' ? startTimeValue : startTimeValue?.text || '';
-      const endTimeValue = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.END];
-      const endTime = typeof endTimeValue === 'string' ? endTimeValue : endTimeValue?.text || '';
-      const noteValue = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.NOTE];
-      const note = typeof noteValue === 'string' ? noteValue : noteValue?.text || '';
-
-      // Handle location data - could be string or object with text/url
-      let location: string, locationUrl: string | null;
-      if (typeof locationData === 'object' && locationData?.text && locationData?.url) {
-        location = locationData.text;
-        locationUrl = locationData.url;
-      } else {
-        location = (typeof locationData === 'string' ? locationData : '') || '';
-        locationUrl = null;
-      }
+      // Extract practice data from cached sheet (all values are strings)
+      const date = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.DATE] || '';
+      const location = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.LOCATION] || '';
+      const locationUrl = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.LOCATION_URL] || null;
+      const startTime = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.START] || '';
+      const endTime = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.END] || '';
+      const note = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.NOTE] || '';
 
       practices.push({
         date,
@@ -131,22 +117,15 @@ export async function GET(
       }
     });
 
-    // Step 3: Get player's current availability responses
-    const availabilityData = await getSheetData(
-      ROSTER_SHEET_ID,
-      `'${PRACTICE_CONFIG.PRACTICE_AVAILABILITY_SHEET}'!A:ZZ`
-    );
-
+    // Step 3: Get player's current availability responses (fresh data)
     let playerAvailability: PlayerAvailability[] = [];
 
-    if (availabilityData && availabilityData.length > 1) {
-      // Find player's row by matching full name
-      const playerRow = availabilityData.find((row, index) => {
-        if (index === 0) return false; // Skip header
-        return row[PRACTICE_CONFIG.AVAILABILITY_COLUMNS.FULL_NAME] === playerFullName;
-      });
+    try {
+      const availabilityResult = await getPlayerPracticeAvailability(playerFullName);
 
-      if (playerRow) {
+      if (availabilityResult) {
+        const { playerRow } = availabilityResult;
+
         // Extract availability for each practice
         playerAvailability = practices.map(practice => ({
           practiceDate: practice.date,
@@ -154,6 +133,9 @@ export async function GET(
           note: playerRow[practice.noteColumnIndex] || '',
         }));
       }
+    } catch (error) {
+      console.log('Could not fetch practice availability:', error);
+      // Continue with empty availability - non-critical for page load
     }
 
     return NextResponse.json({
@@ -226,11 +208,8 @@ export async function POST(
       }, { status: 400 });
     }
 
-    // Get Practice Info data to find the practice column indices
-    const practiceInfoData = await getSheetData(
-      ROSTER_SHEET_ID,
-      `'${PRACTICE_CONFIG.PRACTICE_INFO_SHEET}'!A:E`
-    );
+    // Get Practice Info data from cache to find the practice column indices
+    const practiceInfoData = await getCachedSheetData('PRACTICE_INFO');
 
     if (!practiceInfoData || practiceInfoData.length < 2) {
       return NextResponse.json({
@@ -260,38 +239,17 @@ export async function POST(
       }, { status: 404 });
     }
 
-    // Get Practice Availability data to find the player's row
-    const availabilityData = await getSheetData(
-      ROSTER_SHEET_ID,
-      `'${PRACTICE_CONFIG.PRACTICE_AVAILABILITY_SHEET}'!A:ZZ`
-    );
+    // Get the player's row using targeted fetching
+    const availabilityResult = await getPlayerPracticeAvailability(fullName);
 
-    if (!availabilityData || availabilityData.length < 2) {
+    if (!availabilityResult) {
       return NextResponse.json({
         success: false,
-        error: 'Practice availability sheet not found'
+        error: `Player not found in availability sheet: "${fullName}"`
       }, { status: 404 });
     }
 
-    // Find the player's row
-    let playerRowIndex = -1;
-    console.log('DEBUG: Looking for player:', fullName);
-    console.log('DEBUG: Available players in sheet:');
-    for (let i = 1; i < availabilityData.length; i++) {
-      const playerName = availabilityData[i][PRACTICE_CONFIG.AVAILABILITY_COLUMNS.FULL_NAME];
-      console.log(`  Row ${i}: "${playerName}"`);
-      if (playerName === fullName) {
-        playerRowIndex = i + 1; // +1 because sheet rows are 1-indexed
-        break;
-      }
-    }
-
-    if (playerRowIndex === -1) {
-      return NextResponse.json({
-        success: false,
-        error: `Player not found in availability sheet. Looking for: "${fullName}". Found ${availabilityData.length - 1} players in sheet.`
-      }, { status: 404 });
-    }
+    const playerRowIndex = availabilityResult.rowIndex;
 
     // Convert column index to letter format (A, B, C, ...)
     const getColumnLetter = (index: number): string => {
