@@ -98,7 +98,7 @@ interface PracticeData {
   };
 }
 
-type PortalScreen = 'season-info' | 'player-info' | 'practice-availability' | 'game-availability' | 'help'
+type PortalScreen = 'home' | 'player-info' | 'practice-availability' | 'game-availability'
 
 // Helper function to get team display
 const getTeamDisplay = (team?: string) => {
@@ -118,25 +118,25 @@ const getTeamDisplay = (team?: string) => {
 
 export default function PlayerPortal({ params }: { params: Promise<{ portalId: string }> }) {
   const [player, setPlayer] = useState<PlayerData | null>(null)
-  const [activeScreen, setActiveScreen] = useState<PortalScreen>('season-info')
+  const [activeScreen, setActiveScreen] = useState<PortalScreen>('home')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   // Hash-to-screen mapping
   const hashToScreen: Record<string, PortalScreen> = {
-    '#season': 'season-info',
+    '#home': 'home',
+    '#season': 'home', // Legacy support
+    '#help': 'home', // Legacy support
     '#player': 'player-info',
     '#practices': 'practice-availability',
-    '#games': 'game-availability',
-    '#help': 'help'
+    '#games': 'game-availability'
   }
 
   const screenToHash: Record<PortalScreen, string> = {
-    'season-info': '#season',
+    'home': '#home',
     'player-info': '#player',
     'practice-availability': '#practices',
-    'game-availability': '#games',
-    'help': '#help'
+    'game-availability': '#games'
   }
 
   // Handle initial hash and hash changes
@@ -309,34 +309,31 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
   }
 
   const navItems = [
-    { id: 'season-info' as const, label: 'Season Info', icon: Home },
-    { id: 'player-info' as const, label: 'Player Info', icon: User },
+    { id: 'home' as const, label: 'Home', icon: Home },
+    { id: 'player-info' as const, label: 'Player', icon: User },
     { id: 'practice-availability' as const, label: 'Practices', icon: Calendar },
     { id: 'game-availability' as const, label: 'Games', icon: Trophy },
-    { id: 'help' as const, label: 'Help', icon: HelpCircle },
   ]
 
   const renderContent = () => {
     switch (activeScreen) {
-      case 'season-info':
-        return <SeasonInfoScreen />
+      case 'home':
+        return <HomeScreen />
       case 'player-info':
         return <PlayerInfoScreen player={player} />
       case 'practice-availability':
         return <PracticeAvailabilityScreen params={params} />
       case 'game-availability':
         return <GameAvailabilityScreen params={params} />
-      case 'help':
-        return <HelpScreen />
       default:
-        return <SeasonInfoScreen />
+        return <HomeScreen />
     }
   }
 
   return (
-    <div className="min-h-screen" style={{background: 'var(--primary-bg)'}}>
-      {/* Header */}
-      <div className="shadow-sm border-b" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
+    <div className="min-h-screen flex flex-col" style={{background: 'var(--primary-bg)'}}>
+      {/* Header - Always visible */}
+      <div className="sticky top-0 z-50 shadow-sm border-b" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
         <div className="max-w-lg mx-auto px-4 py-4">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-full flex items-center justify-center shadow-lg" style={{background: 'var(--accent)'}}>
@@ -354,15 +351,17 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
         </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-lg mx-auto px-4 py-6 pb-24">
-        {renderContent()}
+      {/* Content - Scrollable area */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-lg mx-auto px-4 py-6 pb-24">
+          {renderContent()}
+        </div>
       </div>
 
-      {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 border-t shadow-lg" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
+      {/* Bottom Navigation - Always visible with Safari-safe spacing */}
+      <div className="sticky bottom-0 z-50 border-t shadow-lg" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
         <div className="max-w-lg mx-auto">
-          <nav className="flex">
+          <nav className="flex" style={{paddingBottom: 'env(safe-area-inset-bottom)'}}>
             {navItems.map((item) => {
               const Icon = item.icon
               const isActive = activeScreen === item.id
@@ -370,14 +369,14 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
                 <button
                   key={item.id}
                   onClick={() => changeScreen(item.id)}
-                  className="flex-1 py-3 px-2 text-center transition-colors"
+                  className="flex-1 py-2 px-1 text-center transition-colors"
                   style={{
                     color: isActive ? 'var(--page-title)' : 'var(--secondary-text)',
                     backgroundColor: isActive ? 'var(--primary-bg)' : 'transparent'
                   }}
                 >
-                  <Icon className="w-6 h-6 mx-auto mb-1" />
-                  <span className="text-xs font-medium">{item.label}</span>
+                  <Icon className="w-5 h-5 mx-auto mb-1" />
+                  <span className="text-xs font-medium leading-tight">{item.label}</span>
                 </button>
               )
             })}
@@ -391,100 +390,7 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
   )
 }
 
-function HelpScreen() {
-  return (
-    <div className="space-y-6 p-4">
-      {/* Header */}
-      <div className="text-center space-y-2">
-        <div className="w-16 h-16 mx-auto rounded-full bg-blue-100 flex items-center justify-center">
-          <HelpCircle className="w-8 h-8 text-blue-600" />
-        </div>
-        <h1 className="text-2xl font-bold" style={{color: 'var(--page-title)'}}>
-          Need Help?
-        </h1>
-        <p className="text-sm" style={{color: 'var(--secondary-text)'}}>
-          Here are some resources to help you use the Player Portal
-        </p>
-      </div>
-
-      {/* Help Cards */}
-      <div className="space-y-4">
-        {/* Documentation Card */}
-        <Card className="shadow-sm" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg" style={{color: 'var(--page-title)'}}>
-              📖 Player Portal Guide
-            </CardTitle>
-            <CardDescription style={{color: 'var(--secondary-text)'}}>
-              Learn how to use all the features of the Player Portal
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <a
-              href={APP_CONFIG.PLAYER_PORTAL_DOCUMENTATION}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hyperlink text-sm"
-            >
-              View the full Player Portal guide →
-            </a>
-          </CardContent>
-        </Card>
-
-        {/* Contact Card */}
-        <Card className="shadow-sm" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg" style={{color: 'var(--page-title)'}}>
-              📧 Contact Coach
-            </CardTitle>
-            <CardDescription style={{color: 'var(--secondary-text)'}}>
-              Have questions? Need help with something specific?
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm mb-3" style={{color: 'var(--primary-text)'}}>
-              Email&nbsp;
-              <a
-                href={`mailto:${APP_CONFIG.COACH_EMAIL}`}
-                className="hyperlink text-sm"
-              >
-                {APP_CONFIG.COACH_EMAIL}
-              </a>.
-            </p>
-            
-          </CardContent>
-        </Card>
-
-        {/* Quick Tips Card */}
-        <Card className="shadow-sm" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg" style={{color: 'var(--page-title)'}}>
-              💡 Quick Tips
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="space-y-2 text-sm" style={{color: 'var(--primary-text)'}}>
-              <div className="flex items-start gap-2">
-                <span className="text-green-600">✓</span>
-                <span>Update your practice/game availability as soon as possible.</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="text-green-600">✓</span>
-                <span>Check the Season Info tab for important announcements.</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="text-green-600">✓</span>
-                <span>Each player has a unique URL.  Add this site to your home screen or bookmarks for easy access.</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-}
-
-function SeasonInfoScreen() {
+function HomeScreen() {
   // URL constants for easy maintenance
   const SEASON_INFO_URL = 'https://madisonultimate.notion.site/2025-Fall-Madison-Ultimate-265c4da46f7580e8ad0cc5c3fb2315f5';
 
@@ -663,9 +569,62 @@ function SeasonInfoScreen() {
           )}
         </CardContent>
       </Card>
+
+      {/* Help Section */}
+      <Card className="shadow-lg" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
+        <CardHeader>
+          <CardTitle style={{color: 'var(--page-title)'}}>Need Help?</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Documentation Link */}
+          <div>
+            <p className="text-sm mb-2" style={{color: 'var(--primary-text)'}}>
+              📖&nbsp;
+              <a
+                href={APP_CONFIG.PLAYER_PORTAL_DOCUMENTATION}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hyperlink"
+              >
+                Player Portal Guide
+              </a>
+            </p>
+          </div>
+
+          {/* Contact */}
+          <div>
+            <p className="text-sm mb-2" style={{color: 'var(--primary-text)'}}>
+              📧 Email&nbsp;
+              <a
+                href={`mailto:${APP_CONFIG.COACH_EMAIL}`}
+                className="hyperlink"
+              >
+                {APP_CONFIG.COACH_EMAIL}
+              </a>
+            </p>
+          </div>
+
+          {/* Quick Tips */}
+          <div className="space-y-2 text-sm" style={{color: 'var(--primary-text)'}}>
+            <div className="flex items-start gap-2">
+              <span className="text-green-600">✓</span>
+              <span>Update your practice/game availability as soon as possible.</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-green-600">✓</span>
+              <span>Check this Home tab for important announcements.</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-green-600">✓</span>
+              <span>Add this site to your home screen for easy access.</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
-  )
+  );
 }
+
 
 function PlayerInfoScreen({ player }: { player: PlayerData }) {
 
