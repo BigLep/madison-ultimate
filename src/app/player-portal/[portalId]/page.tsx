@@ -221,7 +221,7 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
           appleTouchIcon.rel = 'apple-touch-icon'
           document.head.appendChild(appleTouchIcon)
         }
-        appleTouchIcon.href = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥏</text></svg>"
+        appleTouchIcon.href = "/images/madison-ultimate-logo-1/180.png"
 
         // Add apple mobile web app capable
         let appleMobileCapable = document.querySelector('meta[name="apple-mobile-web-app-capable"]') as HTMLMetaElement

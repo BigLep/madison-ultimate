@@ -6,7 +6,49 @@ export const metadata: Metadata = {
   description: 'Signup tracking for Madison Middle School Ultimate Frisbee team',
   viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover',
   icons: {
-    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🥏</text></svg>',
+    icon: [
+      {
+        url: '/images/madison-ultimate-logo-1/favicon.svg',
+        type: 'image/svg+xml',
+      },
+      {
+        url: '/images/madison-ultimate-logo-1/192.png',
+        sizes: '192x192',
+        type: 'image/png',
+      },
+      {
+        url: '/images/madison-ultimate-logo-1/32.png',
+        sizes: '32x32',
+        type: 'image/png',
+      },
+      {
+        url: '/images/madison-ultimate-logo-1/16.png',
+        sizes: '16x16',
+        type: 'image/png',
+      },
+    ],
+    apple: [
+      {
+        url: '/images/madison-ultimate-logo-1/180.png',
+        sizes: '180x180',
+        type: 'image/png',
+      },
+      {
+        url: '/images/madison-ultimate-logo-1/152.png',
+        sizes: '152x152',
+        type: 'image/png',
+      },
+      {
+        url: '/images/madison-ultimate-logo-1/167.png',
+        sizes: '167x167',
+        type: 'image/png',
+      },
+      {
+        url: '/images/madison-ultimate-logo-1/120.png',
+        sizes: '120x120',
+        type: 'image/png',
+      },
+    ],
   },
 }
 

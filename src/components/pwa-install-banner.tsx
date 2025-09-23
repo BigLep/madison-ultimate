@@ -74,13 +74,16 @@ export function PWAInstallBanner({ playerName }: PWAInstallBannerProps) {
 
   return (
     <>
-      {/* iOS PWA Prompt - handled by react-ios-pwa-prompt library */}
-      {showIOSPrompt && (
-        <PWAPrompt timesToShow={3} />
+      {/* PWA Install Banner - Temporarily disabled */}
+      {false && showIOSPrompt && (
+        <PWAPrompt
+          timesToShow={3}
+          iconSrc="/images/madison-ultimate-logo-1/180.png"
+        />
       )}
 
-      {/* Android/Desktop PWA Banner */}
-      {showAndroidBanner && deferredPrompt && !isStandalone && (
+      {/* Android/Desktop PWA Banner - Temporarily disabled */}
+      {false && showAndroidBanner && deferredPrompt && !isStandalone && (
         <div className="fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-4 md:max-w-sm">
           <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-4" style={{
             background: 'var(--card-bg)',
@@ -99,8 +102,12 @@ export function PWAInstallBanner({ playerName }: PWAInstallBannerProps) {
             {/* Content */}
             <div className="flex items-start gap-3 pr-6">
               <div className="flex-shrink-0 mt-1">
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <span className="text-xl">🥏</span>
+                <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
+                  <img
+                    src="/images/madison-ultimate-logo-1/favicon.svg"
+                    alt="Madison Ultimate Logo"
+                    className="w-8 h-8 object-contain"
+                  />
                 </div>
               </div>
 
