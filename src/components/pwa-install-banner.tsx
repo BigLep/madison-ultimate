@@ -78,7 +78,6 @@ export function PWAInstallBanner({ playerName }: PWAInstallBannerProps) {
       {false && showIOSPrompt && (
         <PWAPrompt
           timesToShow={3}
-          iconSrc="/images/madison-ultimate-logo-1/180.png"
         />
       )}
 
