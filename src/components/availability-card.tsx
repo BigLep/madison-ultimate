@@ -66,11 +66,11 @@ export function AvailabilityCard({
       return "bg-white border-gray-300 text-gray-700 hover:bg-gray-50";
     }
     if (value === availabilityOptions.PLANNING) {
-      return "bg-green-100 border-green-300 text-green-800 hover:bg-green-200";
+      return "availability-planning hover:opacity-80";
     } else if (value === availabilityOptions.CANT_MAKE) {
-      return "bg-red-100 border-red-300 text-red-800 hover:bg-red-200";
+      return "availability-cant-make hover:opacity-80";
     } else {
-      return "bg-yellow-100 border-yellow-300 text-yellow-800 hover:bg-yellow-200";
+      return "availability-unsure hover:opacity-80";
     }
   };
 

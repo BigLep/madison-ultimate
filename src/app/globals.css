@@ -2,51 +2,42 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Madison Ultimate - Simple Color System */
+/* Madison Ultimate - Dark Mode Only */
 :root {
-  /* Essential Colors Only */
-  --page-title: #1e3a8a;           /* Navy blue for main titles */
-  --secondary-header: #64748b;     /* Slate gray for secondary headers */
-  --primary-text: #1f2937;        /* Dark gray for main content */
-  --secondary-text: #6b7280;      /* Medium gray for descriptions/muted text */
-  --primary-bg: #f8fafc;          /* Very light gray background */
-  --card-bg: #ffffff;             /* Pure white for cards/forms */
-  --accent: #2563eb;              /* Blue for buttons/links */
-  --border: #e2e8f0;              /* Light gray for borders */
+  /* Dark Theme Colors */
+  --page-title: #93c5fd;          /* Light blue for titles */
+  --secondary-header: #cbd5e1;    /* Light gray for secondary headers */
+  --primary-text: #f1f5f9;        /* Light gray for main text */
+  --secondary-text: #94a3b8;      /* Medium gray for secondary text */
+  --primary-bg: #0f172a;          /* Dark slate background */
+  --card-bg: #1e293b;             /* Dark gray for cards */
+  --accent: #3b82f6;              /* Bright blue for accent */
+  --border: #334155;              /* Dark gray for borders */
 
-  /* Availability Status Colors - Matching Tailwind color palette */
-  --status-success-bg: #dcfce7;     /* green-100 */
-  --status-success-border: #86efac; /* green-300 */
-  --status-success-text: #166534;   /* green-800 */
+  /* Availability Status Colors - Consistent across selector and summary */
+  --availability-planning-bg: #dcfce7;    /* green-100 */
+  --availability-planning-border: #86efac; /* green-300 */
+  --availability-planning-text: #166534;   /* green-800 */
 
-  --status-danger-bg: #fee2e2;      /* red-100 */
-  --status-danger-border: #fca5a5;  /* red-300 */
-  --status-danger-text: #991b1b;    /* red-800 */
+  --availability-cant-make-bg: #fee2e2;   /* red-100 */
+  --availability-cant-make-border: #fca5a5; /* red-300 */
+  --availability-cant-make-text: #991b1b;  /* red-800 */
 
-  --status-warning-bg: #fef3c7;     /* yellow-100 */
-  --status-warning-border: #fcd34d; /* yellow-300 */
-  --status-warning-text: #92400e;   /* yellow-800 */
+  --availability-unsure-bg: #fef3c7;      /* yellow-100 */
+  --availability-unsure-border: #fcd34d;  /* yellow-300 */
+  --availability-unsure-text: #92400e;    /* yellow-800 */
 
-  --status-info-bg: #dbeafe;        /* blue-100 */
-  --status-info-border: #93c5fd;    /* blue-300 */
-  --status-info-text: #1e40af;      /* blue-800 */
+  --availability-missing-bg: #dbeafe;     /* blue-100 */
+  --availability-missing-border: #93c5fd; /* blue-300 */
+  --availability-missing-text: #1e40af;   /* blue-800 */
 
-  --status-neutral-bg: #f9fafb;     /* gray-50 */
-  --status-neutral-border: #e5e7eb; /* gray-200 */
-  --status-neutral-text: #4b5563;   /* gray-600 */
-}
+  --availability-present-bg: #15803d;     /* darker green for attendance */
+  --availability-present-border: #166534;
+  --availability-present-text: #ffffff;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --page-title: #93c5fd;          /* Light blue for dark mode titles */
-    --secondary-header: #cbd5e1;    /* Light gray for dark mode secondary headers */
-    --primary-text: #f1f5f9;        /* Light gray for dark mode main text */
-    --secondary-text: #94a3b8;      /* Medium gray for dark mode secondary text */
-    --primary-bg: #0f172a;          /* Dark slate for dark mode background */
-    --card-bg: #1e293b;             /* Dark gray for dark mode cards */
-    --accent: #3b82f6;              /* Bright blue for dark mode accent */
-    --border: #334155;              /* Dark gray for dark mode borders */
-  }
+  --availability-absent-bg: #b91c1c;      /* darker red for attendance */
+  --availability-absent-border: #991b1b;
+  --availability-absent-text: #ffffff;
 }
 
 /* Simple body styling */
@@ -79,46 +70,42 @@ body {
 }
 
 /* Availability Status Utility Classes */
-.status-missing {
-  background-color: var(--status-info-bg);
-  border-color: var(--status-info-border);
-  color: var(--status-info-text);
+.availability-planning {
+  background-color: var(--availability-planning-bg);
+  border-color: var(--availability-planning-border);
+  color: var(--availability-planning-text);
 }
 
-.status-planning {
-  background-color: var(--status-success-bg);
-  border-color: var(--status-success-border);
-  color: var(--status-success-text);
+.availability-cant-make {
+  background-color: var(--availability-cant-make-bg);
+  border-color: var(--availability-cant-make-border);
+  color: var(--availability-cant-make-text);
 }
 
-.status-cant-make {
-  background-color: var(--status-danger-bg);
-  border-color: var(--status-danger-border);
-  color: var(--status-danger-text);
+.availability-unsure {
+  background-color: var(--availability-unsure-bg);
+  border-color: var(--availability-unsure-border);
+  color: var(--availability-unsure-text);
 }
 
-.status-unsure {
-  background-color: var(--status-warning-bg);
-  border-color: var(--status-warning-border);
-  color: var(--status-warning-text);
+.availability-missing {
+  background-color: var(--availability-missing-bg);
+  border-color: var(--availability-missing-border);
+  color: var(--availability-missing-text);
 }
 
-.status-neutral {
-  background-color: var(--status-neutral-bg);
-  border-color: var(--status-neutral-border);
-  color: var(--status-neutral-text);
+.availability-present {
+  background-color: var(--availability-present-bg);
+  border-color: var(--availability-present-border);
+  color: var(--availability-present-text);
 }
 
-/* Practice attendance status styles */
-.attendance-present.attendance-present {
-  background-color: #15803d; /* darker green */
-  border-color: #166534;
+.availability-absent {
+  background-color: var(--availability-absent-bg);
+  border-color: var(--availability-absent-border);
+  color: var(--availability-absent-text);
 }
 
-.attendance-absent.attendance-absent {
-  background-color: #b91c1c; /* darker red */
-  border-color: #991b1b;
-}
 
 /* Consistent Hyperlink Styling */
 .hyperlink {

@@ -41,57 +41,57 @@ export function AvailabilitySummary({
         {/* Upcoming items stats - always show all */}
         {upcomingItemsForStats.length > 0 && (
           <>
-            <div className={`flex justify-between items-center py-2 px-3 rounded-lg border ${upcomingNoResponse > 0 ? 'bg-blue-100 border-blue-300' : 'bg-gray-50 border-gray-200'}`}>
+            <div className="flex justify-between items-center py-2 px-3 rounded-lg border availability-missing">
               <div className="flex-1">
-                <div className={`flex items-center gap-2 ${upcomingNoResponse > 0 ? 'text-blue-800' : 'text-gray-600'}`}>
+                <div className="flex items-center gap-2">
                   <span>❗</span>
                   <span>Haven't entered availability for</span>
                 </div>
                 {upcomingNoResponse > 0 && (
-                  <div className="text-xs text-blue-700 mt-1">👇 Enter your availability below</div>
+                  <div className="text-xs mt-1">👇 Enter your availability below</div>
                 )}
               </div>
-              <span className={`font-semibold ${upcomingNoResponse > 0 ? 'text-blue-800' : 'text-gray-600'}`}>{upcomingNoResponse}</span>
+              <span className="font-semibold">{upcomingNoResponse}</span>
             </div>
-            <div className={`flex justify-between items-center py-2 px-3 rounded-lg border ${upcomingPlanToMake > 0 ? 'bg-green-100 border-green-300' : 'bg-gray-50 border-gray-200'}`}>
-              <span className={`flex items-center gap-2 ${upcomingPlanToMake > 0 ? 'text-green-800' : 'text-gray-600'}`}>
+            <div className="flex justify-between items-center py-2 px-3 rounded-lg border availability-planning">
+              <span className="flex items-center gap-2">
                 <span>👍</span>
                 <span>Planning to attend</span>
               </span>
-              <span className={`font-semibold ${upcomingPlanToMake > 0 ? 'text-green-800' : 'text-gray-600'}`}>{upcomingPlanToMake}</span>
+              <span className="font-semibold">{upcomingPlanToMake}</span>
             </div>
-            <div className={`flex justify-between items-center py-2 px-3 rounded-lg border ${upcomingCantMake > 0 ? 'bg-red-100 border-red-300' : 'bg-gray-50 border-gray-200'}`}>
-              <span className={`flex items-center gap-2 ${upcomingCantMake > 0 ? 'text-red-800' : 'text-gray-600'}`}>
+            <div className="flex justify-between items-center py-2 px-3 rounded-lg border availability-cant-make">
+              <span className="flex items-center gap-2">
                 <span>👎</span>
                 <span>Can't make it</span>
               </span>
-              <span className={`font-semibold ${upcomingCantMake > 0 ? 'text-red-800' : 'text-gray-600'}`}>{upcomingCantMake}</span>
+              <span className="font-semibold">{upcomingCantMake}</span>
             </div>
-            <div className={`flex justify-between items-center py-2 px-3 rounded-lg border ${upcomingNotSure > 0 ? 'bg-yellow-100 border-yellow-300' : 'bg-gray-50 border-gray-200'}`}>
-              <span className={`flex items-center gap-2 ${upcomingNotSure > 0 ? 'text-yellow-800' : 'text-gray-600'}`}>
+            <div className="flex justify-between items-center py-2 px-3 rounded-lg border availability-unsure">
+              <span className="flex items-center gap-2">
                 <span>❓</span>
                 <span>Not sure yet</span>
               </span>
-              <span className={`font-semibold ${upcomingNotSure > 0 ? 'text-yellow-800' : 'text-gray-600'}`}>{upcomingNotSure}</span>
+              <span className="font-semibold">{upcomingNotSure}</span>
             </div>
           </>
         )}
         {/* Past items stats - always show all */}
         {pastItemsForStats.length > 0 && (
           <>
-            <div className="flex justify-between items-center py-2 px-3 rounded-lg border attendance-present">
-              <span className="flex items-center gap-2 text-white">
+            <div className="flex justify-between items-center py-2 px-3 rounded-lg border availability-present">
+              <span className="flex items-center gap-2">
                 <span>✅</span>
                 <span>Was present</span>
               </span>
-              <span className="font-semibold text-white">{pastWasPresent}</span>
+              <span className="font-semibold">{pastWasPresent}</span>
             </div>
-            <div className="flex justify-between items-center py-2 px-3 rounded-lg border attendance-absent">
-              <span className="flex items-center gap-2 text-white">
+            <div className="flex justify-between items-center py-2 px-3 rounded-lg border availability-absent">
+              <span className="flex items-center gap-2">
                 <span>❌</span>
                 <span>Wasn't present</span>
               </span>
-              <span className="font-semibold text-white">{pastWasntPresent}</span>
+              <span className="font-semibold">{pastWasntPresent}</span>
             </div>
           </>
         )}
