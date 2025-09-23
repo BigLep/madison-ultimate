@@ -112,7 +112,7 @@ export function validateColumns(availableColumns: string[]): ColumnValidationRes
   }
 
   return {
-    isValid: missingRequired.length === 0 && typeof portalColumns.lookupKey === 'number' && typeof portalColumns.portalId === 'number',
+    isValid: missingRequired.length === 0 && typeof portalColumns.lookupKey === 'string' && typeof portalColumns.portalId === 'string',
     missingRequired,
     missingOptional,
     extraColumns,
