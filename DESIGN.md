@@ -597,3 +597,72 @@ const gameDate = formatFullDate("10/5"); // "Saturday, October 5"
 4. **Mobile-Friendly**: Short format available when space is constrained
 
 This standardization is especially important for sports scheduling where day-of-week matters significantly for planning attendance.
+
+## PWA Icon Management
+
+### Files That Need to Change When Updating PWA Icons
+
+When updating the application's PWA (Progressive Web App) icons, the following files require updates to ensure icons display correctly across all platforms and contexts:
+
+#### 1. PWA Manifest Generation
+**File**: `src/app/api/manifest/[portalId]/route.ts`
+- **Purpose**: Generates player-specific PWA manifests
+- **Icon References**: Array of icon objects with src, sizes, type, and purpose
+- **Platform Focus**: Android launcher icons (typically 48x48 to 512x512)
+- **Cache Busting**: Increment `MANIFEST_VERSION` to force browser refresh
+
+#### 2. Next.js Layout Metadata
+**File**: `src/app/layout.tsx`
+- **Purpose**: Global favicon and Apple touch icons via Next.js metadata API
+- **Icon References**: `metadata.icons.icon` (favicon) and `metadata.icons.apple` (iOS)
+- **Platform Focus**: Browser favicons (16x16, 32x32) and iOS (180x180)
+
+#### 3. PWA Install Banner Component
+**File**: `src/components/pwa-install-banner.tsx`
+- **Purpose**: Custom install prompt with app icon preview
+- **Icon Reference**: Direct `src` attribute in `<img>` tag
+- **Platform Focus**: Small preview icon (typically 60x60 for 40px container)
+
+#### 4. Player Portal Dynamic Meta Tags
+**File**: `src/app/player-portal/[portalId]/page.tsx`
+- **Purpose**: Dynamically sets apple-touch-icon for iOS
+- **Icon Reference**: `appleTouchIcon.href = "/path/to/icon.png"`
+- **Platform Focus**: iOS apple-touch-icon (180x180)
+
+#### Best Practices for Icon Updates
+
+**Icon Size Requirements by Platform:**
+- **Favicons**: 16x16, 32x32, 192x192
+- **Apple Touch Icons**: 180x180 (primary), also 120x120, 152x152, 167x167
+- **Android PWA**: 48x48, 72x72, 96x96, 144x144, 192x192, 512x512
+- **Windows**: Various sizes from 44x44 to 1240x1240
+
+**Update Process:**
+1. Generate comprehensive icon set (use artwork/MadisonUltimateDiscLogo as reference)
+2. Copy icons to `public/icons/` directory with organized subfolders
+3. Update all four file locations listed above
+4. Increment manifest version to force PWA cache refresh
+5. Test across devices/browsers to verify icon display
+
+**Cache Busting Strategy:**
+- Increment `MANIFEST_VERSION` in manifest route
+- Add version query parameters to icon URLs if needed
+- Clear browser cache during testing
+
+**iOS/Apple Special Treatment:**
+- **Apple Touch Icons**: iOS ignores PWA manifest icons and requires separate apple-touch-icon meta tags
+- **Required Sizes**: 180x180 (primary), 152x152 (iPad), 167x167 (iPad Pro), 120x120 (iPhone retina)
+- **Safari Quirks**: iOS Safari caches apple-touch-icons aggressively - may need cache busting
+- **PWA vs Browser**: Different icon requirements for PWA vs Safari browser bookmarks
+- **Multiple Declarations**: iOS requires both layout.tsx metadata AND dynamic meta tags in player portal
+- **Format Requirements**: iOS prefers PNG format, will convert SVG but may not cache properly
+
+**Common Pitfalls:**
+- Missing icon size for specific platforms
+- Inconsistent icon paths across files
+- Forgetting to increment manifest version
+- Using wrong image format (prefer PNG for icons)
+- Hardcoded paths that don't match actual file locations
+- **iOS-Specific**: Not setting both static (layout.tsx) and dynamic (player portal) apple-touch-icons
+- **iOS-Specific**: Using only PWA manifest icons without separate Apple meta tags
+- **iOS-Specific**: Wrong apple-touch-icon sizes causing blurry icons on different iOS devices
