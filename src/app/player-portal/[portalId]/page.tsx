@@ -187,8 +187,12 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
   }, [params])
 
   // Update page title and PWA metadata when player data is loaded
+  // Delay DOM manipulation until after hydration to prevent hydration errors
   useEffect(() => {
     const updatePWAMetadata = async () => {
+      // Wait for next tick to ensure hydration is complete
+      await new Promise(resolve => setTimeout(resolve, 0))
+
       if (player?.fullName) {
         document.title = `Madison Ultimate - ${player.fullName}`
 
