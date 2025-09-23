@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { APP_CONFIG } from '@/lib/app-config'
 
 export default function PlayerPortalLogin() {
@@ -33,11 +32,11 @@ export default function PlayerPortalLogin() {
   ]
 
   const years = [
-    { label: '2011', value: '11' },
-    { label: '2012', value: '12' },
-    { label: '2013', value: '13' },
-    { label: '2014', value: '14' },
-    { label: '2015', value: '15' },
+    { label: '2011', value: '2011' },
+    { label: '2012', value: '2012' },
+    { label: '2013', value: '2013' },
+    { label: '2014', value: '2014' },
+    { label: '2015', value: '2015' },
   ]
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -54,7 +53,7 @@ export default function PlayerPortalLogin() {
         body: JSON.stringify({
           lastName,
           birthMonth: birthMonth,
-          birthYear: birthYear,
+          birthYear: birthYear.slice(-2), // Convert "2012" to "12"
         }),
       })
 
@@ -114,48 +113,50 @@ export default function PlayerPortalLogin() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="birthMonth" className="font-semibold" style={{color: 'var(--primary-text)'}}>Player Birth Month</Label>
-                <Select value={birthMonth} onValueChange={setBirthMonth} disabled={isLoading}>
-                  <SelectTrigger
-                    className="border"
-                    style={{
-                      background: 'var(--card-bg)',
-                      borderColor: 'var(--border)',
-                      color: 'var(--primary-text)'
-                    }}
-                  >
-                    <SelectValue placeholder="Select month" />
-                  </SelectTrigger>
-                  <SelectContent style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
-                    {months.map((month) => (
-                      <SelectItem key={month.value} value={month.value}>
-                        {month.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <select
+                  id="birthMonth"
+                  value={birthMonth}
+                  onChange={(e) => setBirthMonth(e.target.value)}
+                  disabled={isLoading}
+                  required
+                  className="flex h-9 w-full rounded-md border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 border"
+                  style={{
+                    background: 'var(--card-bg)',
+                    borderColor: 'var(--border)',
+                    color: 'var(--primary-text)'
+                  }}
+                >
+                  <option value="" disabled hidden>Select month</option>
+                  {months.map((month) => (
+                    <option key={month.value} value={month.value}>
+                      {month.label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="birthYear" className="font-semibold" style={{color: 'var(--primary-text)'}}>Player Birth Year</Label>
-                <Select value={birthYear} onValueChange={setBirthYear} disabled={isLoading}>
-                  <SelectTrigger
-                    className="border"
-                    style={{
-                      background: 'var(--card-bg)',
-                      borderColor: 'var(--border)',
-                      color: 'var(--primary-text)'
-                    }}
-                  >
-                    <SelectValue placeholder="Select year" />
-                  </SelectTrigger>
-                  <SelectContent style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
-                    {years.map((year) => (
-                      <SelectItem key={year.value} value={year.value}>
-                        {year.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <select
+                  id="birthYear"
+                  value={birthYear}
+                  onChange={(e) => setBirthYear(e.target.value)}
+                  disabled={isLoading}
+                  required
+                  className="flex h-9 w-full rounded-md border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 border"
+                  style={{
+                    background: 'var(--card-bg)',
+                    borderColor: 'var(--border)',
+                    color: 'var(--primary-text)'
+                  }}
+                >
+                  <option value="" disabled hidden>Select year</option>
+                  {years.map((year) => (
+                    <option key={year.value} value={year.value}>
+                      {year.label}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
