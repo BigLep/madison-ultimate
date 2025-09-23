@@ -30,71 +30,86 @@ export function AvailabilitySummary({
   const pastWasntPresent = pastItemsForStats.filter(item => item.availability.availability === pastAbsentValue).length;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex items-center gap-2">
         <h2 className="text-lg font-semibold" style={{color: 'var(--page-title)'}}>{title}</h2>
         {allUpcomingResponded && (
           <span className="text-green-600 text-lg">✓</span>
         )}
       </div>
-      <div className="grid grid-cols-1 gap-2 text-sm">
-        {/* Upcoming items stats - always show all */}
-        {upcomingItemsForStats.length > 0 && (
-          <>
-            <div className="flex justify-between items-center py-2 px-3 rounded-lg border availability-missing">
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <span>❗</span>
-                  <span>Haven't entered availability for</span>
-                </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm border-collapse" style={{borderColor: 'var(--border)'}}>
+          <thead>
+            <tr style={{borderBottom: '2px solid var(--border)'}}>
+              <th className="text-left py-2 px-3 font-semibold" style={{color: 'var(--primary-text)'}}>Status</th>
+              <th className="text-right py-2 px-3 font-semibold" style={{color: 'var(--primary-text)'}}>Count</th>
+            </tr>
+          </thead>
+          <tbody>
+            {/* Upcoming items stats */}
+            {upcomingItemsForStats.length > 0 && (
+              <>
+                <tr style={{borderBottom: upcomingNoResponse > 0 ? 'none' : '1px solid var(--border)'}}>
+                  <td className="py-2 px-3" style={{color: 'var(--primary-text)'}}>
+                    <div className="flex items-center gap-2">
+                      <span>❗</span>
+                      <span>Haven't entered availability for</span>
+                    </div>
+                  </td>
+                  <td className="text-right py-2 px-3 font-semibold" style={{color: upcomingNoResponse > 0 ? '#dc2626' : 'var(--primary-text)'}}>{upcomingNoResponse}</td>
+                </tr>
                 {upcomingNoResponse > 0 && (
-                  <div className="text-xs mt-1">👇 Enter your availability below</div>
+                  <tr style={{borderBottom: '1px solid var(--border)'}}>
+                    <td colSpan={2} className="py-1 px-3 text-xs text-center" style={{color: 'var(--secondary-text)'}}>
+                      Enter your availability below
+                    </td>
+                  </tr>
                 )}
-              </div>
-              <span className="font-semibold">{upcomingNoResponse}</span>
-            </div>
-            <div className="flex justify-between items-center py-2 px-3 rounded-lg border availability-planning">
-              <span className="flex items-center gap-2">
-                <span>👍</span>
-                <span>Planning to attend</span>
-              </span>
-              <span className="font-semibold">{upcomingPlanToMake}</span>
-            </div>
-            <div className="flex justify-between items-center py-2 px-3 rounded-lg border availability-cant-make">
-              <span className="flex items-center gap-2">
-                <span>👎</span>
-                <span>Can't make it</span>
-              </span>
-              <span className="font-semibold">{upcomingCantMake}</span>
-            </div>
-            <div className="flex justify-between items-center py-2 px-3 rounded-lg border availability-unsure">
-              <span className="flex items-center gap-2">
-                <span>❓</span>
-                <span>Not sure yet</span>
-              </span>
-              <span className="font-semibold">{upcomingNotSure}</span>
-            </div>
-          </>
-        )}
-        {/* Past items stats - always show all */}
-        {pastItemsForStats.length > 0 && (
-          <>
-            <div className="flex justify-between items-center py-2 px-3 rounded-lg border availability-present">
-              <span className="flex items-center gap-2">
-                <span>✅</span>
-                <span>Was present</span>
-              </span>
-              <span className="font-semibold">{pastWasPresent}</span>
-            </div>
-            <div className="flex justify-between items-center py-2 px-3 rounded-lg border availability-absent">
-              <span className="flex items-center gap-2">
-                <span>❌</span>
-                <span>Wasn't present</span>
-              </span>
-              <span className="font-semibold">{pastWasntPresent}</span>
-            </div>
-          </>
-        )}
+                <tr style={{borderBottom: '1px solid var(--border)'}}>
+                  <td className="py-2 px-3 flex items-center gap-2" style={{color: 'var(--primary-text)'}}>
+                    <span>👍</span>
+                    <span>Planning to attend</span>
+                  </td>
+                  <td className="text-right py-2 px-3 font-semibold" style={{color: 'var(--primary-text)'}}>{upcomingPlanToMake}</td>
+                </tr>
+                <tr style={{borderBottom: '1px solid var(--border)'}}>
+                  <td className="py-2 px-3 flex items-center gap-2" style={{color: 'var(--primary-text)'}}>
+                    <span>👎</span>
+                    <span>Can't make it</span>
+                  </td>
+                  <td className="text-right py-2 px-3 font-semibold" style={{color: 'var(--primary-text)'}}>{upcomingCantMake}</td>
+                </tr>
+                <tr style={{borderBottom: '1px solid var(--border)'}}>
+                  <td className="py-2 px-3 flex items-center gap-2" style={{color: 'var(--primary-text)'}}>
+                    <span>❓</span>
+                    <span>Not sure yet</span>
+                  </td>
+                  <td className="text-right py-2 px-3 font-semibold" style={{color: 'var(--primary-text)'}}>{upcomingNotSure}</td>
+                </tr>
+              </>
+            )}
+            {/* Past items stats */}
+            {pastItemsForStats.length > 0 && (
+              <>
+                <tr style={{borderBottom: '1px solid var(--border)'}}>
+                  <td className="py-2 px-3 flex items-center gap-2" style={{color: 'var(--primary-text)'}}>
+                    <span>✅</span>
+                    <span>Was present</span>
+                  </td>
+                  <td className="text-right py-2 px-3 font-semibold" style={{color: 'var(--primary-text)'}}>{pastWasPresent}</td>
+                </tr>
+                <tr>
+                  <td className="py-2 px-3 flex items-center gap-2" style={{color: 'var(--primary-text)'}}>
+                    <span>❌</span>
+                    <span>Wasn't present</span>
+                  </td>
+                  <td className="text-right py-2 px-3 font-semibold" style={{color: 'var(--primary-text)'}}>{pastWasntPresent}</td>
+                </tr>
+              </>
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );

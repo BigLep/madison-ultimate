@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useDebounce } from 'use-debounce';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Clock, MapPin } from 'lucide-react';
 import { PRACTICE_CONFIG } from '@/lib/practice-config';
 
 interface AvailabilityCardProps {
@@ -62,15 +63,17 @@ export function AvailabilityCard({
 
   const getButtonStyle = (value: string) => {
     const isSelected = selectedAvailability === value;
+    const baseStyle = "shadow-md active:scale-95 transition-transform";
+
     if (!isSelected) {
-      return "bg-white border-gray-300 text-gray-700 hover:bg-gray-50";
+      return `${baseStyle} bg-white border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400`;
     }
     if (value === availabilityOptions.PLANNING) {
-      return "availability-planning hover:opacity-80";
+      return `${baseStyle} availability-planning border-2 border-transparent hover:opacity-90`;
     } else if (value === availabilityOptions.CANT_MAKE) {
-      return "availability-cant-make hover:opacity-80";
+      return `${baseStyle} availability-cant-make border-2 border-transparent hover:opacity-90`;
     } else {
-      return "availability-unsure hover:opacity-80";
+      return `${baseStyle} availability-unsure border-2 border-transparent hover:opacity-90`;
     }
   };
 
@@ -81,10 +84,13 @@ export function AvailabilityCard({
           {title}
         </CardTitle>
         <div className="text-sm space-y-1" style={{color: 'var(--secondary-text)'}}>
-          <div>{subtitle}</div>
+          <div className="flex items-center gap-1">
+            <Clock className="w-4 h-4" />
+            <span>{subtitle}</span>
+          </div>
           {location && (
             <div className="flex items-center gap-1">
-              <span>Location:</span>
+              <MapPin className="w-4 h-4" />
               {locationUrl ? (
                 <a href={locationUrl} target="_blank" rel="noopener noreferrer" className="hyperlink">
                   {location}
@@ -114,7 +120,10 @@ export function AvailabilityCard({
           <>
 {isEditable ? (
               <div className="space-y-3">
-                <div className="text-sm font-medium" style={{color: 'var(--primary-text)'}}>Your availability:</div>
+                <div className="text-sm font-medium flex items-center gap-2" style={{color: 'var(--primary-text)'}}>
+                  <span>👇</span>
+                  <span>Select your availability:</span>
+                </div>
                 <div className="grid grid-cols-1 gap-2">
                   {Object.entries(availabilityOptions).map(([key, value]) => (
                     <button
@@ -122,10 +131,10 @@ export function AvailabilityCard({
                       onClick={() => handleAvailabilityChange(value)}
                       disabled={isUpdating}
                       className={`
-                        px-3 py-2 text-sm font-medium border rounded-lg transition-colors text-left
+                        px-4 py-3 min-h-[48px] text-sm font-semibold rounded-lg transition-all text-left
                         ${getButtonStyle(value)}
                         cursor-pointer
-                        ${isUpdating ? 'opacity-50' : ''}
+                        ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}
                       `}
                     >
                       {value}

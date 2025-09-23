@@ -1118,7 +1118,7 @@ function GameAvailabilityScreen({ params }: { params: Promise<{ portalId: string
             <AvailabilityCard
               key={game.gameKey}
               title={game.isBye ? game.formattedDate : `${game.team} Game #${game.gameNumber}: ${game.formattedDate}`}
-              subtitle=""
+              subtitle={!game.isBye ? `Warmups: ${game.formattedWarmupTime} • Start: ${game.formattedGameStart} • Done: ${game.formattedDoneBy}` : ''}
               location={game.location}
               locationUrl={game.locationUrl}
               availabilityOptions={availabilityOptions}
@@ -1129,20 +1129,11 @@ function GameAvailabilityScreen({ params }: { params: Promise<{ portalId: string
               isEditable={true}
               isBye={game.isBye}
             >
-              <div className="space-y-1">
-                {!game.isBye && (
-                  <>
-                    <div>Arrival for warmups: {game.formattedWarmupTime}</div>
-                    <div>Game start: {game.formattedGameStart}</div>
-                    <div>Done by: {game.formattedDoneBy}</div>
-                  </>
-                )}
-                {game.gameNote && (
-                  <div className="text-xs italic mt-2" style={{color: 'var(--secondary-text)'}}>
-                    Coach note: {game.gameNote}
-                  </div>
-                )}
-              </div>
+              {game.gameNote && (
+                <div className="text-xs italic mt-2" style={{color: 'var(--secondary-text)'}}>
+                  Coach note: {game.gameNote}
+                </div>
+              )}
             </AvailabilityCard>
           ))}
         </div>
@@ -1156,7 +1147,7 @@ function GameAvailabilityScreen({ params }: { params: Promise<{ portalId: string
             <AvailabilityCard
               key={game.gameKey}
               title={game.isBye ? game.formattedDate : `${game.team} Game #${game.gameNumber}: ${game.formattedDate}`}
-              subtitle=""
+              subtitle={!game.isBye ? `Warmups: ${game.formattedWarmupTime} • Start: ${game.formattedGameStart} • Done: ${game.formattedDoneBy}` : ''}
               location={game.location}
               locationUrl={game.locationUrl}
               availabilityOptions={availabilityOptions}
@@ -1167,20 +1158,11 @@ function GameAvailabilityScreen({ params }: { params: Promise<{ portalId: string
               isEditable={false}
               isBye={game.isBye}
             >
-              <div className="space-y-1">
-                {!game.isBye && (
-                  <>
-                    <div>Arrival for warmups: {game.formattedWarmupTime}</div>
-                    <div>Game start: {game.formattedGameStart}</div>
-                    <div>Done by: {game.formattedDoneBy}</div>
-                  </>
-                )}
-                {game.gameNote && (
-                  <div className="text-xs italic mt-2" style={{color: 'var(--secondary-text)'}}>
-                    Coach note: {game.gameNote}
-                  </div>
-                )}
-              </div>
+              {game.gameNote && (
+                <div className="text-xs italic mt-2" style={{color: 'var(--secondary-text)'}}>
+                  Coach note: {game.gameNote}
+                </div>
+              )}
             </AvailabilityCard>
           ))}
         </div>
