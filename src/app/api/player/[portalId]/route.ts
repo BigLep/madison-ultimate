@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPlayerDataByPortalId, getColumnValue } from '../../../../lib/portal-cache';
+import { getPlayerDataByPortalId } from '../../../../lib/portal-cache';
+import { extractPlayerData } from '../../../../lib/column-validation';
 
 interface PlayerData {
   studentId: string;
@@ -78,56 +79,9 @@ export async function GET(
       }, { status: 404 });
     }
 
-    // Step 2: Extract player information using the cached data
-    // This eliminates the need for additional API calls since we have the full row
-    const player: PlayerData = {
-      studentId: getColumnValue(playerData, 'Student ID') || '',
-      firstName: getColumnValue(playerData, 'First Name') || '',
-      lastName: getColumnValue(playerData, 'Last Name') || '',
-      fullName: getColumnValue(playerData, 'Full Name') || '',
-      grade: parseInt(getColumnValue(playerData, 'Grade') || '0'),
-      gender: getColumnValue(playerData, 'Gender') || '',
-      genderIdentification: getColumnValue(playerData, 'Gender Identification') || '',
-      dateOfBirth: getColumnValue(playerData, 'Date of Birth') || '',
-      team: getColumnValue(playerData, 'Team') || '',
-      finalFormsStatus: {
-        parentSigned: getColumnValue(playerData, 'Parent Signed') === 'TRUE',
-        studentSigned: getColumnValue(playerData, 'Student Signed') === 'TRUE',
-        physicalCleared: getColumnValue(playerData, 'Physical Cleared') === 'TRUE',
-        allCleared: getColumnValue(playerData, 'All Cleared') === 'TRUE'
-      },
-      contacts: {
-        parent1: {
-          firstName: getColumnValue(playerData, 'Parent 1 First Name') || '',
-          lastName: getColumnValue(playerData, 'Parent 1 Last Name') || '',
-          email: getColumnValue(playerData, 'Parent 1 Email') || '',
-          mailingListStatus: getColumnValue(playerData, 'Parent 1 Email On Mailing List?') || ''
-        },
-        parent2: {
-          firstName: getColumnValue(playerData, 'Parent 2 First Name') || '',
-          lastName: getColumnValue(playerData, 'Parent 2 Last Name') || '',
-          email: getColumnValue(playerData, 'Parent 2 Email') || '',
-          mailingListStatus: getColumnValue(playerData, 'Parent 2 Email On Mailing List?') || ''
-        },
-        studentEmails: {
-          spsEmail: getColumnValue(playerData, 'Student SPS Email') || undefined,
-          personalEmail: getColumnValue(playerData, 'Student Personal Email') || undefined,
-          personalEmailMailingStatus: getColumnValue(playerData, 'Student Personal Email On Mailing List?') || undefined
-        }
-      }
-    };
-
-    // Step 3: Get additional questionnaire data from roster columns
-    player.additionalInfo = {
-      pronouns: getColumnValue(playerData, 'Prounouns') || undefined,
-      allergies: getColumnValue(playerData, 'Player Allergies') || undefined,
-      competingSports: getColumnValue(playerData, 'Competing Sports and Activities') || undefined,
-      jerseySize: getColumnValue(playerData, 'Jersey Size') || undefined,
-      playingExperience: getColumnValue(playerData, 'Playing Experience') || undefined,
-      playerHopes: getColumnValue(playerData, 'Player hopes for the season') || undefined,
-      otherInfo: getColumnValue(playerData, 'Other Player Info') || undefined,
-      questionnaireFilledOut: getColumnValue(playerData, 'Additional Info Questionnaire Filled Out?') === 'TRUE'
-    };
+    // Step 2: Extract player information using validated column access
+    // This eliminates the need for additional API calls and provides fail-fast behavior for missing columns
+    const player: PlayerData = extractPlayerData(playerData);
 
     console.log(`Successfully fetched player details: ${player.fullName}`);
 

@@ -1,4 +1,5 @@
 import { getCachedSheetData, findCachedSheetRow } from './sheet-cache';
+import { validateColumns, createValidationErrorMessage, PORTAL_COLUMN_PATTERNS } from './column-validation';
 
 interface PortalEntry {
   lookupKey: string;
@@ -49,33 +50,42 @@ async function refreshPortalCache(): Promise<void> {
     // Extract column mapping from the first row
     const columnNameRow = rosterData[0];
     const columnMapping: Record<string, number> = {};
+    const availableColumns: string[] = [];
 
     for (let i = 0; i < columnNameRow.length; i++) {
       const columnName = columnNameRow[i]?.toString().trim();
       if (columnName) {
         columnMapping[columnName] = i;
+        availableColumns.push(columnName);
       }
     }
 
-    // Find portal columns
-    let lookupKeyIndex = -1;
-    let portalIdIndex = -1;
+    // Validate that all required columns exist
+    console.log('Validating roster column structure...');
+    const validationResult = validateColumns(availableColumns);
 
-    for (const [columnName, index] of Object.entries(columnMapping)) {
-      const lowerName = columnName.toLowerCase();
-      if (lowerName.includes('portal') && lowerName.includes('lookup')) {
-        lookupKeyIndex = index;
-      }
-      if (lowerName.includes('portal') && lowerName.includes('id') && !lowerName.includes('lookup')) {
-        portalIdIndex = index;
-      }
+    if (!validationResult.isValid) {
+      const errorMessage = createValidationErrorMessage(validationResult);
+      console.error('❌ Column validation failed:', errorMessage);
+      throw new Error(`Roster column validation failed:\n${errorMessage}`);
     }
 
-    if (lookupKeyIndex === -1 || portalIdIndex === -1) {
-      throw new Error('Portal columns not found in roster data');
+    if (validationResult.missingOptional.length > 0) {
+      console.warn('⚠️ Missing optional columns:', validationResult.missingOptional.join(', '));
     }
 
-    console.log(`Found Portal columns: Lookup Key at ${lookupKeyIndex}, Portal ID at ${portalIdIndex}`);
+    console.log('✅ Column validation passed');
+    if (validationResult.extraColumns.length > 0) {
+      console.log('📊 Extra columns found:', validationResult.extraColumns.slice(0, 5).join(', '), validationResult.extraColumns.length > 5 ? '...' : '');
+    }
+
+    // Use validated portal columns from validation result
+    const lookupKeyColumn = validationResult.portalColumns.lookupKey!;
+    const portalIdColumn = validationResult.portalColumns.portalId!;
+    const lookupKeyIndex = columnMapping[lookupKeyColumn];
+    const portalIdIndex = columnMapping[portalIdColumn];
+
+    console.log(`Found Portal columns: "${lookupKeyColumn}" at ${lookupKeyIndex}, "${portalIdColumn}" at ${portalIdIndex}`);
 
     // Build portal entries from the data rows (skip header rows)
     const entries: PortalEntry[] = [];
@@ -149,16 +159,6 @@ export async function getPlayerDataByPortalId(portalId: string): Promise<any | n
   };
 }
 
-/**
- * Get column value from player data
- */
-export function getColumnValue(playerData: any, columnName: string): string | null {
-  const columnIndex = playerData.columnMapping[columnName];
-  if (columnIndex === undefined) {
-    return null;
-  }
-  return playerData.rowData[columnIndex]?.toString().trim() || null;
-}
 
 /**
  * Get cache stats for debugging
