@@ -67,23 +67,20 @@ export function AvailabilitySummary({
                   </tr>
                 )}
                 <tr style={{borderBottom: '1px solid var(--border)'}}>
-                  <td className="py-2 px-3 flex items-center gap-2" style={{color: 'var(--primary-text)'}}>
-                    <span>👍</span>
-                    <span>Planning to attend</span>
+                  <td className="py-2 px-3" style={{color: 'var(--primary-text)'}}>
+                    <span>👍 Planning to attend</span>
                   </td>
                   <td className="text-right py-2 px-3 font-semibold" style={{color: 'var(--primary-text)'}}>{upcomingPlanToMake}</td>
                 </tr>
                 <tr style={{borderBottom: '1px solid var(--border)'}}>
-                  <td className="py-2 px-3 flex items-center gap-2" style={{color: 'var(--primary-text)'}}>
-                    <span>👎</span>
-                    <span>Can't make it</span>
+                  <td className="py-2 px-3" style={{color: 'var(--primary-text)'}}>
+                    <span>👎 Can't make it</span>
                   </td>
                   <td className="text-right py-2 px-3 font-semibold" style={{color: 'var(--primary-text)'}}>{upcomingCantMake}</td>
                 </tr>
                 <tr style={{borderBottom: '1px solid var(--border)'}}>
-                  <td className="py-2 px-3 flex items-center gap-2" style={{color: 'var(--primary-text)'}}>
-                    <span>❓</span>
-                    <span>Not sure yet</span>
+                  <td className="py-2 px-3" style={{color: 'var(--primary-text)'}}>
+                    <span>❓ Not sure yet</span>
                   </td>
                   <td className="text-right py-2 px-3 font-semibold" style={{color: 'var(--primary-text)'}}>{upcomingNotSure}</td>
                 </tr>
@@ -93,16 +90,14 @@ export function AvailabilitySummary({
             {pastItemsForStats.length > 0 && (
               <>
                 <tr style={{borderBottom: '1px solid var(--border)'}}>
-                  <td className="py-2 px-3 flex items-center gap-2" style={{color: 'var(--primary-text)'}}>
-                    <span>✅</span>
-                    <span>Was present</span>
+                  <td className="py-2 px-3" style={{color: 'var(--primary-text)'}}>
+                    <span>✅ Was present</span>
                   </td>
                   <td className="text-right py-2 px-3 font-semibold" style={{color: 'var(--primary-text)'}}>{pastWasPresent}</td>
                 </tr>
                 <tr>
-                  <td className="py-2 px-3 flex items-center gap-2" style={{color: 'var(--primary-text)'}}>
-                    <span>❌</span>
-                    <span>Wasn't present</span>
+                  <td className="py-2 px-3" style={{color: 'var(--primary-text)'}}>
+                    <span>❌ Wasn't present</span>
                   </td>
                   <td className="text-right py-2 px-3 font-semibold" style={{color: 'var(--primary-text)'}}>{pastWasntPresent}</td>
                 </tr>
