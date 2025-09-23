@@ -695,7 +695,7 @@ function PlayerInfoScreen({ player }: { player: PlayerData }) {
             <div>
               <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Caretaker 1</p>
               <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.contacts.parent1.firstName} {player.contacts.parent1.lastName}</p>
-              <p style={{color: 'var(--secondary-text)'}}>{player.contacts.parent1.email}</p>
+              <p style={{color: 'var(--primary-text)'}}>{player.contacts.parent1.email}</p>
               <p className="text-xs" style={{color: 'var(--secondary-text)'}}>
                 <a href={MAILING_LIST_INFO_URL} target="_blank" rel="noopener noreferrer" style={{color: 'var(--accent)', textDecoration: 'underline'}}>
                   Mailing List
@@ -708,7 +708,7 @@ function PlayerInfoScreen({ player }: { player: PlayerData }) {
             <div>
               <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Caretaker 2</p>
               <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.contacts.parent2.firstName} {player.contacts.parent2.lastName}</p>
-              <p style={{color: 'var(--secondary-text)'}}>{player.contacts.parent2.email}</p>
+              <p style={{color: 'var(--primary-text)'}}>{player.contacts.parent2.email}</p>
               <p className="text-xs" style={{color: 'var(--secondary-text)'}}>
                 <a href={MAILING_LIST_INFO_URL} target="_blank" rel="noopener noreferrer" style={{color: 'var(--accent)', textDecoration: 'underline'}}>
                   Mailing List
@@ -720,11 +720,6 @@ function PlayerInfoScreen({ player }: { player: PlayerData }) {
           <div>
             <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Player SPS Email</p>
             <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.contacts.studentEmails.spsEmail || 'Not provided'}</p>
-            <p className="text-xs" style={{color: 'var(--secondary-text)'}}>
-              <a href={MAILING_LIST_INFO_URL} target="_blank" rel="noopener noreferrer" style={{color: 'var(--accent)', textDecoration: 'underline'}}>
-                Mailing List
-              </a>: n/a
-            </p>
           </div>
 
           <div>

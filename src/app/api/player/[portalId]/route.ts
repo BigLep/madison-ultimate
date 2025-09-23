@@ -101,18 +101,18 @@ export async function GET(
           firstName: getColumnValue(playerData, 'Parent 1 First Name') || '',
           lastName: getColumnValue(playerData, 'Parent 1 Last Name') || '',
           email: getColumnValue(playerData, 'Parent 1 Email') || '',
-          mailingListStatus: getColumnValue(playerData, 'Parent 1 Mailing List Status') || ''
+          mailingListStatus: getColumnValue(playerData, 'Parent 1 Email On Mailing List?') || ''
         },
         parent2: {
           firstName: getColumnValue(playerData, 'Parent 2 First Name') || '',
           lastName: getColumnValue(playerData, 'Parent 2 Last Name') || '',
           email: getColumnValue(playerData, 'Parent 2 Email') || '',
-          mailingListStatus: getColumnValue(playerData, 'Parent 2 Mailing List Status') || ''
+          mailingListStatus: getColumnValue(playerData, 'Parent 2 Email On Mailing List?') || ''
         },
         studentEmails: {
-          spsEmail: getColumnValue(playerData, 'SPS Email') || undefined,
-          personalEmail: getColumnValue(playerData, 'Personal Email') || undefined,
-          personalEmailMailingStatus: getColumnValue(playerData, 'Personal Email Mailing Status') || undefined
+          spsEmail: getColumnValue(playerData, 'Student SPS Email') || undefined,
+          personalEmail: getColumnValue(playerData, 'Student Personal Email') || undefined,
+          personalEmailMailingStatus: getColumnValue(playerData, 'Student Personal Email On Mailing List?') || undefined
         }
       }
     };
