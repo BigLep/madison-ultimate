@@ -54,7 +54,7 @@ export function AvailabilitySummary({
                   <td className="py-2 px-3" style={{color: 'var(--primary-text)'}}>
                     <div className="flex items-center gap-2">
                       <span>❗</span>
-                      <span>Haven't entered availability for</span>
+                      <span>Haven't entered availability</span>
                     </div>
                   </td>
                   <td className="text-right py-2 px-3 font-semibold" style={{color: upcomingNoResponse > 0 ? '#dc2626' : 'var(--primary-text)'}}>{upcomingNoResponse}</td>
