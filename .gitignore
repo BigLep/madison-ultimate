@@ -48,3 +48,4 @@ next-env.d.ts
 
 # cache
 /tmp.google-oauth.json
+/tmp/
