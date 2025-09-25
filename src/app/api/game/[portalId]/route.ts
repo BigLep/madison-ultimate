@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSheetData, updateSheetData } from '../../../../lib/google-api';
 import { findPortalEntryByPortalId } from '../../../../lib/portal-cache';
 import { getCachedSheetData } from '../../../../lib/sheet-cache';
-import { getPlayerGameAvailability } from '../../../../lib/game-availability-helper';
+import { getPlayerGameAvailability, findGameColumns } from '../../../../lib/game-availability-helper';
+import { getColumnLetter } from '../../../../lib/availability-helper';
 import { SHEET_CONFIG } from '../../../../lib/sheet-config';
 import {
   GAME_CONFIG,
@@ -184,31 +185,24 @@ export async function GET(
       if (availabilityResult) {
         const { headerRow, playerRow } = availabilityResult;
 
-        // Create column mapping for Game Availability sheet (dynamic discovery)
-        const availabilityColumnMap: Record<string, number> = {};
-        for (let i = 0; i < headerRow.length; i++) {
-          const columnName = headerRow[i]?.toString().trim();
-          if (columnName) {
-            availabilityColumnMap[columnName] = i;
+        // Extract availability for each game using dynamic column discovery
+        playerAvailability = games.map(game => {
+          const gameColumns = findGameColumns(headerRow, game.date);
+          if (gameColumns) {
+            return {
+              gameKey: getGameKey(game.team, game.gameNumber),
+              availability: playerRow[gameColumns.availabilityColumn] || '',
+              note: playerRow[gameColumns.noteColumn] || '',
+            };
+          } else {
+            console.warn(`Game columns not found for date: ${game.date}`);
+            return {
+              gameKey: getGameKey(game.team, game.gameNumber),
+              availability: '',
+              note: '',
+            };
           }
-        }
-
-        // Now update the games with their correct column indices
-        // The availability sheet uses dates as column headers, not full game keys
-        games.forEach(game => {
-          const dateKey = game.date; // e.g., "9/27"
-          const noteKey = `${game.date} Note`; // e.g., "9/27 Note"
-
-          game.availabilityColumnIndex = availabilityColumnMap[dateKey] || -1;
-          game.noteColumnIndex = availabilityColumnMap[noteKey] || -1;
         });
-
-        // Extract availability for each game
-        playerAvailability = games.map(game => ({
-          gameKey: getGameKey(game.team, game.gameNumber),
-          availability: game.availabilityColumnIndex >= 0 ? (playerRow[game.availabilityColumnIndex] || '') : '',
-          note: game.noteColumnIndex >= 0 ? (playerRow[game.noteColumnIndex] || '') : '',
-        }));
       }
     } catch (error) {
       console.log('Could not fetch game availability:', error);
@@ -362,15 +356,6 @@ export async function POST(
 
     const { headerRow: availabilityHeaderRow, rowIndex: playerRowIndex } = availabilityResult;
 
-    // Create column mapping for Game Availability sheet (dynamic discovery)
-    const availabilityColumnMap: Record<string, number> = {};
-    for (let i = 0; i < availabilityHeaderRow.length; i++) {
-      const columnName = availabilityHeaderRow[i]?.trim();
-      if (columnName) {
-        availabilityColumnMap[columnName] = i;
-      }
-    }
-
     // Find the game date to use as column key in availability sheet
     let gameDate = '';
     for (let i = 1; i < gameInfoData.length; i++) {
@@ -391,38 +376,24 @@ export async function POST(
       }, { status: 404 });
     }
 
-    // Find the column indices for this specific game using date as key
-    const gameColumnIndex = availabilityColumnMap[gameDate];
-    const noteColumnIndex = availabilityColumnMap[`${gameDate} Note`];
+    // Find the columns for this game using dynamic discovery
+    const gameColumns = findGameColumns(availabilityHeaderRow, gameDate);
 
-    if (gameColumnIndex === undefined) {
+    if (!gameColumns) {
       return NextResponse.json({
         success: false,
         error: `This game (${gameDate}) is not yet available for availability tracking. The availability sheet needs to have a "${gameDate}" column added.`
       }, { status: 404 });
     }
 
-    // Player row index is already available from the helper function
-    // (playerRowIndex is already 1-indexed from getPlayerGameAvailability)
-
-    // Convert column index to letter format (A, B, C, ...)
-    const getColumnLetter = (index: number): string => {
-      let result = '';
-      while (index >= 0) {
-        result = String.fromCharCode(65 + (index % 26)) + result;
-        index = Math.floor(index / 26) - 1;
-      }
-      return result;
-    };
-
     // Update availability
-    const availabilityColumn = getColumnLetter(gameColumnIndex);
+    const availabilityColumn = getColumnLetter(gameColumns.availabilityColumn);
     const availabilityRange = `'${GAME_CONFIG.GAME_AVAILABILITY_SHEET}'!${availabilityColumn}${playerRowIndex}`;
     await updateSheetData(ROSTER_SHEET_ID, availabilityRange, [[availability]]);
 
-    // Update note if provided and note column exists
-    if (note && noteColumnIndex !== undefined) {
-      const noteColumn = getColumnLetter(noteColumnIndex);
+    // Update note if provided
+    if (note) {
+      const noteColumn = getColumnLetter(gameColumns.noteColumn);
       const noteRange = `'${GAME_CONFIG.GAME_AVAILABILITY_SHEET}'!${noteColumn}${playerRowIndex}`;
       await updateSheetData(ROSTER_SHEET_ID, noteRange, [[note]]);
     }

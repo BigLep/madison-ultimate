@@ -666,3 +666,49 @@ When updating the application's PWA (Progressive Web App) icons, the following f
 - **iOS-Specific**: Not setting both static (layout.tsx) and dynamic (player portal) apple-touch-icons
 - **iOS-Specific**: Using only PWA manifest icons without separate Apple meta tags
 - **iOS-Specific**: Wrong apple-touch-icon sizes causing blurry icons on different iOS devices
+
+## Development Best Practices
+
+### Sheet Data Column Mapping
+
+**CRITICAL RULE: Never use hardcoded column positions**
+
+❌ **Wrong Approach:**
+```typescript
+// This breaks when columns are added/removed/reordered
+const playerName = row[0];
+const grade = row[1];
+const team = row[2];
+const availability = row[3 + (i - 1) * 2]; // Fragile calculation
+```
+
+✅ **Correct Approach:**
+```typescript
+// Use dynamic header discovery
+const columnMapping = {};
+headerRow.forEach((header, index) => {
+  columnMapping[header.toString().trim()] = index;
+});
+
+const playerName = row[columnMapping['Full Name']];
+const grade = row[columnMapping['Grade']];
+const team = row[columnMapping['Team']]; // Works even if Team column added later
+```
+
+**Why This Matters:**
+- Google Sheets are frequently modified by coaches/administrators
+- Adding columns like "Team" shifts all subsequent column positions
+- Hardcoded indices cause availability tracking to write to wrong columns
+- Dynamic discovery makes the system resilient to sheet structure changes
+
+**Implementation Pattern:**
+1. Always fetch header row first to create column mapping
+2. Use column names (e.g., "9/23", "9/23 Note") to find data columns
+3. Handle missing columns gracefully with warnings/errors
+4. Use shared helpers like `findDateColumns()` for common patterns
+
+**Files Using This Pattern:**
+- `src/lib/availability-helper.ts` - Shared column discovery utilities
+- `src/lib/practice-availability-helper.ts` - Practice-specific implementation
+- `src/lib/game-availability-helper.ts` - Game-specific implementation
+- `src/lib/column-validation.ts` - Validates expected columns exist

@@ -65,6 +65,40 @@ Files changed:
 - Use fuzzy matching for joining player data across different sources
 - Mobile-first responsive design approach with Tailwind CSS
 
+## Data Access Guidelines
+
+### CRITICAL: Never Use Hardcoded Column Positions
+
+**Rule**: Always use dynamic header discovery for Google Sheets column mapping.
+
+**Why This Matters**:
+- Google Sheets are frequently modified (columns added, removed, reordered)
+- Hardcoded positions like `row[3]` break when sheet structure changes
+- Example: Adding "Team" column shifted all availability columns, causing data to write to wrong places
+
+**Correct Implementation**:
+```typescript
+// ✅ Always do this - dynamic column discovery
+const columnMapping: Record<string, number> = {};
+headerRow.forEach((header, index) => {
+  columnMapping[header.toString().trim()] = index;
+});
+
+const availability = playerRow[columnMapping['9/23']] || '';
+const note = playerRow[columnMapping['9/23 Note']] || '';
+```
+
+**Never Do This**:
+```typescript
+// ❌ Never use hardcoded positions
+const availability = playerRow[3 + (i - 1) * 2]; // Breaks when columns change
+```
+
+**Shared Helpers Available**:
+- `src/lib/availability-helper.ts` - `findDateColumns()` for practice/game availability
+- `src/lib/column-validation.ts` - `getValidatedColumnValue()` for safe column access
+- Pattern: Always fetch header row first, create mapping, then access data
+
 ## Testing Guidelines
 
 **Puppeteer Screenshots**: Always use iPhone screen dimensions for testing mobile-first design:

@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSheetData, updateSheetData } from '../../../../lib/google-api';
 import { findPortalEntryByPortalId } from '../../../../lib/portal-cache';
 import { getCachedSheetData } from '../../../../lib/sheet-cache';
-import { getPlayerPracticeAvailability } from '../../../../lib/practice-availability-helper';
+import { getPlayerPracticeAvailability, findPracticeColumns } from '../../../../lib/practice-availability-helper';
+import { getColumnLetter } from '../../../../lib/availability-helper';
 import { SHEET_CONFIG } from '../../../../lib/sheet-config';
 import {
   PRACTICE_CONFIG,
@@ -85,10 +86,9 @@ export async function GET(
         endTime,
         note,
         isPast: isPracticeInPast(date),
-        // Calculate column indices for this practice in the availability sheet
-        // Column pattern: Name(0), Grade(1), Gender(2), then pairs of [date, date+" Note"]
-        availabilityColumnIndex: 3 + (i - 1) * 2,
-        noteColumnIndex: 3 + (i - 1) * 2 + 1,
+        // Column indices will be determined dynamically during data fetching
+        availabilityColumnIndex: -1,
+        noteColumnIndex: -1,
       });
     }
 
@@ -124,14 +124,26 @@ export async function GET(
       const availabilityResult = await getPlayerPracticeAvailability(playerFullName);
 
       if (availabilityResult) {
-        const { playerRow } = availabilityResult;
+        const { playerRow, headerRow } = availabilityResult;
 
-        // Extract availability for each practice
-        playerAvailability = practices.map(practice => ({
-          practiceDate: practice.date,
-          availability: playerRow[practice.availabilityColumnIndex] || '',
-          note: playerRow[practice.noteColumnIndex] || '',
-        }));
+        // Extract availability for each practice using dynamic column discovery
+        playerAvailability = practices.map(practice => {
+          const columns = findPracticeColumns(headerRow, practice.date);
+          if (columns) {
+            return {
+              practiceDate: practice.date,
+              availability: playerRow[columns.availabilityColumn] || '',
+              note: playerRow[columns.noteColumn] || '',
+            };
+          } else {
+            console.warn(`Practice columns not found for date: ${practice.date}`);
+            return {
+              practiceDate: practice.date,
+              availability: '',
+              note: '',
+            };
+          }
+        });
       }
     } catch (error) {
       console.log('Could not fetch practice availability:', error);
@@ -208,38 +220,7 @@ export async function POST(
       }, { status: 400 });
     }
 
-    // Get Practice Info data from cache to find the practice column indices
-    const practiceInfoData = await getCachedSheetData('PRACTICE_INFO');
-
-    if (!practiceInfoData || practiceInfoData.length < 2) {
-      return NextResponse.json({
-        success: false,
-        error: 'Practice information not found'
-      }, { status: 404 });
-    }
-
-    // Find the practice and its column indices
-    let practiceColumnIndex = -1;
-    let noteColumnIndex = -1;
-
-    for (let i = 1; i < practiceInfoData.length; i++) {
-      const row = practiceInfoData[i];
-      if (row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.DATE] === practiceDate) {
-        // Calculate column indices for this practice in the availability sheet
-        practiceColumnIndex = 3 + (i - 1) * 2;
-        noteColumnIndex = 3 + (i - 1) * 2 + 1;
-        break;
-      }
-    }
-
-    if (practiceColumnIndex === -1) {
-      return NextResponse.json({
-        success: false,
-        error: 'Practice not found'
-      }, { status: 404 });
-    }
-
-    // Get the player's row using targeted fetching
+    // Get player's availability data to access header row for column discovery
     const availabilityResult = await getPlayerPracticeAvailability(fullName);
 
     if (!availabilityResult) {
@@ -249,26 +230,26 @@ export async function POST(
       }, { status: 404 });
     }
 
+    // Find the practice columns using dynamic discovery
+    const practiceColumns = findPracticeColumns(availabilityResult.headerRow, practiceDate);
+
+    if (!practiceColumns) {
+      return NextResponse.json({
+        success: false,
+        error: `Practice date not found in availability sheet: "${practiceDate}"`
+      }, { status: 404 });
+    }
+
     const playerRowIndex = availabilityResult.rowIndex;
 
-    // Convert column index to letter format (A, B, C, ...)
-    const getColumnLetter = (index: number): string => {
-      let result = '';
-      while (index >= 0) {
-        result = String.fromCharCode(65 + (index % 26)) + result;
-        index = Math.floor(index / 26) - 1;
-      }
-      return result;
-    };
-
     // Update availability
-    const availabilityColumn = getColumnLetter(practiceColumnIndex);
+    const availabilityColumn = getColumnLetter(practiceColumns.availabilityColumn);
     const availabilityRange = `'${PRACTICE_CONFIG.PRACTICE_AVAILABILITY_SHEET}'!${availabilityColumn}${playerRowIndex}`;
     await updateSheetData(ROSTER_SHEET_ID, availabilityRange, [[availability]]);
 
     // Update note if provided
     if (note) {
-      const noteColumn = getColumnLetter(noteColumnIndex);
+      const noteColumn = getColumnLetter(practiceColumns.noteColumn);
       const noteRange = `'${PRACTICE_CONFIG.PRACTICE_AVAILABILITY_SHEET}'!${noteColumn}${playerRowIndex}`;
       await updateSheetData(ROSTER_SHEET_ID, noteRange, [[note]]);
     }
