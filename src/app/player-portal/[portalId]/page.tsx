@@ -965,6 +965,7 @@ function PracticeCard({
       onUpdateAvailability={handleUpdateAvailability}
       isUpdating={isUpdating}
       isEditable={isEditable}
+      isCancelled={practice.isCancelled}
     >
       {/* Coach Note */}
       {practice.note && (

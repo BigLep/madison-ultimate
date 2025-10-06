@@ -10,6 +10,7 @@ import {
   Practice,
   PlayerAvailability,
   isPracticeInPast,
+  isPracticeCancelled,
   formatPracticeDate,
   formatPracticeTime
 } from '../../../../lib/practice-config';
@@ -86,6 +87,7 @@ export async function GET(
         endTime,
         note,
         isPast: isPracticeInPast(date),
+        isCancelled: isPracticeCancelled(note),
         // Column indices will be determined dynamically during data fetching
         availabilityColumnIndex: -1,
         noteColumnIndex: -1,
@@ -209,6 +211,26 @@ export async function POST(
         success: false,
         error: 'Cannot update availability for past practices'
       }, { status: 400 });
+    }
+
+    // Get Practice Info data to check if practice is cancelled
+    const practiceInfoData = await getCachedSheetData('PRACTICE_INFO');
+    if (practiceInfoData && practiceInfoData.length > 1) {
+      // Find the practice to check if it's cancelled
+      for (let i = 1; i < practiceInfoData.length; i++) {
+        const row = practiceInfoData[i];
+        const date = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.DATE] || '';
+        if (date === practiceDate) {
+          const practiceNote = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.NOTE] || '';
+          if (isPracticeCancelled(practiceNote)) {
+            return NextResponse.json({
+              success: false,
+              error: 'Cannot update availability for cancelled practices'
+            }, { status: 400 });
+          }
+          break;
+        }
+      }
     }
 
     // Validate availability value

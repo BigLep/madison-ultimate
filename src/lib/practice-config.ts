@@ -65,6 +65,7 @@ export interface Practice {
   endTime: string;
   note?: string;
   isPast: boolean;
+  isCancelled: boolean;
   availabilityColumnIndex: number;
   noteColumnIndex: number;
 }
@@ -99,6 +100,11 @@ export function formatPracticeDate(date: string): string {
   // Use the centralized date formatter for consistency
   // Convert "9/23" to "Tuesday, September 23"
   return formatFullDate(date);
+}
+
+export function isPracticeCancelled(practiceNote: string): boolean {
+  // Check if the note contains "Cancelled" (case-insensitive)
+  return /cancelled/i.test(practiceNote || '');
 }
 
 export function formatPracticeTime(startTime: string, endTime: string): string {

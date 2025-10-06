@@ -16,6 +16,7 @@ interface AvailabilityCardProps {
   isUpdating: boolean;
   isEditable: boolean;
   isBye?: boolean; // Whether this is a bye week (FYI only)
+  isCancelled?: boolean; // Whether this practice is cancelled (FYI only)
   children?: React.ReactNode; // For additional content like time details
 }
 
@@ -31,6 +32,7 @@ export function AvailabilityCard({
   isUpdating,
   isEditable,
   isBye = false,
+  isCancelled = false,
   children
 }: AvailabilityCardProps) {
   const [selectedAvailability, setSelectedAvailability] = useState(currentAvailability);
@@ -115,8 +117,19 @@ export function AvailabilityCard({
               Enjoy your week off!
             </div>
           </div>
+        ) : isCancelled ? (
+          /* Cancelled Practice Display - No availability selection */
+          <div className="text-center py-4 px-6 rounded-lg" style={{backgroundColor: 'var(--secondary-bg)'}}>
+            <div className="text-lg mb-2">🚫</div>
+            <div className="text-sm font-medium" style={{color: 'var(--primary-text)'}}>
+              Practice Cancelled
+            </div>
+            <div className="text-xs mt-1" style={{color: 'var(--secondary-text)'}}>
+              No practice scheduled for this date
+            </div>
+          </div>
         ) : (
-          /* Regular Game - Show availability selection */
+          /* Regular Practice/Game - Show availability selection */
           <>
 {isEditable ? (
               <div className="space-y-3">
