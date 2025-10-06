@@ -73,6 +73,7 @@ interface Practice {
   endTime: string;
   note?: string;
   isPast: boolean;
+  isCancelled: boolean;
   availabilityColumnIndex: number;
   noteColumnIndex: number;
   formattedDate: string;
