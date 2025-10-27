@@ -51,10 +51,10 @@ export async function getGroupMessages(maxResults: number = GMAIL_CACHE_CONFIG.M
     console.log('Gmail cache miss - fetching from API');
     const gmail = await getGmailClient();
 
-    // Search for messages sent by madisonultimate@gmail.com to the group
+    // Search for sent messages only (excludes drafts) from madisonultimate@gmail.com to the group
     const queries = [
-      `from:madisonultimate@gmail.com to:${GOOGLE_GROUP_EMAIL}`,
-      `from:madisonultimate@gmail.com ${GOOGLE_GROUP_EMAIL}`,
+      `from:madisonultimate@gmail.com to:${GOOGLE_GROUP_EMAIL} in:sent`,
+      `from:madisonultimate@gmail.com ${GOOGLE_GROUP_EMAIL} in:sent`,
     ];
 
     let response;
