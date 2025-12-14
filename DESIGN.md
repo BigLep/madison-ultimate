@@ -97,7 +97,7 @@ The application integrates data from three sources to create a comprehensive sig
 - **Styling**: Tailwind CSS
 - **Authentication**: Google Service Account (server-side)
 - **Data Sources**: Google Sheets API + Google Drive API
-- **Deployment**: Vercel (planned)
+- **Deployment**: Vercel (https://madison-ultimate.vercel.app)
 
 ### Data Processing Pipeline
 
@@ -361,25 +361,25 @@ vercel --prod --yes
 }
 ```
 
-**Note**: Cron jobs removed due to Hobby plan limitations. Background refresh relies on in-memory timer instead.
+**Note**: Cron jobs removed due to Hobby plan limitations. Cache uses on-demand refresh only (no background timers in serverless).
 
 ## Current Status (Production Ready)
 
-✅ **Data Integration Pipeline**: Fully functional with real data processing  
-✅ **Google APIs**: Authenticated and tested with all 3 sources  
-✅ **Server-Side Caching**: 30-minute cache with background refresh  
-✅ **UI Components**: Responsive signup table with mobile/desktop views  
-✅ **Privacy Protection**: Student name obfuscation (e.g., "Bob F.")  
-✅ **Debug Tools**: Email matching analysis and cache diagnostics  
-✅ **Performance Optimized**: ~50ms response times via caching  
-✅ **Production Features**: 
+✅ **Data Integration Pipeline**: Fully functional with real data processing
+✅ **Google APIs**: Authenticated and tested with all 3 sources
+✅ **Server-Side Caching**: 2-minute in-memory cache with on-demand refresh (optimized for serverless)
+✅ **UI Components**: Responsive signup table with mobile/desktop views
+✅ **Privacy Protection**: Student name obfuscation (e.g., "Bob F.")
+✅ **Debug Tools**: Email matching analysis and cache diagnostics
+✅ **Performance Optimized**: ~10-20ms response times via caching
+✅ **Production Features**:
   - Data source timestamps in Pacific timezone
-  - Stale-while-revalidate for reliability  
+  - Stale-while-revalidate for reliability
   - Comprehensive statistics and progress tracking
   - Mobile-first responsive design
   - First name alphabetical sorting
 ✅ **Deployment**: Successfully deployed to Vercel production environment
-  
+
 🚀 **Production Status**: Live at https://madison-ultimate.vercel.app
 
 ## Stage 3: Player Portal UI Framework Decision

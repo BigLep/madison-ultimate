@@ -1,5 +1,7 @@
 # Stage 2 Plan: Roster Synthesis from Data Sources
 
+> **⚠️ ARCHIVED**: This stage was an experimental prototype. The roster was built using a separate process, and the actual implementation pivoted to Stage 3 (Player Portal). This file is kept for historical reference only. See `Stage 3 PLAN.md` for the active implementation.
+
 ## Overview
 Build functionality at `/build-roster` that automatically creates or updates the team roster Google Sheet using the same data sources from Stage 1. This is an admin function that synthesizes player data from multiple sources into a structured roster format.
 

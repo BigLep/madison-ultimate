@@ -30,7 +30,7 @@ A web application to track signup progress for Madison Middle School Ultimate Fr
    ```
 
 5. **Open your browser**
-   Navigate to [http://localhost:3000](http://localhost:3000) to see the application.
+   Navigate to [http://localhost:3001](http://localhost:3001) to see the application (port 3001 is used if 3000 is occupied).
 
 ### Available Scripts
 
@@ -42,7 +42,7 @@ A web application to track signup progress for Madison Middle School Ultimate Fr
 ## Documentation
 
 - **[PROJECT REQUIREMENTS.md](./PROJECT%20REQUIREMENTS.md)** - Business requirements and feature specifications
-- **[PLAN.md](./PLAN.md)** - Implementation plan, progress tracking, and development phases
+- **[Stage 3 PLAN.md](./Stage%203%20PLAN.md)** - Player Portal implementation plan (active)
 - **[DESIGN.md](./DESIGN.md)** - Technical architecture, data mapping, and implementation details
 - **[CLAUDE.md](./CLAUDE.md)** - Claude Code development notes and commands
 
@@ -66,7 +66,7 @@ madison-ultimate/
 - **Framework**: Next.js 15 with App Router
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
-- **Deployment**: Vercel (planned)
+- **Deployment**: Vercel (https://madison-ultimate.vercel.app)
 - **Data Sources**: Google Sheets API, Google Drive API, Gmail API
 
 ## Development Workflow
@@ -82,15 +82,15 @@ fix: resolve data matching issue
 docs: update setup instructions 📖
 ```
 
-## Stage 1: Signup Steps Reporting
+## Current Features: Player Portal (Stage 3)
 
-Currently implementing a dashboard to track player signup progress across multiple data sources:
+The application provides a Progressive Web App (PWA) player portal where students and families can:
 
-- SPS Final Forms completion status
-- Additional questionnaire responses  
-- Team mailing list membership
+- View player information and status
+- Mark availability for practices and games
+- Access season info and team news
 
-See `PLAN.md` for detailed implementation progress.
+See `Stage 3 PLAN.md` for implementation details.
 
 ## Google API Setup
 

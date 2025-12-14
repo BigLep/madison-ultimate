@@ -1,5 +1,7 @@
 # Madison Ultimate App - Stage 1 Implementation Plan
 
+> **⚠️ ARCHIVED**: This stage was an experimental prototype. The actual implementation pivoted to Stage 3 (Player Portal). This file is kept for historical reference only. See `Stage 3 PLAN.md` for the active implementation.
+
 ## Overview
 Building a web application to track signup progress for Madison Middle School ultimate frisbee players. Stage 1 focuses on creating a comprehensive signup status dashboard.
 

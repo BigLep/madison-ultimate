@@ -2,6 +2,16 @@
 
 This document explains the dual authentication system used in the Madison Ultimate Portal and how to set it up.
 
+## Seasonal Setup Checklist
+
+> **📅 For Spring Season**: The following items are season-specific and need to be updated:
+>
+> 1. **Google Group**: Create a new group (e.g., `madisonultimatespring26@googlegroups.com`) and update references in:
+>    - This file (search for `madisonultimatefall25`)
+>    - `PROJECT REQUIREMENTS.md`
+> 2. **Gmail OAuth Token**: The refresh token expires after ~7 days of inactivity. Re-run OAuth flow at `/api/auth/gmail` to get a fresh token.
+> 3. **Google Sheets**: Verify the roster sheet and data sources are updated for the new season.
+
 ## Overview
 
 The portal uses **two different authentication methods** for accessing different Google APIs:
