@@ -712,3 +712,57 @@ const team = row[columnMapping['Team']]; // Works even if Team column added late
 - `src/lib/practice-availability-helper.ts` - Practice-specific implementation
 - `src/lib/game-availability-helper.ts` - Game-specific implementation
 - `src/lib/column-validation.ts` - Validates expected columns exist
+
+## Known Issues & Future Improvements
+
+### Gmail OAuth Token Expiration
+
+**Current Issue:**
+The Gmail OAuth refresh token (`GMAIL_REFRESH_TOKEN`) requires manual regeneration approximately once per week, creating maintenance overhead.
+
+**Problem Details:**
+- **Frequency**: Token expires roughly every 7 days
+- **Symptom**: Gmail API calls fail with `invalid_grant` errors
+- **Current Workaround**: Manual OAuth flow re-authentication via `/api/auth/gmail` endpoint
+- **Impact**: Requires administrator intervention to regenerate and update environment variable
+
+**Possible Root Causes:**
+1. **Google OAuth App Testing Mode**: If the OAuth app is in "Testing" status (not "Published"), refresh tokens expire after 7 days
+2. **Refresh Token Rotation**: Google may be rotating refresh tokens, but we're not capturing the new token
+3. **API Scope Changes**: Changes to requested scopes invalidate existing tokens
+4. **Account Security Policies**: Google Workspace security settings may enforce shorter token lifetimes
+
+**Future Solution Options:**
+
+**Option 1: Publish OAuth App (Recommended)**
+- Move OAuth app from "Testing" to "Published" status in Google Cloud Console
+- Published apps have refresh tokens that don't expire (unless revoked)
+- Requires OAuth app verification if requesting sensitive scopes
+- Best long-term solution for production use
+
+**Option 2: Automated Token Refresh & Storage**
+- Implement automatic token refresh detection and storage
+- Capture new refresh tokens when Google rotates them
+- Store tokens in environment variable management system (Vercel API)
+- Requires additional infrastructure and error handling
+
+**Option 3: Service Account for Gmail (If Possible)**
+- Use Google Workspace service account with domain-wide delegation
+- No token expiration or manual OAuth flows
+- Requires Google Workspace admin access and domain-wide delegation setup
+- May not be possible depending on account type
+
+**Temporary Workaround (Current Implementation):**
+1. Visit production OAuth URL: `https://madison-ultimate.vercel.app/api/auth/gmail`
+2. Complete Google OAuth consent flow
+3. Copy refresh token from callback page
+4. Update `GMAIL_REFRESH_TOKEN` in Vercel environment variables
+5. Tokens valid for ~7 days before requiring regeneration
+
+**Related Files:**
+- `src/lib/gmail-oauth.ts` - OAuth client and token management
+- `src/lib/gmail-api.ts` - Gmail API integration using refresh token
+- `src/app/api/auth/gmail/route.ts` - OAuth authorization URL endpoint
+- `src/app/api/auth/callback/route.ts` - OAuth callback handler
+
+**Priority**: Medium - System is functional but requires regular manual maintenance
