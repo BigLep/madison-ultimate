@@ -170,7 +170,8 @@ You must share each Google resource with the service account email (found in the
    ADDITIONAL_QUESTIONNAIRE_SHEET_ID=1f_PPULjdg-5q2Gi0cXvWvGz1RbwYmUtADChLqwsHuNs
    SPS_FINAL_FORMS_FOLDER_ID=1SnWCxDIn3FxJCvd1JcWyoeoOMscEsQcW
    TEAM_MAILING_LIST_FOLDER_ID=1pAeQMEqiA9QdK9G5yRXsqgbNVzEU7R1E
-   ROSTER_SHEET_ID=1ZZA5TxHu8nmtyNORm3xYtN5rzP3p1jtW178UgRcxLA8
+   # Single workbook for roster and all related tabs (Roster, Practice Info, Game Info, Practice/Game Availability)
+   ROSTER_SHEET_ID=1kV3Y_GST_Y-X9PZFXu9yFkCzGWvhk9f7G24Y8QNuayU
    ```
 
 ### 7. Security Notes

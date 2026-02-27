@@ -10,7 +10,7 @@ This document explains the dual authentication system used in the Madison Ultima
 >    - This file (search for `madisonultimatefall25`)
 >    - `PROJECT REQUIREMENTS.md`
 > 2. **Gmail OAuth Token**: The refresh token expires after ~7 days of inactivity. Re-run OAuth flow at `/api/auth/gmail` to get a fresh token.
-> 3. **Google Sheets**: Verify the roster sheet and data sources are updated for the new season.
+> 3. **Google Sheets**: Set `ROSTER_SHEET_ID` to the season workbook. This single workbook contains all tabs (Roster, Practice Info, Game Info, Practice Availability, Game Availability). Verify data is updated for the new season.
 
 ## Overview
 
