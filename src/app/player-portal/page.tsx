@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { APP_CONFIG } from '@/lib/app-config'
 
 export default function PlayerPortalLogin() {
+  const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [birthMonth, setBirthMonth] = useState('')
   const [birthYear, setBirthYear] = useState('')
@@ -51,7 +52,8 @@ export default function PlayerPortalLogin() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          lastName,
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
           birthMonth: birthMonth,
           birthYear: birthYear.slice(-2), // Convert "2012" to "12"
         }),
@@ -91,6 +93,25 @@ export default function PlayerPortalLogin() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="firstName" className="font-semibold" style={{color: 'var(--primary-text)'}}>Player First Name</Label>
+              <Input
+                id="firstName"
+                type="text"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="Enter player first name"
+                required
+                disabled={isLoading}
+                className="border"
+                style={{
+                  background: 'var(--card-bg)',
+                  borderColor: 'var(--border)',
+                  color: 'var(--primary-text)'
+                }}
+              />
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="lastName" className="font-semibold" style={{color: 'var(--primary-text)'}}>Player Last Name</Label>
               <Input

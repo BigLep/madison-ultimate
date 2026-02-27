@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { findPortalIdByLookupKey } from '../../../../lib/portal-cache';
 
 interface PlayerLookupRequest {
+  firstName: string;
   lastName: string;
   birthMonth: string; // 2 digits
   birthYear: string;  // 2 digits
@@ -10,13 +11,13 @@ interface PlayerLookupRequest {
 export async function POST(request: NextRequest) {
   try {
     const body: PlayerLookupRequest = await request.json();
-    const { lastName, birthMonth, birthYear } = body;
+    const { firstName, lastName, birthMonth, birthYear } = body;
 
     // Validate input
-    if (!lastName || !birthMonth || !birthYear) {
+    if (!firstName?.trim() || !lastName?.trim() || !birthMonth || !birthYear) {
       return NextResponse.json({
         success: false,
-        error: 'Missing required fields: lastName, birthMonth, birthYear'
+        error: 'Missing required fields: firstName, lastName, birthMonth, birthYear'
       }, { status: 400 });
     }
 
@@ -28,8 +29,9 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Construct lookup key from input
-    const lookupKey = `${lastName.toLowerCase()}${birthMonth}${birthYear}`;
+    // Lookup key: first initial (lowercase) + last name (lowercase) + birth month (2 digits) + birth year (2 digits)
+    const firstInitial = firstName.trim().charAt(0).toLowerCase();
+    const lookupKey = `${firstInitial}${lastName.trim().toLowerCase()}${birthMonth}${birthYear}`;
 
     // Use cached portal data to find matching portal ID
     const playerPortalId = await findPortalIdByLookupKey(lookupKey);
