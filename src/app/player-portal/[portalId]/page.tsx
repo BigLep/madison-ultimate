@@ -399,7 +399,7 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
 
 function HomeScreen() {
   // URL constants for easy maintenance
-  const SEASON_INFO_URL = 'https://madisonultimate.notion.site/2025-Fall-Madison-Ultimate-265c4da46f7580e8ad0cc5c3fb2315f5';
+  const SEASON_INFO_URL = 'https://madisonultimate.notion.site/2025-Fall-Madison-Ultimate-265c4da46f7580e8ad0cc5c3fb2315f5'; // Update to Spring 2026 season page when ready
 
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -440,7 +440,7 @@ function HomeScreen() {
       <Card className="shadow-lg" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
         <CardHeader>
           <CardTitle style={{color: 'var(--page-title)'}}>Welcome to Madison Ultimate!</CardTitle>
-          <CardDescription style={{color: 'var(--secondary-header)'}}>Fall 2025 Season</CardDescription>
+          <CardDescription style={{color: 'var(--secondary-header)'}}>Spring 2026 Season</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>

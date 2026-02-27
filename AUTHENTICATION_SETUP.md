@@ -4,13 +4,14 @@ This document explains the dual authentication system used in the Madison Ultima
 
 ## Seasonal Setup Checklist
 
-> **📅 For Spring Season**: The following items are season-specific and need to be updated:
+> **📅 For Spring 2026**: The app is configured for Spring 2026 (roster sheet ID, single team, “Spring 2026 Season” label). Still update:
 >
 > 1. **Google Group**: Create a new group (e.g., `madisonultimatespring26@googlegroups.com`) and update references in:
 >    - This file (search for `madisonultimatefall25`)
 >    - `PROJECT REQUIREMENTS.md`
 > 2. **Gmail OAuth Token**: The refresh token expires after ~7 days of inactivity. Re-run OAuth flow at `/api/auth/gmail` to get a fresh token.
-> 3. **Google Sheets**: Set `ROSTER_SHEET_ID` to the season workbook. This single workbook contains all tabs (Roster, Practice Info, Game Info, Practice Availability, Game Availability). Verify data is updated for the new season.
+> 3. **Google Sheets**: `ROSTER_SHEET_ID` is set to the Spring 2026 workbook. Verify all tabs and data are updated for the season.
+> 4. **Notion/links**: Update `SEASON_INFO_URL` and `MAILING_LIST_INFO_URL` in the player portal to point to Spring 2026 pages when ready.
 
 ## Overview
 
