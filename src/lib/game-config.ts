@@ -77,10 +77,16 @@ export interface Game {
   noteColumnIndex: number;
 }
 
+/** Coach-set per-game activation: Active = called to play, Inactive = not asked, TBD = not yet decided */
+export type ActivationStatus = 'Active' | 'Inactive' | 'TBD' | '';
+
+export const ACTIVATION_STATUS_VALUES: ActivationStatus[] = ['Active', 'Inactive', 'TBD'];
+
 export interface PlayerGameAvailability {
-  gameKey: string; // e.g., "Gold Game #1"
+  gameKey: string; // e.g., "Varsity Team Game #1"
   availability: string;
   note: string;
+  activationStatus?: ActivationStatus;
 }
 
 export interface GameAvailabilityRow {

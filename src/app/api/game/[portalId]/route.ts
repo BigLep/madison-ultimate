@@ -9,11 +9,18 @@ import {
   GAME_CONFIG,
   Game,
   PlayerGameAvailability,
+  ActivationStatus,
   isGameInPast,
   formatGameDate,
   formatGameTime,
   getGameKey
 } from '../../../../lib/game-config';
+
+function normalizeActivationStatus(value: string | undefined): ActivationStatus {
+  const v = (value || '').trim();
+  if (GAME_CONFIG.ACTIVATION_STATUS_VALUES.includes(v as ActivationStatus)) return v as ActivationStatus;
+  return '';
+}
 
 const ROSTER_SHEET_ID = SHEET_CONFIG.ROSTER_SHEET_ID;
 
@@ -156,14 +163,18 @@ export async function GET(
       if (availabilityResult) {
         const { headerRow, playerRow } = availabilityResult;
 
-        // Extract availability for each game using dynamic column discovery
+        // Extract availability and activation status for each game using dynamic column discovery
         playerAvailability = games.map(game => {
           const gameColumns = findGameColumns(headerRow, game.date);
           if (gameColumns) {
+            const activationStatus = gameColumns.activationStatusColumn !== undefined
+              ? normalizeActivationStatus(playerRow[gameColumns.activationStatusColumn]?.toString())
+              : '';
             return {
               gameKey: getGameKey(game.team, game.gameNumber),
               availability: playerRow[gameColumns.availabilityColumn] || '',
               note: playerRow[gameColumns.noteColumn] || '',
+              activationStatus,
             };
           } else {
             console.warn(`Game columns not found for date: ${game.date}`);
@@ -171,6 +182,7 @@ export async function GET(
               gameKey: getGameKey(game.team, game.gameNumber),
               availability: '',
               note: '',
+              activationStatus: '' as ActivationStatus,
             };
           }
         });
@@ -199,6 +211,7 @@ export async function GET(
           gameKey: getGameKey(game.team, game.gameNumber),
           availability: '',
           note: '',
+          activationStatus: '' as ActivationStatus,
         },
       })),
       availabilityOptions: GAME_CONFIG.AVAILABILITY_OPTIONS,
