@@ -40,7 +40,8 @@ export async function GET(
       }, { status: 404 });
     }
 
-    // Get the actual full name and team from the player API
+
+    // Get full name (and optional team for display) from player API
     let playerFullName = portalEntry.lookupKey; // fallback
     let playerTeam = '';
     try {
@@ -55,13 +56,6 @@ export async function GET(
       }
     } catch (error) {
       console.log('Could not fetch player data, using lookup key as fallback');
-    }
-
-    if (!playerTeam) {
-      return NextResponse.json({
-        success: false,
-        error: 'Player team not found. Please ensure team is assigned in the roster.'
-      }, { status: 404 });
     }
 
     // Step 2: Get Game Info data from cache
@@ -90,65 +84,42 @@ export async function GET(
       return index !== undefined ? (row[index]?.toString().trim() || '') : '';
     };
 
-    // Parse games (skip header row) - we'll process all games and create both Gold and Blue games
+    // Parse games (skip header row) - one game per row (single team)
+    const teamDisplay = playerTeam || GAME_CONFIG.TEAM_DISPLAY_NAME;
     const games: Game[] = [];
-    let gameIndex = 0; // Track overall game index for column calculation
+    const col = GAME_CONFIG.GAME_INFO_COLUMN_NAMES;
 
     for (let i = 1; i < gameInfoData.length; i++) {
       const row = gameInfoData[i];
-      const date = getGameInfoValue(row, GAME_CONFIG.GAME_INFO_COLUMN_NAMES.DATE);
-      const gameNumber = getGameInfoValue(row, GAME_CONFIG.GAME_INFO_COLUMN_NAMES.GAME_NUMBER);
+      const date = getGameInfoValue(row, col.DATE);
+      const gameNumber = getGameInfoValue(row, col.GAME_NUMBER);
 
-      if (!date || !gameNumber) continue; // Skip rows without basic game info
+      if (!date || !gameNumber) continue;
 
-      // Create games for both teams from this row
-      const teams = [GAME_CONFIG.TEAMS.GOLD, GAME_CONFIG.TEAMS.BLUE];
+      const warmupTime = getGameInfoValue(row, col.WARMUP);
+      const gameStart = getGameInfoValue(row, col.START);
+      const doneBy = getGameInfoValue(row, col.DONE);
+      const location = getGameInfoValue(row, col.LOCATION);
+      const locationUrl = getGameInfoValue(row, col.LOCATION_URL) || null;
+      const gameNote = getGameInfoValue(row, col.GAME_NOTE);
+      const isBye = gameNumber.toLowerCase() === 'bye';
 
-      for (const team of teams) {
-        // Only include games for the player's team
-        if (team !== playerTeam) {
-          continue;
-        }
-
-        // Get team-specific columns
-        const isGold = team === GAME_CONFIG.TEAMS.GOLD;
-        const warmupColumnName = isGold ? GAME_CONFIG.GAME_INFO_COLUMN_NAMES.GOLD_WARMUP : GAME_CONFIG.GAME_INFO_COLUMN_NAMES.BLUE_WARMUP;
-        const startColumnName = isGold ? GAME_CONFIG.GAME_INFO_COLUMN_NAMES.GOLD_START : GAME_CONFIG.GAME_INFO_COLUMN_NAMES.BLUE_START;
-        const doneColumnName = isGold ? GAME_CONFIG.GAME_INFO_COLUMN_NAMES.GOLD_DONE : GAME_CONFIG.GAME_INFO_COLUMN_NAMES.BLUE_DONE;
-        const locationColumnName = isGold ? GAME_CONFIG.GAME_INFO_COLUMN_NAMES.GOLD_LOCATION : GAME_CONFIG.GAME_INFO_COLUMN_NAMES.BLUE_LOCATION;
-        const locationUrlColumnName = isGold ? GAME_CONFIG.GAME_INFO_COLUMN_NAMES.GOLD_LOCATION_URL : GAME_CONFIG.GAME_INFO_COLUMN_NAMES.BLUE_LOCATION_URL;
-        const gameNoteColumnName = isGold ? GAME_CONFIG.GAME_INFO_COLUMN_NAMES.GOLD_GAME_NOTE : GAME_CONFIG.GAME_INFO_COLUMN_NAMES.BLUE_GAME_NOTE;
-
-        const warmupTime = getGameInfoValue(row, warmupColumnName);
-        const gameStart = getGameInfoValue(row, startColumnName);
-        const doneBy = getGameInfoValue(row, doneColumnName);
-        const location = getGameInfoValue(row, locationColumnName);
-        const locationUrl = getGameInfoValue(row, locationUrlColumnName) || null;
-        const gameNote = getGameInfoValue(row, gameNoteColumnName);
-
-        // Check if this is a bye week
-        const isBye = gameNumber.toLowerCase() === 'bye';
-
-        games.push({
-          team,
-          gameNumber,
-          date,
-          location,
-          locationUrl,
-          warmupTime,
-          gameStart,
-          doneBy,
-          note: '', // Games don't have notes in the info sheet
-          gameNote, // Team-specific game note from coach
-          isBye,
-          isPast: isGameInPast(date),
-          // We'll calculate these after we get the availability sheet structure
-          availabilityColumnIndex: -1,
-          noteColumnIndex: -1,
-        });
-
-        gameIndex++;
-      }
+      games.push({
+        team: teamDisplay,
+        gameNumber,
+        date,
+        location,
+        locationUrl,
+        warmupTime,
+        gameStart,
+        doneBy,
+        note: '',
+        gameNote,
+        isBye,
+        isPast: isGameInPast(date),
+        availabilityColumnIndex: -1,
+        noteColumnIndex: -1,
+      });
     }
 
     // Sort games: upcoming first (chronologically), then past games (reverse chronologically)
@@ -214,7 +185,7 @@ export async function GET(
       player: {
         fullName: playerFullName,
         portalId: portalId,
-        team: playerTeam,
+        team: teamDisplay,
       },
       games: games.map(game => ({
         ...game,
@@ -266,8 +237,8 @@ export async function POST(
       }, { status: 400 });
     }
 
-    // Extract game info from gameKey (e.g., "Gold Game #1" or "Blue Game #Playoff #1")
-    const gameKeyMatch = gameKey.match(/^(\w+) Game #(.+)$/);
+    // Extract game info from gameKey (e.g., "Varsity Team Game #1" or "Game #Playoff #1")
+    const gameKeyMatch = gameKey.match(/^(.+?) Game #(.+)$/);
     if (!gameKeyMatch) {
       return NextResponse.json({
         success: false,

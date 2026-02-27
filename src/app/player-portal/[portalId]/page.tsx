@@ -101,9 +101,9 @@ interface PracticeData {
 
 type PortalScreen = 'home' | 'player-info' | 'practice-availability' | 'game-availability'
 
-// Helper function to get team display
+// Helper function to get team display (single-team seasons use "Varsity Team" when no roster team)
 const getTeamDisplay = (team?: string) => {
-  if (!team) return 'Not assigned';
+  if (!team || !team.trim()) return 'Varsity Team';
 
   switch (team.toLowerCase()) {
     case 'blue':
@@ -112,6 +112,8 @@ const getTeamDisplay = (team?: string) => {
       return '🟨 Gold';
     case 'practice squad':
       return '🏋️ Practice Squad';
+    case 'varsity team':
+      return 'Varsity Team';
     default:
       return team;
   }
@@ -1104,7 +1106,7 @@ function GameAvailabilityScreen({ params }: { params: Promise<{ portalId: string
       {/* Game Summary Stats */}
       {(upcomingGamesForStats.length > 0 || pastGamesForStats.length > 0) && (
         <AvailabilitySummary
-          title={`${player.team} Team Game Summary`}
+          title={`${getTeamDisplay(player.team)} Game Summary`}
           upcomingItems={upcomingGamesForStats}
           pastItems={pastGamesForStats}
           availabilityOptions={availabilityOptions}
@@ -1119,7 +1121,7 @@ function GameAvailabilityScreen({ params }: { params: Promise<{ portalId: string
           {upcomingGames.map((game: any) => (
             <AvailabilityCard
               key={game.gameKey}
-              title={game.isBye ? game.formattedDate : `${game.team} Game #${game.gameNumber}: ${game.formattedDate}`}
+              title={game.isBye ? game.formattedDate : `Game #${game.gameNumber}: ${game.formattedDate}`}
               subtitle={!game.isBye ? `Warmups: ${game.formattedWarmupTime} • Start: ${game.formattedGameStart} • Done: ${game.formattedDoneBy}` : ''}
               location={game.location}
               locationUrl={game.locationUrl}
@@ -1148,7 +1150,7 @@ function GameAvailabilityScreen({ params }: { params: Promise<{ portalId: string
           {pastGames.map((game: any) => (
             <AvailabilityCard
               key={game.gameKey}
-              title={game.isBye ? game.formattedDate : `${game.team} Game #${game.gameNumber}: ${game.formattedDate}`}
+              title={game.isBye ? game.formattedDate : `Game #${game.gameNumber}: ${game.formattedDate}`}
               subtitle={!game.isBye ? `Warmups: ${game.formattedWarmupTime} • Start: ${game.formattedGameStart} • Done: ${game.formattedDoneBy}` : ''}
               location={game.location}
               locationUrl={game.locationUrl}
@@ -1174,7 +1176,7 @@ function GameAvailabilityScreen({ params }: { params: Promise<{ portalId: string
         <Card className="shadow-lg" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
           <CardContent className="text-center py-8">
             <Trophy className="w-12 h-12 mx-auto mb-4 opacity-50" style={{color: 'var(--secondary-text)'}} />
-            <p style={{color: 'var(--secondary-text)'}}>No games scheduled for the {player.team} team yet.</p>
+            <p style={{color: 'var(--secondary-text)'}}>No games scheduled for the {getTeamDisplay(player.team)} yet.</p>
           </CardContent>
         </Card>
       )}

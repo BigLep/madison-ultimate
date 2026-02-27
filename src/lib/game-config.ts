@@ -9,29 +9,18 @@ export const GAME_CONFIG = {
   GAME_INFO_SHEET: SHEET_CONFIG.GAME_INFO_SHEET_NAME,
   GAME_AVAILABILITY_SHEET: SHEET_CONFIG.GAME_AVAILABILITY_SHEET_NAME,
 
-  // Game Info sheet column names for dynamic discovery
-  // Based on the actual sheet structure with separate Gold/Blue columns
+  // Game Info sheet column names for dynamic discovery (single team)
   GAME_INFO_COLUMN_NAMES: {
     DATE: "Date",
     GAME_NUMBER: "Game #",
-    // Gold team columns
-    GOLD_WARMUP: "Gold Warmup Arrival",
-    GOLD_START: "Gold Game Start",
-    GOLD_DONE: "Gold Done By",
-    GOLD_LOCATION: "Gold Location",
-    GOLD_LOCATION_URL: "Gold Location URL",
-    GOLD_SNACK: "Gold Snack Owner",
-    GOLD_DISC: "Gold DiscNW Page",
-    GOLD_GAME_NOTE: "Gold Game Note",
-    // Blue team columns
-    BLUE_WARMUP: "Blue Warmup Arrival",
-    BLUE_START: "Blue Game Start",
-    BLUE_DONE: "Blue Done By",
-    BLUE_LOCATION: "Blue Location",
-    BLUE_LOCATION_URL: "Blue Location URL",
-    BLUE_SNACK: "Blue Snack Owner",
-    BLUE_DISC: "Blue DiscNW Page",
-    BLUE_GAME_NOTE: "Blue Game Note",
+    WARMUP: "Warmup Arrival",
+    START: "Game Start",
+    DONE: "Done By",
+    LOCATION: "Location",
+    LOCATION_URL: "Location URL",
+    SNACK: "Snack Owner",
+    DISC: "DiscNW Page",
+    GAME_NOTE: "Game Note",
   },
 
   // Game Availability sheet column names for dynamic discovery
@@ -39,9 +28,8 @@ export const GAME_CONFIG = {
     FULL_NAME: "Full Name",
     GRADE: "Grade",
     GENDER_IDENTIFICATION: "Gender Identification",
-    TEAM: "Team",
-    // Game columns are dynamically named based on game info
-    // Pattern: [team + " Game #" + number], [team + " Game #" + number + " Note"], etc.
+    // Team column optional for single-team seasons
+    // Per-date columns: {date}, {date} Note, {date} Activation Status
   },
 
   // Valid availability values (what players can select)
@@ -67,11 +55,8 @@ export const GAME_CONFIG = {
     "", // Empty is valid (no response yet)
   ],
 
-  // Team values
-  TEAMS: {
-    GOLD: "Gold",
-    BLUE: "Blue",
-  },
+  // Single team display label (used for game keys and portal copy when no roster team)
+  TEAM_DISPLAY_NAME: "Varsity Team",
 } as const;
 
 // Type definitions
@@ -146,5 +131,6 @@ export function formatGameTime(time: string): string {
 }
 
 export function getGameKey(team: string, gameNumber: string): string {
-  return `${team} Game #${gameNumber}`;
+  const displayTeam = team && team.trim() ? team : GAME_CONFIG.TEAM_DISPLAY_NAME;
+  return `${displayTeam} Game #${gameNumber}`;
 }
