@@ -25,7 +25,7 @@ export const REQUIRED_COLUMNS: ColumnDefinition[] = [
   { name: 'Gender', required: true, description: 'Student gender', type: 'string' },
   { name: 'Gender Identification', required: true, description: 'Student gender identification', type: 'string' },
   { name: 'Date of Birth', required: true, description: 'Student date of birth', type: 'date' },
-  { name: 'Team', required: true, description: 'Team assignment (Blue/Gold)', type: 'string' },
+  { name: 'Team', required: false, description: 'Team assignment (optional for single-team seasons)', type: 'string' },
 
   // Final Forms status
   { name: 'Are All Forms Parent Signed', required: true, description: 'Parent signature status', type: 'boolean' },
@@ -185,7 +185,7 @@ export function extractPlayerData(playerData: any) {
     gender: getRequired('Gender') || '',
     genderIdentification: getRequired('Gender Identification') || '',
     dateOfBirth: getRequired('Date of Birth') || '',
-    team: getRequired('Team') || '',
+    team: getOptional('Team') || '',
 
     // Final Forms status (all required)
     finalFormsStatus: {
