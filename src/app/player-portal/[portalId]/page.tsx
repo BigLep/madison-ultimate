@@ -13,7 +13,9 @@ import { APP_CONFIG } from '../../../lib/app-config'
 
 // URL constants for easy maintenance
 const ADDITIONAL_INFO_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfOO0ybkvfs0GTBvP6tC95HT3JlGVWkSzlYghDITpw_38_hPA/viewform?usp=dialog';
-const MAILING_LIST_INFO_URL = 'https://madisonultimate.notion.site/More-Season-Info-265c4da46f7580668995df287590039f#265c4da46f75812981c1ee2b8d88e956';
+// Per-season: show "Additional Info Form" in Player Info? See SEASON_SETUP.md.
+const SHOW_ADDITIONAL_INFO_FORM = false;
+const MAILING_LIST_INFO_URL = 'https://madisonultimate.notion.site/More-Season-Info-2ffc4da46f7581d0b8e8f16282d39117#2ffc4da46f75811a8f53eabe24678d75';
 
 interface PlayerData {
   studentId: string;
@@ -399,7 +401,7 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
 
 function HomeScreen() {
   // URL constants for easy maintenance
-  const SEASON_INFO_URL = 'https://madisonultimate.notion.site/2025-Fall-Madison-Ultimate-265c4da46f7580e8ad0cc5c3fb2315f5'; // Update to Spring 2026 season page when ready
+  const SEASON_INFO_URL = 'https://madisonultimate.notion.site/2026-Spring-Madison-Ultimate-2ffc4da46f75805a8817f19327bfa970';
 
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -675,16 +677,18 @@ function PlayerInfoScreen({ player }: { player: PlayerData }) {
               <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Pronouns</p>
               <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.additionalInfo?.pronouns || 'Not specified'}</p>
             </div>
-            <div>
-              <p className="text-sm" style={{color: 'var(--secondary-text)'}}>
-                <a href={ADDITIONAL_INFO_FORM_URL} target="_blank" rel="noopener noreferrer" style={{color: 'var(--accent)', textDecoration: 'underline'}}>
-                  Additional Info Form
-                </a>
-              </p>
-              <p className="font-medium" style={{color: 'var(--primary-text)'}}>
-                {player.additionalInfo?.questionnaireFilledOut ? '✅ Yes' : 'No'}
-              </p>
-            </div>
+            {SHOW_ADDITIONAL_INFO_FORM && (
+              <div>
+                <p className="text-sm" style={{color: 'var(--secondary-text)'}}>
+                  <a href={ADDITIONAL_INFO_FORM_URL} target="_blank" rel="noopener noreferrer" style={{color: 'var(--accent)', textDecoration: 'underline'}}>
+                    Additional Info Form
+                  </a>
+                </p>
+                <p className="font-medium" style={{color: 'var(--primary-text)'}}>
+                  {player.additionalInfo?.questionnaireFilledOut ? '✅ Yes' : 'No'}
+                </p>
+              </div>
+            )}
             <div>
               <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Allergies</p>
               <p className="font-medium" style={{color: 'var(--primary-text)'}}>{player.additionalInfo?.allergies || 'None reported'}</p>

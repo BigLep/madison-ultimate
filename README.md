@@ -188,7 +188,7 @@ This application uses **dual authentication** for different Google APIs:
 - **Service Account**: For Google Sheets and Drive APIs
 - **OAuth 2.0**: For Gmail API (team message access)
 
-For complete authentication setup instructions, see [AUTHENTICATION_SETUP.md](./AUTHENTICATION_SETUP.md).
+For complete authentication setup instructions, see [AUTHENTICATION_SETUP.md](./AUTHENTICATION_SETUP.md). For a checklist of what to set or decide each season (roster sheet, portal labels, Additional Info Form visibility, etc.), see [SEASON_SETUP.md](./SEASON_SETUP.md).
 
 ## Deployment (Vercel)
 

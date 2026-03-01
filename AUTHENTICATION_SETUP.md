@@ -4,14 +4,14 @@ This document explains the dual authentication system used in the Madison Ultima
 
 ## Seasonal Setup Checklist
 
-> **📅 For Spring 2026**: The app is configured for Spring 2026 (roster sheet ID, single team, “Spring 2026 Season” label). Still update:
->
-> 1. **Google Group**: Create a new group (e.g., `madisonultimatespring26@googlegroups.com`) and update references in:
->    - This file (search for `madisonultimatefall25`)
->    - `PROJECT REQUIREMENTS.md`
-> 2. **Gmail OAuth Token**: The refresh token expires after ~7 days of inactivity. Re-run OAuth flow at `/api/auth/gmail` to get a fresh token.
-> 3. **Google Sheets**: Set `ROSTER_SHEET_ID` in `.env.local` to the season workbook. **Share that spreadsheet** with the app’s service account so it can read roster data: open the sheet → Share → add the service account email (see below) with at least **Viewer** access. Example: `stevel@cedar-scene-471205-t3.iam.gserviceaccount.com` (or the `client_email` from `.google-service-account.json`). Verify all tabs and data are updated for the season.
-> 4. **Notion/links**: Update `SEASON_INFO_URL` and `MAILING_LIST_INFO_URL` in the player portal to point to Spring 2026 pages when ready.
+**Use [SEASON_SETUP.md](SEASON_SETUP.md) as the main checklist** for everything that must be set or decided each season (env, Sheets, portal labels and links, Additional Info Form visibility, Google Group, etc.). The rest of this file covers auth only.
+
+For each new season you will need to:
+
+1. **Google Sheets**: Set `ROSTER_SHEET_ID` in `.env.local` and **share that spreadsheet** with the service account (see "Grant Permissions" below).
+2. **Portal and links**: Update season label, `SEASON_INFO_URL`, `MAILING_LIST_INFO_URL`, and `SHOW_ADDITIONAL_INFO_FORM` in the player portal — see [SEASON_SETUP.md](SEASON_SETUP.md).
+3. **Google Group**: If using team messages, create/update the group and references (e.g. search for `madisonultimatefall25` in this repo and `PROJECT REQUIREMENTS.md`).
+4. **Gmail OAuth**: The refresh token can expire after ~7 days of inactivity. Re-run the OAuth flow at `/api/auth/gmail` if needed.
 
 ## Overview
 
