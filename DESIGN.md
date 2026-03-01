@@ -226,17 +226,27 @@ The application uses a simple in-memory caching strategy optimized for Vercel's 
 - **Response**: Complete PlayerSignupStatus[] with statistics
 - **Performance**: ~10-20ms (cached) / ~3-5s (fresh)
 
-### `/api/debug` (Debug & Force Refresh)
-- **Purpose**: Email matching analysis + force cache refresh
-- **Caching**: Always fetches fresh data and updates memory cache
-- **Response**: Matched/unmatched email breakdown
-- **Usage**: Troubleshooting email matching issues
+### Debug endpoints
 
-### Legacy Endpoints (Deprecated)
-- `/api/test-google` - Replaced by cache manager
-- `/api/test-data-processing` - Replaced by main data pipeline  
-- `/api/cache-data` - Replaced by automatic caching
-- `/api/debug-mailing-list` - Replaced by `/api/debug`
+These endpoints are for development and troubleshooting. Use them when roster columns, cache, or per-player data don’t match expectations.
+
+#### `GET /api/debug` (Debug & force refresh)
+- **Purpose**: Email matching analysis and force cache refresh
+- **Caching**: Always fetches fresh data and updates the in-memory cache
+- **Response**: Debug data including matched/unmatched email breakdown
+- **When to use**: Troubleshooting email matching or when you need to force the cache to refresh and inspect the result
+
+#### `GET /api/system/column-health` (Roster column validation)
+- **Purpose**: Validate the roster sheet’s column headers against app expectations
+- **Query params**: None
+- **Response**: `columnHealth` with `isValid`, `errorMessage`, `summary` (counts of required/optional/missing/extra), `details` (e.g. `missingRequired`, `missingOptional`, `extraColumns`, `portalColumns`), and `availableColumns` (first 50). No per-player data is returned.
+- **When to use**: After changing the roster sheet or column names; confirms required and portal columns are present and shows which optional columns are missing or extra
+
+#### `GET /api/debug/player-row?portalId=...` (Single-player raw row)
+- **Purpose**: Return the actual column names and one player’s row values keyed by column name
+- **Query params**: `portalId` (required) — the player’s portal ID from the roster
+- **Response**: `columnNames`, `rowByColumn` (column name → value for that player), `columnCount`
+- **When to use**: Debugging a specific player’s data (e.g. missing pronouns, contacts, or allergies); compare `rowByColumn` to what the app expects to find header or value mismatches
 
 ## Data Source Details
 

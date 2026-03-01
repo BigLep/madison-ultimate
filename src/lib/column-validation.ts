@@ -47,14 +47,20 @@ export const REQUIRED_COLUMNS: ColumnDefinition[] = [
   { name: 'Parent 2 Email', required: false, description: 'Parent 2 email address', type: 'email' },
   { name: 'Parent 2 Email On Mailing List?', required: false, description: 'Parent 2 mailing list status', type: 'string' },
 
+  // Caregiver columns (alternative to Parent 1/2; app maps these into parent1/parent2)
+  { name: 'Caregiver #1: Name (First & Last)', required: false, description: 'Caregiver 1 full name', type: 'string' },
+  { name: 'Caregiver #1: Email', required: false, description: 'Caregiver 1 email', type: 'email' },
+  { name: 'Caregiver #2: Name (First & Last)', required: false, description: 'Caregiver 2 full name', type: 'string' },
+  { name: 'Caregiver #2: Email', required: false, description: 'Caregiver 2 email', type: 'email' },
+
   // Student emails
   { name: 'Student SPS Email', required: false, description: 'Student SPS email address', type: 'email' },
   { name: 'Student Personal Email', required: false, description: 'Student personal email address', type: 'email' },
   { name: 'Student Personal Email On Mailing List?', required: false, description: 'Student personal email mailing list status', type: 'string' },
 
   // Additional questionnaire info
-  { name: 'Prounouns', required: false, description: 'Student pronouns', type: 'string' },
-  { name: 'Player Allergies', required: false, description: 'Player allergies', type: 'string' },
+  { name: 'Pronouns', required: false, description: 'Student pronouns', type: 'string' },
+  { name: 'Player Allergies', required: false, description: 'Player allergies (any column ending with "Allergies" is accepted)', type: 'string' },
   { name: 'Competing Sports and Activities', required: false, description: 'Other competing activities', type: 'string' },
   { name: 'Jersey Size', required: false, description: 'Jersey size preference', type: 'string' },
   { name: 'Playing Experience', required: false, description: 'Previous playing experience', type: 'string' },
@@ -169,6 +175,55 @@ export function createValidationErrorMessage(result: ColumnValidationResult): st
 }
 
 /**
+ * Split a full name "First Last" into { firstName, lastName }.
+ * Last token is lastName; everything else is firstName. Single word → lastName only.
+ */
+function splitFullName(full: string | null): { firstName: string; lastName: string } {
+  if (!full || !full.trim()) return { firstName: '', lastName: '' };
+  const parts = full.trim().split(/\s+/);
+  if (parts.length === 1) return { firstName: '', lastName: parts[0]! };
+  const lastName = parts.pop() ?? '';
+  const firstName = parts.join(' ');
+  return { firstName, lastName };
+}
+
+/**
+ * Get value from first column whose name ends with the given suffix (e.g. "Allergies").
+ */
+function getOptionalBySuffix(playerData: any, suffix: string): string | undefined {
+  const col = Object.keys(playerData.columnMapping ?? {}).find((c) =>
+    c.trim().toLowerCase().endsWith(suffix.toLowerCase())
+  );
+  if (!col) return undefined;
+  const idx = playerData.columnMapping[col];
+  const val = playerData.rowData?.[idx];
+  return val != null ? String(val).trim() || undefined : undefined;
+}
+
+/**
+ * Get value from first column whose name matches the given regex.
+ */
+function getOptionalByPattern(playerData: any, pattern: RegExp): string | undefined {
+  const col = Object.keys(playerData.columnMapping ?? {}).find((c) => pattern.test(c.trim()));
+  if (!col) return undefined;
+  const idx = playerData.columnMapping[col];
+  const val = playerData.rowData?.[idx];
+  return val != null ? String(val).trim() || undefined : undefined;
+}
+
+// Regexes for parent/caregiver columns (Parent N or Caregiver #N)
+const PARENT_FIRST = /^Parent\s+1\s+First\s+Name$/i;
+const PARENT_LAST = /^Parent\s+1\s+Last\s+Name$/i;
+const PARENT_EMAIL = /^Parent\s+1\s+Email$/i;
+const CAREGIVER_NAME = /Caregiver\s*#?1[^:]*:\s*Name/i;
+const CAREGIVER_EMAIL = /Caregiver\s*#?1[^:]*:\s*Email/i;
+const PARENT2_FIRST = /^Parent\s+2\s+First\s+Name$/i;
+const PARENT2_LAST = /^Parent\s+2\s+Last\s+Name$/i;
+const PARENT2_EMAIL = /^Parent\s+2\s+Email$/i;
+const CAREGIVER2_NAME = /Caregiver\s*#?2[^:]*:\s*Name/i;
+const CAREGIVER2_EMAIL = /Caregiver\s*#?2[^:]*:\s*Email/i;
+
+/**
  * Helper function to safely extract all player data using validated column access
  */
 export function extractPlayerData(playerData: any) {
@@ -176,6 +231,21 @@ export function extractPlayerData(playerData: any) {
   const getRequired = (columnName: string) => getValidatedColumnValue(playerData, columnName, true);
   // Helper to get optional columns
   const getOptional = (columnName: string) => getValidatedColumnValue(playerData, columnName, false);
+
+  const byPattern = (re: RegExp) => getOptionalByPattern(playerData, re);
+  // Parent 1: prefer Parent 1 columns; fall back to Caregiver #1 (regex matches "Caregiver #1: Name (First & Last)", etc.)
+  const p1First = byPattern(PARENT_FIRST), p1Last = byPattern(PARENT_LAST), p1Email = byPattern(PARENT_EMAIL);
+  const c1Name = byPattern(CAREGIVER_NAME), c1Email = byPattern(CAREGIVER_EMAIL);
+  const p1 = (p1First ?? p1Last ?? p1Email) != null
+    ? { firstName: p1First ?? '', lastName: p1Last ?? '', email: p1Email ?? '' }
+    : { ...splitFullName(c1Name ?? null), email: c1Email ?? '' };
+
+  // Parent 2: prefer Parent 2 columns; fall back to Caregiver #2
+  const p2First = byPattern(PARENT2_FIRST), p2Last = byPattern(PARENT2_LAST), p2Email = byPattern(PARENT2_EMAIL);
+  const c2Name = byPattern(CAREGIVER2_NAME), c2Email = byPattern(CAREGIVER2_EMAIL);
+  const p2 = (p2First ?? p2Last ?? p2Email) != null
+    ? { firstName: p2First ?? '', lastName: p2Last ?? '', email: p2Email ?? '' }
+    : { ...splitFullName(c2Name ?? null), email: c2Email ?? '' };
 
   return {
     // Basic info
@@ -197,18 +267,18 @@ export function extractPlayerData(playerData: any) {
       allCleared: getOptional('Final Forms Cleared?') === 'TRUE'
     },
 
-    // Parent contacts (optional)
+    // Parent contacts (optional; supports Parent 1/2 or Caregiver #1/#2 columns)
     contacts: {
       parent1: {
-        firstName: getOptional('Parent 1 First Name') || '',
-        lastName: getOptional('Parent 1 Last Name') || '',
-        email: getOptional('Parent 1 Email') || '',
+        firstName: p1.firstName,
+        lastName: p1.lastName,
+        email: p1.email,
         mailingListStatus: getOptional('Parent 1 Email On Mailing List?') || ''
       },
       parent2: {
-        firstName: getOptional('Parent 2 First Name') || '',
-        lastName: getOptional('Parent 2 Last Name') || '',
-        email: getOptional('Parent 2 Email') || '',
+        firstName: p2.firstName,
+        lastName: p2.lastName,
+        email: p2.email,
         mailingListStatus: getOptional('Parent 2 Email On Mailing List?') || ''
       },
       studentEmails: {
@@ -218,10 +288,10 @@ export function extractPlayerData(playerData: any) {
       }
     },
 
-    // Additional info (all optional)
+    // Additional info (all optional; Pronouns column only; any "*Allergies" column accepted)
     additionalInfo: {
-      pronouns: getOptional('Prounouns') || undefined,
-      allergies: getOptional('Player Allergies') || undefined,
+      pronouns: getOptional('Pronouns') ?? undefined,
+      allergies: getOptionalBySuffix(playerData, 'Allergies') ?? undefined,
       competingSports: getOptional('Competing Sports and Activities') || undefined,
       jerseySize: getOptional('Jersey Size') || undefined,
       playingExperience: getOptional('Playing Experience') || undefined,
