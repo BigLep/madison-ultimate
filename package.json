@@ -19,6 +19,7 @@
     "clsx": "^2.1.1",
     "csv-parser": "^3.2.0",
     "fast-levenshtein": "^3.0.0",
+    "fast-xml-parser": "^5.4.1",
     "google-auth-library": "^10.3.0",
     "googleapis": "^159.0.0",
     "lucide-react": "^0.544.0",

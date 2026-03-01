@@ -10,6 +10,7 @@ Use this checklist at the start of each season so the portal and APIs point to t
 |------|--------|------|
 | **ROSTER_SHEET_ID** | `.env.local` | Google Sheet ID of the **season workbook** (roster + Practice Info, Game Info, availability tabs). |
 | **TEAM_MAILING_LIST_FOLDER_ID** | `.env.local` | Optional. Google Drive folder for mailing list CSV if you use that feature. |
+| **BUTTONDOWN_API_KEY** | `.env.local` | Optional. Buttondown API key so the player page can show whether contact emails are on the newsletter. Team updates use the public RSS and do not require this. |
 
 After changing `ROSTER_SHEET_ID`, restart the dev/server process.
 
@@ -39,13 +40,10 @@ All of these live in **`src/app/player-portal/[portalId]/page.tsx`**. Decide eac
 
 ---
 
-## 4. Google Group and Gmail (team messages)
+## 4. Team updates and newsletter (Buttondown)
 
-If the portal shows team messages from a Google Group:
-
-- Create or choose the **season Google Group** (e.g. `madisonultimatespring26@googlegroups.com`).
-- Update every reference to the group (e.g. search for the previous season’s group name in this repo and in `PROJECT REQUIREMENTS.md`).
-- **Gmail OAuth**: The refresh token can expire after ~7 days of inactivity. Re-run the OAuth flow at `/api/auth/gmail` if messages stop loading. See [AUTHENTICATION_SETUP.md](AUTHENTICATION_SETUP.md).
+- **Recent Team Updates** on the portal home come from the **public Buttondown RSS** at `https://buttondown.com/madisonultimate/rss` (cached 5 minutes). No API key needed. Ensure web archives are enabled in Buttondown so the RSS feed is available.
+- **Mailing list status** on the player page (whether parent/student emails are subscribed) uses the Buttondown Subscribers API when `BUTTONDOWN_API_KEY` is set (cached 5 minutes). See [AUTHENTICATION_SETUP.md](AUTHENTICATION_SETUP.md#getting-a-buttondown-api-key) for how to get the key.
 
 ---
 
@@ -61,10 +59,10 @@ Sheet structure (single team vs Blue/Gold, etc.) is configured in the codebase a
 
 ## Quick reference: files to touch each season
 
-- **`.env.local`** – `ROSTER_SHEET_ID` (and optionally `TEAM_MAILING_LIST_FOLDER_ID`).
+- **`.env.local`** – `ROSTER_SHEET_ID`; optionally `TEAM_MAILING_LIST_FOLDER_ID`, `BUTTONDOWN_API_KEY`.
 - **`src/app/player-portal/[portalId]/page.tsx`** – Season label, `SEASON_INFO_URL`, `MAILING_LIST_INFO_URL`, `SHOW_ADDITIONAL_INFO_FORM`.
 - **`src/lib/game-config.ts`** – `TEAM_DISPLAY_NAME` if you use a different default team name.
 - **Google Sheet** – Share with service account; update tabs and data.
-- **Google Group / Gmail** – If using team messages: group name and OAuth as above.
+- **Buttondown** – RSS is public; set `BUTTONDOWN_API_KEY` if you want mailing list status on the player page.
 
 For auth details (service account, OAuth, tokens), see [AUTHENTICATION_SETUP.md](AUTHENTICATION_SETUP.md).

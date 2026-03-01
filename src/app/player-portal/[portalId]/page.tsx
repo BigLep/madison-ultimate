@@ -422,7 +422,7 @@ function HomeScreen() {
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const response = await fetch('/api/group-messages?maxResults=3');
+        const response = await fetch('/api/team-updates?maxResults=3');
         const data = await response.json();
         if (data.success) {
           setMessages(data.messages);
@@ -466,14 +466,14 @@ function HomeScreen() {
         <CardHeader>
           <CardTitle style={{color: 'var(--page-title)'}}>Recent Team Updates</CardTitle>
           <CardDescription style={{color: 'var(--secondary-header)'}}>
-            Messages from the{' '}
+            Recent posts from our{' '}
             <a
-              href={MAILING_LIST_INFO_URL}
+              href="https://buttondown.com/madisonultimate"
               target="_blank"
               rel="noopener noreferrer"
               className="hyperlink"
             >
-              team mailing list
+              newsletter
             </a>
           </CardDescription>
         </CardHeader>

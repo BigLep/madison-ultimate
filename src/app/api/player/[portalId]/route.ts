@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPlayerDataByPortalId } from '../../../../lib/portal-cache';
 import { extractPlayerData } from '../../../../lib/column-validation';
+import { getSubscriberEmails } from '../../../../lib/buttondown-api';
 
 interface PlayerData {
   studentId: string;
@@ -80,8 +81,59 @@ export async function GET(
     }
 
     // Step 2: Extract player information using validated column access
-    // This eliminates the need for additional API calls and provides fail-fast behavior for missing columns
-    const player: PlayerData = extractPlayerData(playerData);
+    let player: PlayerData = extractPlayerData(playerData);
+
+    // Step 3: If Buttondown API key is set, override mailing list status from Buttondown subscribers (cached 5 min)
+    if (process.env.BUTTONDOWN_API_KEY) {
+      try {
+        const subscribers = await getSubscriberEmails();
+        const check = (email: string | undefined) => {
+          if (!email?.trim()) return undefined;
+          const lower = email.trim().toLowerCase();
+          return subscribers.has(lower) ? 'Subscribed' : 'Not subscribed';
+        };
+        if (player.contacts.parent1?.email) {
+          player = {
+            ...player,
+            contacts: {
+              ...player.contacts,
+              parent1: {
+                ...player.contacts.parent1!,
+                mailingListStatus: check(player.contacts.parent1.email) ?? player.contacts.parent1.mailingListStatus,
+              },
+            },
+          };
+        }
+        if (player.contacts.parent2?.email) {
+          player = {
+            ...player,
+            contacts: {
+              ...player.contacts,
+              parent2: {
+                ...player.contacts.parent2!,
+                mailingListStatus: check(player.contacts.parent2.email) ?? player.contacts.parent2.mailingListStatus,
+              },
+            },
+          };
+        }
+        if (player.contacts.studentEmails?.personalEmail) {
+          player = {
+            ...player,
+            contacts: {
+              ...player.contacts,
+              studentEmails: {
+                ...player.contacts.studentEmails,
+                personalEmailMailingStatus:
+                  check(player.contacts.studentEmails.personalEmail) ??
+                  player.contacts.studentEmails.personalEmailMailingStatus,
+              },
+            },
+          };
+        }
+      } catch (err) {
+        console.warn('Buttondown subscriber check failed, using roster mailing list status:', err);
+      }
+    }
 
     console.log(`Successfully fetched player details: ${player.fullName}`);
 

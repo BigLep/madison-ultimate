@@ -10,6 +10,7 @@ import {
   Game,
   PlayerGameAvailability,
   ActivationStatus,
+  ACTIVATION_STATUS_VALUES,
   isGameInPast,
   formatGameDate,
   formatGameTime,
@@ -19,7 +20,7 @@ import { toCanonicalDateKey } from '../../../../lib/date-formatters';
 
 function normalizeActivationStatus(value: string | undefined): ActivationStatus {
   const v = (value || '').trim();
-  if (GAME_CONFIG.ACTIVATION_STATUS_VALUES.includes(v as ActivationStatus)) return v as ActivationStatus;
+  if (ACTIVATION_STATUS_VALUES.includes(v as ActivationStatus)) return v as ActivationStatus;
   return '';
 }
 

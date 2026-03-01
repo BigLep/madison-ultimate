@@ -1,51 +1,51 @@
 # Authentication Setup for Madison Ultimate Portal
 
-This document explains the dual authentication system used in the Madison Ultimate Portal and how to set it up.
+This document explains how the portal authenticates with external services.
 
 ## Seasonal Setup Checklist
 
-**Use [SEASON_SETUP.md](SEASON_SETUP.md) as the main checklist** for everything that must be set or decided each season (env, Sheets, portal labels and links, Additional Info Form visibility, Google Group, etc.). The rest of this file covers auth only.
+**Use [SEASON_SETUP.md](SEASON_SETUP.md) as the main checklist** for everything that must be set or decided each season (env, Sheets, portal labels and links, Additional Info Form visibility, Buttondown, etc.). The rest of this file covers auth only.
 
 For each new season you will need to:
 
 1. **Google Sheets**: Set `ROSTER_SHEET_ID` in `.env.local` and **share that spreadsheet** with the service account (see "Grant Permissions" below).
 2. **Portal and links**: Update season label, `SEASON_INFO_URL`, `MAILING_LIST_INFO_URL`, and `SHOW_ADDITIONAL_INFO_FORM` in the player portal — see [SEASON_SETUP.md](SEASON_SETUP.md).
-3. **Google Group**: If using team messages, create/update the group and references (e.g. search for `madisonultimatefall25` in this repo and `PROJECT REQUIREMENTS.md`).
-4. **Gmail OAuth**: The refresh token can expire after ~7 days of inactivity. Re-run the OAuth flow at `/api/auth/gmail` if needed.
+3. **Buttondown** (optional): Set `BUTTONDOWN_API_KEY` in `.env.local` if you want the player page to show whether contact emails are on the newsletter. See **Getting a Buttondown API key** below. Team updates (Recent Team Updates) use the public Buttondown RSS and do not require an API key.
 
 ## Overview
 
-The portal uses **two different authentication methods** for accessing different Google APIs:
-
-1. **Service Account** - For Google Sheets and Drive APIs
-2. **OAuth 2.0** - For Gmail API access
-
-## Why Two Authentication Methods?
+The portal uses a **service account** for Google Sheets and Google Drive. Team updates come from the **public Buttondown newsletter RSS** (no auth). Mailing list status on the player page can optionally use the **Buttondown API** (API key).
 
 ### Service Account (Sheets/Drive)
 - **Purpose**: Access roster data from Google Sheets and files from Google Drive
-- **Works well** because these APIs can be accessed by service accounts with proper permissions
 - **No user interaction** required once configured
 
-### OAuth 2.0 (Gmail)
-- **Purpose**: Access Google Group messages sent to `madisonultimatefall25@googlegroups.com`
-- **Required because**: Gmail API with service accounts requires domain-wide delegation, which only works with Google Workspace domains
-- **Problem**: `madisonultimate@gmail.com` is a regular Gmail account, not a Google Workspace account
-- **Solution**: Use OAuth 2.0 to authenticate as the specific Gmail user who has access to the group messages
+### Team Updates (Buttondown RSS)
+- **Purpose**: "Recent Team Updates" on the portal home
+- **Source**: Public RSS at `https://buttondown.com/madisonultimate/rss` (cached 5 minutes)
+- **No API key** required
 
-## Google Groups Message Access Challenge
+### Mailing List Status (Buttondown API, optional)
+- **Purpose**: Show "Subscribed" / "Not subscribed" for parent and student emails on the player page
+- **Source**: Buttondown Subscribers API (cached 5 minutes)
+- **Requires**: `BUTTONDOWN_API_KEY` in `.env.local`
 
-### The Problem
-We want to display recent team messages from the Google Group `madisonultimatefall25@googlegroups.com` in the portal. However:
+## Getting a Buttondown API key
 
-1. **No Google Groups API** exists for reading messages/conversations
-2. **Gmail API is the only way** to access group messages programmatically
-3. **Service accounts can't access regular Gmail accounts** without domain-wide delegation
-4. **Domain-wide delegation only works** with Google Workspace domains
-5. **Our Gmail account** (`madisonultimate@gmail.com`) is a regular Gmail account, not Workspace
+The Buttondown API key is **optional**. You only need it if you want the player page to show whether each contact email is subscribed to the newsletter. Team updates (Recent Team Updates on the portal home) use the public RSS and do **not** require an API key.
 
-### The Solution
-Use OAuth 2.0 to authenticate once as `madisonultimate@gmail.com`, store the refresh token, and use it to access Gmail messages automatically.
+To get a key:
+
+1. **Log in to Buttondown** at [buttondown.com](https://buttondown.com) with the account that owns the Madison Ultimate newsletter (`madisonultimate`).
+2. **Open API requests**: Go to [buttondown.com/requests](https://buttondown.com/requests) (or in the dashboard: Settings → API).
+3. **Create or copy your API key**: On the API requests page you’ll see your token. If you don’t have one yet, create one. The key is a long string (e.g. starts with a prefix like `abc123...`).
+4. **Add it to `.env.local`**:
+   ```env
+   BUTTONDOWN_API_KEY=your-key-here
+   ```
+5. **Restart the dev server** so the app picks up the new variable.
+
+The app uses this key only to **list subscribers** (read-only). Subscriber data is cached for 5 minutes so the API isn’t called on every player page load. Never commit the key to version control; keep it in `.env.local` (which is gitignored).
 
 ## Current Authentication Files
 
@@ -57,20 +57,12 @@ Use OAuth 2.0 to authenticate once as `madisonultimate@gmail.com`, store the ref
   - `https://www.googleapis.com/auth/spreadsheets`
   - `https://www.googleapis.com/auth/drive.readonly`
 
-### OAuth 2.0
-- **File**: `.google-oauth.json`
-- **Environment**: `GMAIL_REFRESH_TOKEN=<refresh-token-from-oauth-flow>`
-- **Used for**: Gmail API
-- **Scopes**:
-  - `https://www.googleapis.com/auth/gmail.readonly`
-
 ## Setup Instructions for New Environments
 
 ### Prerequisites
 1. **Google Cloud Project** with the following APIs enabled:
    - Google Sheets API
    - Google Drive API
-   - Gmail API
 
 ### Step 1: Service Account Setup (Sheets/Drive)
 
@@ -89,49 +81,16 @@ Use OAuth 2.0 to authenticate once as `madisonultimate@gmail.com`, store the ref
    GOOGLE_SERVICE_ACCOUNT_KEY_FILE=./.google-service-account.json
    ```
 
-### Step 2: OAuth 2.0 Setup (Gmail)
-
-1. **Create OAuth 2.0 Credentials**:
-   - Go to Google Cloud Console → APIs & Services → Credentials
-   - Create OAuth 2.0 Client ID (Web application)
-   - Add authorized redirect URI: `http://localhost:3001/api/auth/callback`
-   - Download JSON credentials file
-   - Rename to `.google-oauth.json`
-
-2. **Configure OAuth Consent Screen**:
-   - Set up OAuth consent screen (External)
-   - Add required information (app name, contact emails)
-   - Add test users: include `madisonultimate@gmail.com`
-
-3. **Run OAuth Flow**:
-   ```bash
-   # Start development server
-   npm run dev
-
-   # Get authorization URL
-   curl http://localhost:3001/api/auth/gmail
-
-   # Follow the returned authUrl in browser
-   # Sign in with madisonultimate@gmail.com
-   # Grant Gmail read permissions
-   # Copy refresh token from callback response
-   ```
-
-4. **Environment Variable**:
-   ```env
-   GMAIL_REFRESH_TOKEN=<refresh-token-from-oauth-flow>
-   ```
-
-### Step 3: Verify Setup
+### Step 2: Verify Setup
 
 1. **Test Sheets/Drive APIs**:
    ```bash
    curl http://localhost:3001/api/roster/metadata
    ```
 
-2. **Test Gmail API**:
+2. **Test Team Updates** (Buttondown RSS):
    ```bash
-   curl http://localhost:3001/api/group-messages
+   curl http://localhost:3001/api/team-updates
    ```
 
 ## Security Considerations
@@ -141,20 +100,11 @@ Use OAuth 2.0 to authenticate once as `madisonultimate@gmail.com`, store the ref
 - **Principle of least privilege** - only grant necessary permissions
 - **Regular audit** - review what the service account has access to
 
-### OAuth Refresh Token
-- **Keep token secure** - store in environment variables only
-- **Limited scope** - only Gmail readonly access
-- **Refresh tokens can expire** if:
-  - User changes password
-  - User revokes access
-  - App is unused for extended periods (testing mode)
+### Buttondown API Key
+- **Keep key secure** - store in environment variables only
+- **Optional** - the portal works without it; only mailing list status on the player page uses it
 
 ## Maintenance
-
-### When OAuth Token Expires
-1. **Symptoms**: Gmail API returns authentication errors
-2. **Solution**: Re-run OAuth flow to get new refresh token
-3. **Frequency**: Rarely needed (usually months/years)
 
 ### When Service Account Access Breaks
 1. **Symptoms**: Sheets/Drive APIs return permission errors
@@ -163,38 +113,30 @@ Use OAuth 2.0 to authenticate once as `madisonultimate@gmail.com`, store the ref
    - Regenerate service account credentials
    - Check API quotas/limits
 
-
 ## Files in Project
 
-### Authentication Modules
+### Authentication / External APIs
 - `src/lib/google-api.ts` - Service account authentication for Sheets/Drive
-- `src/lib/gmail-oauth.ts` - OAuth 2.0 authentication for Gmail
-- `src/lib/gmail-api.ts` - Gmail API functions using OAuth
+- `src/lib/buttondown-rss.ts` - Fetch and cache Buttondown newsletter RSS (team updates)
+- `src/lib/buttondown-api.ts` - Buttondown Subscribers API (mailing list status)
 
 ### API Endpoints
-- `src/app/api/auth/gmail/route.ts` - Get OAuth authorization URL
-- `src/app/api/auth/callback/route.ts` - Handle OAuth callback
-- `src/app/api/group-messages/route.ts` - Fetch group messages
+- `src/app/api/team-updates/route.ts` - Fetch recent team updates from Buttondown RSS
 
 ### Environment Files
 - `.env.local` - Environment variables (not committed)
 - `.google-service-account.json` - Service account credentials (not committed)
-- `.google-oauth.json` - OAuth client credentials (not committed)
 
 ## Troubleshooting
-
-### "Access blocked" during OAuth
-- **Cause**: Gmail account not added as test user
-- **Solution**: Add `madisonultimate@gmail.com` to OAuth consent screen test users
-
-### "Precondition check failed" in Gmail API
-- **Cause**: Invalid or expired refresh token
-- **Solution**: Re-run OAuth flow to get fresh token
 
 ### "Permission denied" for Sheets/Drive
 - **Cause**: Service account lacks access to resources
 - **Solution**: Re-share Google Sheets/Drive folders with service account email
 
-### No messages returned from Gmail API
-- **Cause**: Gmail account not member of Google Group, or no recent messages
-- **Solution**: Verify `madisonultimate@gmail.com` is subscribed to the group
+### Team updates not loading
+- **Cause**: Buttondown RSS URL or network issue
+- **Solution**: Check that https://buttondown.com/madisonultimate/rss is accessible; RSS is cached 5 minutes
+
+### Mailing list status shows roster value or "Unknown"
+- **Cause**: `BUTTONDOWN_API_KEY` not set or invalid
+- **Solution**: Set the key in `.env.local` from Buttondown → API requests; subscriber list is cached 5 minutes

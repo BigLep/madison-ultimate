@@ -11,8 +11,7 @@ This file contains development guidelines and commands for working with Claude C
 ## API Endpoints for Development
 
 - `/api/diagnostics` - Comprehensive system health check (environment variables, credentials, API access)
-- `/api/group-messages` - Fetch recent team messages from Google Groups
-- `/api/auth/gmail` - Get Gmail OAuth authorization URL (for setup only)
+- `/api/team-updates` - Fetch recent team updates from Buttondown newsletter RSS
 - `/api/auth/callback` - OAuth callback handler (for setup only)
 
 ## Troubleshooting
@@ -22,7 +21,7 @@ This file contains development guidelines and commands for working with Claude C
 - **Credentials**: Validates service account and OAuth credential files
 - **Sheets Access**: Tests Google Sheets API access to roster and questionnaire
 - **Drive Access**: Tests Google Drive API access to SPS and mailing list folders
-- **Gmail Access**: Tests Gmail API authentication and message search
+- **Sheets/Drive**: Tests service account access to roster and Drive folders
 - **System**: Checks Node.js version, timezone, and memory usage
 
 Look for `"status": "fail"` items to identify configuration issues.

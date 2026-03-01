@@ -28,13 +28,14 @@ A web application to track signup progress for Madison Middle School Ultimate Fr
    ```bash
    npm run dev
    ```
+   Next.js will print the URL (e.g. **http://localhost:3000**). Run this in a **terminal in the foreground** (not as a background task). When you’re done, stop the server with **Ctrl+C** in that terminal. The dev server shuts down cleanly when it receives SIGINT (Ctrl+C), so the port is freed for the next run. If the server was started in the background (e.g. by an IDE), it may not receive a signal when you “stop” elsewhere—use the IDE’s Stop button for that task so the process is terminated.
 
 5. **Open your browser**
-   Navigate to [http://localhost:3001](http://localhost:3001) to see the application (port 3001 is used if 3000 is occupied).
+   Navigate to the URL Next.js printed (typically [http://localhost:3000](http://localhost:3000)).
 
 ### Available Scripts
 
-- `npm run dev` - Start development server with hot reload
+- `npm run dev` - Start development server (with hot reload). Stop with **Ctrl+C** in the same terminal for a clean shutdown.
 - `npm run build` - Build the application for production
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint for code quality checks
@@ -67,7 +68,7 @@ madison-ultimate/
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
 - **Deployment**: Vercel (https://madison-ultimate.vercel.app)
-- **Data Sources**: Google Sheets API, Google Drive API, Gmail API
+- **Data Sources**: Google Sheets API, Google Drive API, Buttondown (RSS for team updates; optional API for mailing list status)
 
 ## Development Workflow
 
@@ -186,7 +187,7 @@ You must share each Google resource with the service account email (found in the
 This application uses **dual authentication** for different Google APIs:
 
 - **Service Account**: For Google Sheets and Drive APIs
-- **OAuth 2.0**: For Gmail API (team message access)
+- **Buttondown**: Public RSS for "Recent Team Updates"; optional API key for mailing list status on player page
 
 For complete authentication setup instructions, see [AUTHENTICATION_SETUP.md](./AUTHENTICATION_SETUP.md). For a checklist of what to set or decide each season (roster sheet, portal labels, Additional Info Form visibility, etc.), see [SEASON_SETUP.md](./SEASON_SETUP.md).
 
@@ -200,15 +201,8 @@ Set these in Vercel Dashboard → Project → Settings → Environment Variables
 # Service Account
 GOOGLE_SERVICE_ACCOUNT_KEY=<full-json-content-as-string>
 
-# Gmail OAuth (choose ONE option):
-# Option 1: OAuth JSON file path
-GOOGLE_OAUTH_JSON_PATH=.google-oauth.json
-# Option 2: Individual credentials
-GMAIL_CLIENT_ID=<your-oauth-client-id>
-GMAIL_CLIENT_SECRET=<your-oauth-client-secret>
-
-# Gmail Refresh Token (required for both options)
-GMAIL_REFRESH_TOKEN=<your-refresh-token-from-oauth-flow>
+# Optional: Buttondown API key for mailing list status on player page
+# BUTTONDOWN_API_KEY=<your-buttondown-api-key>
 
 # Resource IDs
 ROSTER_SHEET_ID=<sheet-id>
@@ -229,5 +223,5 @@ ADDITIONAL_QUESTIONNAIRE_SHEET_ID=<sheet-id>
 4. **Deploy and test**:
    ```bash
    # Test the application APIs
-   curl https://your-app.vercel.app/api/group-messages
+   curl https://your-app.vercel.app/api/team-updates
    ```

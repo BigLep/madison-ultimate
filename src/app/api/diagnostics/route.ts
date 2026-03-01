@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as fs from 'fs';
 import * as path from 'path';
-import { getSheetData } from '../../../lib/google-api';
-import { getGmailClient } from '../../../lib/gmail-oauth';
-import { getMostRecentFileInfoFromFolder } from '../../../lib/google-api';
+import { getSheetData, getMostRecentFileInfoFromFolder } from '../../../lib/google-api';
 
 interface DiagnosticResult {
   category: string;
@@ -40,7 +38,6 @@ export async function GET(request: NextRequest) {
     'SPS_FINAL_FORMS_FOLDER_ID',
     'TEAM_MAILING_LIST_FOLDER_ID',
     'ADDITIONAL_QUESTIONNAIRE_SHEET_ID',
-    'GMAIL_REFRESH_TOKEN'
   ];
 
   requiredEnvVars.forEach(envVar => {
@@ -64,25 +61,6 @@ export async function GET(request: NextRequest) {
       'Neither GOOGLE_SERVICE_ACCOUNT_KEY_FILE nor GOOGLE_SERVICE_ACCOUNT_KEY is set');
   }
 
-  // Check Gmail OAuth credential configuration
-  const gmailClientId = process.env.GMAIL_CLIENT_ID;
-  const gmailClientSecret = process.env.GMAIL_CLIENT_SECRET;
-  const gmailRefreshToken = process.env.GMAIL_REFRESH_TOKEN;
-  const oauthJsonPath = process.env.GOOGLE_OAUTH_JSON_PATH;
-
-  if ((gmailClientId && gmailClientSecret) || oauthJsonPath) {
-    if (gmailClientId && gmailClientSecret) {
-      addResult('Environment', 'Gmail OAuth Config', 'pass',
-        'Using individual GMAIL_CLIENT_ID and GMAIL_CLIENT_SECRET environment variables');
-    } else {
-      addResult('Environment', 'Gmail OAuth Config', 'pass',
-        `Using OAuth JSON file path: ${oauthJsonPath}`);
-    }
-  } else {
-    addResult('Environment', 'Gmail OAuth Config', 'fail',
-      'Gmail OAuth not configured. Set either (GMAIL_CLIENT_ID + GMAIL_CLIENT_SECRET) or GOOGLE_OAUTH_JSON_PATH');
-  }
-
   // 2. Credential File Access
   try {
     // Check service account file
@@ -98,22 +76,6 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Check OAuth credentials file (only if GOOGLE_OAUTH_JSON_PATH is set)
-    const oauthJsonPath = process.env.GOOGLE_OAUTH_JSON_PATH;
-    if (oauthJsonPath) {
-      const oauthCredentialsPath = path.join(process.cwd(), oauthJsonPath);
-      if (fs.existsSync(oauthCredentialsPath)) {
-        const oauthCredentials = JSON.parse(fs.readFileSync(oauthCredentialsPath, 'utf8'));
-        addResult('Credentials', 'OAuth Credentials File', 'pass',
-          `File exists and parsed successfully. Client ID: ${oauthCredentials.web?.client_id?.substring(0, 20)}...`);
-      } else {
-        addResult('Credentials', 'OAuth Credentials File', 'fail',
-          `OAuth credentials file not found: ${oauthCredentialsPath}`);
-      }
-    } else {
-      addResult('Credentials', 'OAuth Credentials File', 'warning',
-        'GOOGLE_OAUTH_JSON_PATH not set - using individual environment variables for OAuth');
-    }
   } catch (error) {
     addResult('Credentials', 'File Access', 'fail',
       `Error reading credential files: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -183,79 +145,7 @@ export async function GET(request: NextRequest) {
       `Error accessing Drive folders: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 
-  // 5. Gmail OAuth Configuration Check
-  // First check if all required credentials are present
-  if (!gmailClientId || !gmailClientSecret || !gmailRefreshToken) {
-    const missing = [];
-    if (!gmailClientId) missing.push('GMAIL_CLIENT_ID');
-    if (!gmailClientSecret) missing.push('GMAIL_CLIENT_SECRET');
-    if (!gmailRefreshToken) missing.push('GMAIL_REFRESH_TOKEN');
-
-    addResult('Gmail OAuth', 'OAuth Configuration', 'fail',
-      `Missing required OAuth credentials: ${missing.join(', ')}`);
-  } else {
-    addResult('Gmail OAuth', 'OAuth Credentials Present', 'pass',
-      'All Gmail OAuth credentials are configured');
-
-    // Test if the refresh token is valid by attempting to get Gmail profile
-    try {
-      const gmail = await getGmailClient();
-      const profile = await gmail.users.getProfile({ userId: 'me' });
-
-      if (profile.data.emailAddress) {
-        addResult('Gmail OAuth', 'Refresh Token Validity', 'pass',
-          `Refresh token is valid - authenticated as: ${profile.data.emailAddress}`);
-      } else {
-        addResult('Gmail OAuth', 'Refresh Token Validity', 'warning',
-          'Refresh token appears valid but profile data is incomplete');
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-
-      if (errorMessage.includes('invalid_grant')) {
-        addResult('Gmail OAuth', 'Refresh Token Validity', 'fail',
-          'Refresh token is invalid or expired - need to regenerate OAuth token');
-      } else if (errorMessage.includes('invalid_client')) {
-        addResult('Gmail OAuth', 'Refresh Token Validity', 'fail',
-          'OAuth client credentials (GMAIL_CLIENT_ID/GMAIL_CLIENT_SECRET) are invalid');
-      } else {
-        addResult('Gmail OAuth', 'Refresh Token Validity', 'fail',
-          `Error testing refresh token: ${errorMessage}`);
-      }
-    }
-  }
-
-  // 6. Gmail API Access
-  try {
-    const gmail = await getGmailClient();
-
-    // Test Gmail profile access
-    const profile = await gmail.users.getProfile({ userId: 'me' });
-    if (profile.data.emailAddress) {
-      addResult('Gmail Access', 'Gmail Profile', 'pass',
-        `Successfully authenticated as: ${profile.data.emailAddress}`);
-    }
-
-    // Test message search
-    const messages = await gmail.users.messages.list({
-      userId: 'me',
-      q: 'from:madisonultimate@gmail.com',
-      maxResults: 1,
-    });
-
-    if (messages.data.messages && messages.data.messages.length > 0) {
-      addResult('Gmail Access', 'Message Search', 'pass',
-        `Successfully found ${messages.data.messages.length} message(s)`);
-    } else {
-      addResult('Gmail Access', 'Message Search', 'warning',
-        'Gmail API accessible but no messages found from madisonultimate@gmail.com');
-    }
-  } catch (error) {
-    addResult('Gmail Access', 'Gmail API', 'fail',
-      `Error accessing Gmail: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  }
-
-  // 6. Additional System Checks
+  // 5. System Checks
   try {
     // Check Node.js version
     const nodeVersion = process.version;
