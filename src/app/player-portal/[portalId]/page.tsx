@@ -348,7 +348,7 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-full flex items-center justify-center shadow-lg" style={{background: 'var(--accent)'}}>
               <span className="text-white font-semibold text-sm">
-                {player.firstName[0]}{player.lastName[0]}
+                {(player.firstName?.[0] ?? '')}{(player.lastName?.[0] ?? '') || '?'}
               </span>
             </div>
             <div>
@@ -377,6 +377,7 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
               const isActive = activeScreen === item.id
               return (
                 <button
+                  type="button"
                   key={item.id}
                   onClick={() => changeScreen(item.id)}
                   className="flex-1 py-2 px-1 text-center transition-colors"
