@@ -1142,14 +1142,10 @@ function GameAvailabilityScreen({ params }: { params: Promise<{ portalId: string
               currentNote={game.availability.note}
               onUpdateAvailability={(availability, note) => updateAvailability(game.gameKey, availability, note)}
               isUpdating={updating === game.gameKey}
-              isEditable={game.availability.activationStatus !== 'Inactive'}
+              isEditable={true}
               isBye={game.isBye}
+              activationStatus={game.availability.activationStatus ?? ''}
             >
-              {game.availability.activationStatus && (
-                <div className="text-xs mt-2" style={{color: 'var(--secondary-text)'}}>
-                  Activation: {game.availability.activationStatus}
-                </div>
-              )}
               {game.gameNote && (
                 <div className="text-xs italic mt-2" style={{color: 'var(--secondary-text)'}}>
                   Coach note: {game.gameNote}
@@ -1178,12 +1174,8 @@ function GameAvailabilityScreen({ params }: { params: Promise<{ portalId: string
               isUpdating={false}
               isEditable={false}
               isBye={game.isBye}
+              activationStatus={game.availability.activationStatus ?? ''}
             >
-              {game.availability.activationStatus && (
-                <div className="text-xs mt-2" style={{color: 'var(--secondary-text)'}}>
-                  Activation: {game.availability.activationStatus}
-                </div>
-              )}
               {game.gameNote && (
                 <div className="text-xs italic mt-2" style={{color: 'var(--secondary-text)'}}>
                   Coach note: {game.gameNote}

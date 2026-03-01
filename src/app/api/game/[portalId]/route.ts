@@ -175,8 +175,8 @@ export async function GET(
               : '';
             return {
               gameKey: getGameKey(game.team, game.gameNumber),
-              availability: playerRow[gameColumns.availabilityColumn] || '',
-              note: playerRow[gameColumns.noteColumn] || '',
+              availability: (playerRow[gameColumns.availabilityColumn]?.toString() || '').trim(),
+              note: (playerRow[gameColumns.noteColumn]?.toString() || '').trim(),
               activationStatus,
             };
           } else {

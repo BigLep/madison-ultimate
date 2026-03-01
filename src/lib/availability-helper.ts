@@ -127,7 +127,8 @@ function toPaddedDateKey(date: string): string | null {
 
 /**
  * Find columns for a specific date in the header row
- * Works for both practices and games - looks for date pattern and corresponding note column.
+ * Works for both practices and games - looks for date pattern (e.g. "3/7" or "3/7 Availability").
+ * Returns availability column and the next column as note column.
  * Tries canonical date (e.g. "2/27") first, then zero-padded (e.g. "02/27") to match sheet headers.
  */
 export function findDateColumns(headerRow: any[], date: string): ColumnIndices | null {
@@ -141,12 +142,10 @@ export function findDateColumns(headerRow: any[], date: string): ColumnIndices |
       const availabilityMatches = header === tryDate || header.startsWith(tryDate + ' ');
 
       if (availabilityMatches) {
-        const availabilityColumn = i;
-        const noteColumn = i + 1;
-        const nextHeader = headerRow[noteColumn]?.toString().trim();
-        if (!nextHeader || nextHeader.endsWith(' Note')) {
-          return { availabilityColumn, noteColumn };
-        }
+        return {
+          availabilityColumn: i,
+          noteColumn: i + 1,
+        };
       }
     }
   }

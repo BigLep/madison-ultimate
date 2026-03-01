@@ -17,6 +17,8 @@ interface AvailabilityCardProps {
   isEditable: boolean;
   isBye?: boolean; // Whether this is a bye week (FYI only)
   isCancelled?: boolean; // Whether this practice is cancelled (FYI only)
+  /** Game activation status: show pill above "Select your availability" (empty → TBD) */
+  activationStatus?: string;
   children?: React.ReactNode; // For additional content like time details
 }
 
@@ -33,6 +35,7 @@ export function AvailabilityCard({
   isEditable,
   isBye = false,
   isCancelled = false,
+  activationStatus,
   children
 }: AvailabilityCardProps) {
   const [selectedAvailability, setSelectedAvailability] = useState(currentAvailability);
@@ -131,7 +134,35 @@ export function AvailabilityCard({
         ) : (
           /* Regular Practice/Game - Show availability selection */
           <>
-{isEditable ? (
+            {activationStatus != null && (
+              <div className="mb-3">
+                <a
+                  href="https://madisonultimate.notion.site/More-Season-Info-2ffc4da46f7581d0b8e8f16282d39117#2ffc4da46f75814fa548e677b4176285"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-medium mb-1.5 block hyperlink"
+                  style={{color: 'var(--secondary-text)'}}
+                >
+                  Activation Status
+                </a>
+                <span
+                  className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase"
+                  style={{
+                    backgroundColor:
+                      /^active$/i.test(activationStatus) ? 'rgb(34 197 94 / 0.2)'  // green pill
+                      : /^inactive$/i.test(activationStatus) ? 'rgb(248 113 113 / 0.3)'  // light red
+                      : 'rgb(234 179 8 / 0.25)',  // TBD yellow
+                    color:
+                      /^active$/i.test(activationStatus) ? 'rgb(22 163 74)'
+                      : /^inactive$/i.test(activationStatus) ? 'rgb(185 28 28)'
+                      : 'rgb(161 98 7)'
+                  }}
+                >
+                  {((activationStatus || 'TBD').trim() || 'TBD').toUpperCase()}
+                </span>
+              </div>
+            )}
+            {isEditable ? (
               <div className="space-y-3">
                 <div className="text-sm font-medium flex items-center gap-2" style={{color: 'var(--primary-text)'}}>
                   <span>👇</span>
