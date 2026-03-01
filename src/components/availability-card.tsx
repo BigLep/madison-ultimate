@@ -164,9 +164,16 @@ export function AvailabilityCard({
             )}
             {isEditable ? (
               <div className="space-y-3">
-                <div className="text-sm font-medium flex items-center gap-2" style={{color: 'var(--primary-text)'}}>
-                  <span>👇</span>
-                  <span>Select your availability:</span>
+                <div className="flex flex-col gap-1">
+                  <div className="text-sm font-medium flex items-center gap-2 flex-wrap" style={{color: 'var(--primary-text)'}}>
+                    <span>👇</span>
+                    <span>{activationStatus != null ? 'Select your availability assuming activated:' : 'Select your availability:'}</span>
+                  </div>
+                  {activationStatus != null && (
+                    <p className="text-xs" style={{color: 'var(--secondary-text)'}}>
+                      Enter regardless of activation status.
+                    </p>
+                  )}
                 </div>
                 <div className="grid grid-cols-1 gap-2">
                   {Object.entries(availabilityOptions).map(([key, value]) => (
