@@ -26,6 +26,7 @@ interface PlayerData {
   gender: string;
   genderIdentification: string;
   dateOfBirth: string;
+  team?: string;
   finalFormsStatus: {
     parentSigned: boolean;
     studentSigned: boolean;
@@ -353,7 +354,7 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
             <div>
               <h1 className="font-semibold" style={{color: 'var(--page-title)'}}>{player.fullName}</h1>
               <p className="text-sm" style={{color: 'var(--secondary-text)'}}>
-                {((player as any).team ? getTeamDisplay((player as any).team) : 'Not assigned')} | {player.genderIdentification || 'Not specified'} | Grade {player.grade}
+                {getTeamDisplay(player.team)} | {player.genderIdentification || 'Not specified'} | Grade {player.grade}
               </p>
             </div>
           </div>
@@ -661,7 +662,7 @@ function PlayerInfoScreen({ player }: { player: PlayerData }) {
             </div>
             <div>
               <p className="text-sm" style={{color: 'var(--secondary-text)'}}>Team</p>
-              <p className="font-medium" style={{color: 'var(--primary-text)'}}>{getTeamDisplay((player as any).team)}</p>
+              <p className="font-medium" style={{color: 'var(--primary-text)'}}>{getTeamDisplay(player.team)}</p>
             </div>
           </div>
           <div>
