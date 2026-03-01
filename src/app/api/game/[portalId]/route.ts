@@ -15,6 +15,7 @@ import {
   formatGameTime,
   getGameKey
 } from '../../../../lib/game-config';
+import { toCanonicalDateKey } from '../../../../lib/date-formatters';
 
 function normalizeActivationStatus(value: string | undefined): ActivationStatus {
   const v = (value || '').trim();
@@ -98,11 +99,12 @@ export async function GET(
 
     for (let i = 1; i < gameInfoData.length; i++) {
       const row = gameInfoData[i];
-      const date = getGameInfoValue(row, col.DATE);
+      const rawDate = getGameInfoValue(row, col.DATE);
       const gameNumber = getGameInfoValue(row, col.GAME_NUMBER);
 
-      if (!date || !gameNumber) continue;
+      if (!rawDate || !gameNumber) continue;
 
+      const date = toCanonicalDateKey(rawDate);
       const warmupTime = getGameInfoValue(row, col.WARMUP);
       const gameStart = getGameInfoValue(row, col.START);
       const doneBy = getGameInfoValue(row, col.DONE);
@@ -348,7 +350,7 @@ export async function POST(
       const rowGameNumber = getGameInfoValue(row, GAME_CONFIG.GAME_INFO_COLUMN_NAMES.GAME_NUMBER);
 
       if (rowGameNumber === gameNumber) {
-        gameDate = date;
+        gameDate = toCanonicalDateKey(date);
         break;
       }
     }
@@ -360,7 +362,6 @@ export async function POST(
       }, { status: 404 });
     }
 
-    // Find the columns for this game using dynamic discovery
     const gameColumns = findGameColumns(availabilityHeaderRow, gameDate);
 
     if (!gameColumns) {

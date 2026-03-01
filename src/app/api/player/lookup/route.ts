@@ -33,17 +33,20 @@ export async function POST(request: NextRequest) {
     const firstInitial = firstName.trim().charAt(0).toLowerCase();
     const lookupKey = `${firstInitial}${lastName.trim().toLowerCase()}${birthMonth}${birthYear}`;
 
+    console.log('[player/lookup] request', { firstName: firstName.trim(), lastName: lastName.trim(), birthMonth, birthYear, lookupKey });
+
     // Use cached portal data to find matching portal ID
     const playerPortalId = await findPortalIdByLookupKey(lookupKey);
 
     if (playerPortalId) {
+      console.log('[player/lookup] match found', { lookupKey });
       return NextResponse.json({
         success: true,
         playerPortalId
       });
     }
 
-    // No match found
+    console.log('[player/lookup] no match', { lookupKey });
     return NextResponse.json({
       success: false,
       error: 'No player found with the provided information'

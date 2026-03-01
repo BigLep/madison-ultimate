@@ -10,7 +10,7 @@ This document explains the dual authentication system used in the Madison Ultima
 >    - This file (search for `madisonultimatefall25`)
 >    - `PROJECT REQUIREMENTS.md`
 > 2. **Gmail OAuth Token**: The refresh token expires after ~7 days of inactivity. Re-run OAuth flow at `/api/auth/gmail` to get a fresh token.
-> 3. **Google Sheets**: `ROSTER_SHEET_ID` is set to the Spring 2026 workbook. Verify all tabs and data are updated for the season.
+> 3. **Google Sheets**: Set `ROSTER_SHEET_ID` in `.env.local` to the season workbook. **Share that spreadsheet** with the app’s service account so it can read roster data: open the sheet → Share → add the service account email (see below) with at least **Viewer** access. Example: `stevel@cedar-scene-471205-t3.iam.gserviceaccount.com` (or the `client_email` from `.google-service-account.json`). Verify all tabs and data are updated for the season.
 > 4. **Notion/links**: Update `SEASON_INFO_URL` and `MAILING_LIST_INFO_URL` in the player portal to point to Spring 2026 pages when ready.
 
 ## Overview
@@ -80,9 +80,9 @@ Use OAuth 2.0 to authenticate once as `madisonultimate@gmail.com`, store the ref
    - Download JSON credentials file
    - Rename to `.google-service-account.json`
 
-2. **Grant Permissions**:
-   - Share roster Google Sheet with service account email
-   - Share Drive folders with service account email
+2. **Grant Permissions** (required each season when using a new workbook):
+   - **Share the season roster spreadsheet** with the service account email (e.g. `stevel@cedar-scene-471205-t3.iam.gserviceaccount.com` — or use the `client_email` from `.google-service-account.json`). In Google Sheets: open the workbook → Share → add that email with at least **Viewer** (or **Editor** if the app writes to the sheet). Without this, the app will get "permission denied" and login will fail.
+   - Share any Drive folders the app needs with the same service account email.
 
 3. **Environment Variable**:
    ```env

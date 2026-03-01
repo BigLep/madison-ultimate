@@ -1,4 +1,5 @@
 import { getCachedSheetData, findCachedSheetRow } from './sheet-cache';
+import { SHEET_CONFIG } from './sheet-config';
 import { validateColumns, createValidationErrorMessage, PORTAL_COLUMN_PATTERNS } from './column-validation';
 
 interface PortalEntry {
@@ -37,14 +38,16 @@ export async function getPortalCache(): Promise<PortalEntry[]> {
  * Refresh portal cache from sheet cache
  */
 async function refreshPortalCache(): Promise<void> {
-  console.log('Refreshing portal cache from sheet data...');
+  const sheetId = SHEET_CONFIG.ROSTER_SHEET_ID;
+  const sheetIdSuffix = sheetId.length >= 8 ? sheetId.slice(-8) : sheetId;
+  console.log('[portal-cache] Refreshing portal cache from sheet data...', { sheetIdSuffix: `...${sheetIdSuffix}` });
 
   try {
     // Get the full roster sheet (this uses the sheet cache)
     const rosterData = await getCachedSheetData('ROSTER');
 
-    if (rosterData.length < 4) {
-      throw new Error('Invalid roster data structure');
+    if (rosterData.length < 2) {
+      throw new Error('Invalid roster data structure: need at least header row and one data row');
     }
 
     // Extract column mapping from the first row
@@ -87,9 +90,9 @@ async function refreshPortalCache(): Promise<void> {
 
     console.log(`Found Portal columns: "${lookupKeyColumn}" at ${lookupKeyIndex}, "${portalIdColumn}" at ${portalIdIndex}`);
 
-    // Build portal entries from the data rows (skip header rows)
+    // Build portal entries from the data rows (skip header; support 1 header only or 4 metadata rows)
     const entries: PortalEntry[] = [];
-    const dataStartIndex = 4; // Skip metadata rows
+    const dataStartIndex = rosterData.length >= 5 ? SHEET_CONFIG.DATA_START_ROW_INDEX : 1;
 
     for (let i = dataStartIndex; i < rosterData.length; i++) {
       const row = rosterData[i];
@@ -117,7 +120,8 @@ async function refreshPortalCache(): Promise<void> {
       lastUpdated: Date.now()
     };
 
-    console.log(`Portal cache refreshed: ${entries.length} entries loaded`);
+    const sampleKeys = entries.slice(0, 5).map(e => e.lookupKey);
+    console.log('[portal-cache] Refreshed', { entryCount: entries.length, sampleLookupKeys: sampleKeys });
 
   } catch (error) {
     console.error('Error refreshing portal cache:', error);
@@ -131,7 +135,12 @@ async function refreshPortalCache(): Promise<void> {
 export async function findPortalIdByLookupKey(lookupKey: string): Promise<string | null> {
   const entries = await getPortalCache();
   const entry = entries.find(e => e.lookupKey === lookupKey);
-  return entry?.portalId || null;
+  if (entry) {
+    console.log('[portal-cache] findPortalIdByLookupKey', { lookupKey, found: true, entryCount: entries.length });
+    return entry.portalId;
+  }
+  console.log('[portal-cache] findPortalIdByLookupKey', { lookupKey, found: false, entryCount: entries.length });
+  return null;
 }
 
 /**

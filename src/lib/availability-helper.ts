@@ -116,25 +116,37 @@ export async function getPlayerAvailabilityData(
   }
 }
 
+/** Return zero-padded M/D as MM/DD for column header fallback (e.g. "2/27" -> "02/27"). */
+function toPaddedDateKey(date: string): string | null {
+  const parts = date.split('/').map(Number);
+  if (parts.length !== 2 || isNaN(parts[0]) || isNaN(parts[1])) return null;
+  const [m, d] = parts;
+  if (m < 1 || m > 12 || d < 1 || d > 31) return null;
+  return `${String(m).padStart(2, '0')}/${String(d).padStart(2, '0')}`;
+}
+
 /**
  * Find columns for a specific date in the header row
- * Works for both practices and games - looks for date pattern and corresponding note column
+ * Works for both practices and games - looks for date pattern and corresponding note column.
+ * Tries canonical date (e.g. "2/27") first, then zero-padded (e.g. "02/27") to match sheet headers.
  */
 export function findDateColumns(headerRow: any[], date: string): ColumnIndices | null {
-  for (let i = 0; i < headerRow.length; i++) {
-    const header = headerRow[i]?.toString().trim();
+  const datesToTry = [date];
+  const padded = toPaddedDateKey(date);
+  if (padded && padded !== date) datesToTry.push(padded);
 
-    // Look for exact date match
-    if (header === date) {
-      // Availability column is the date column
-      const availabilityColumn = i;
+  for (const tryDate of datesToTry) {
+    for (let i = 0; i < headerRow.length; i++) {
+      const header = headerRow[i]?.toString().trim();
+      const availabilityMatches = header === tryDate || header.startsWith(tryDate + ' ');
 
-      // Note column should be the next column with " Note" suffix
-      const noteColumn = i + 1;
-      const nextHeader = headerRow[noteColumn]?.toString().trim();
-
-      if (nextHeader === `${date} Note`) {
-        return { availabilityColumn, noteColumn };
+      if (availabilityMatches) {
+        const availabilityColumn = i;
+        const noteColumn = i + 1;
+        const nextHeader = headerRow[noteColumn]?.toString().trim();
+        if (!nextHeader || nextHeader.endsWith(' Note')) {
+          return { availabilityColumn, noteColumn };
+        }
       }
     }
   }

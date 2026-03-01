@@ -14,6 +14,7 @@ import {
   formatPracticeDate,
   formatPracticeTime
 } from '../../../../lib/practice-config';
+import { parseMMDDDate, toCanonicalDateKey } from '../../../../lib/date-formatters';
 
 const ROSTER_SHEET_ID = SHEET_CONFIG.ROSTER_SHEET_ID;
 
@@ -71,8 +72,9 @@ export async function GET(
       const row = practiceInfoData[i];
       if (!row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.DATE]) continue;
 
-      // Extract practice data from cached sheet (all values are strings)
-      const date = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.DATE] || '';
+      // Extract practice data from cached sheet; normalize date to M/D for availability column lookup
+      const rawDate = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.DATE] || '';
+      const date = toCanonicalDateKey(rawDate);
       const location = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.LOCATION] || '';
       const locationUrl = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.LOCATION_URL] || null;
       const startTime = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.START] || '';
@@ -100,22 +102,18 @@ export async function GET(
         return a.isPast ? 1 : -1; // Past practices go to end
       }
 
-      // Parse dates for proper chronological sorting
-      const parseDate = (dateStr: string) => {
-        const [month, day] = dateStr.split('/').map(Number);
-        const currentYear = new Date().getFullYear();
-        return new Date(currentYear, month - 1, day);
-      };
-
-      const dateA = parseDate(a.date);
-      const dateB = parseDate(b.date);
+      const dateA = parseMMDDDate(a.date);
+      const dateB = parseMMDDDate(b.date);
+      const timeA = dateA.getTime();
+      const timeB = dateB.getTime();
+      if (isNaN(timeA) && isNaN(timeB)) return 0;
+      if (isNaN(timeA)) return 1;
+      if (isNaN(timeB)) return -1;
 
       if (!a.isPast && !b.isPast) {
-        // Future practices: earliest first
-        return dateA.getTime() - dateB.getTime();
+        return timeA - timeB;
       } else {
-        // Past practices: most recent first
-        return dateB.getTime() - dateA.getTime();
+        return timeB - timeA;
       }
     });
 
@@ -196,14 +194,16 @@ export async function POST(
       }, { status: 400 });
     }
 
-    const { practiceDate, availability, note, fullName } = body;
+    const { practiceDate: rawPracticeDate, availability, note, fullName } = body;
 
-    if (!practiceDate || !availability || !fullName) {
+    if (!rawPracticeDate || !availability || !fullName) {
       return NextResponse.json({
         success: false,
         error: 'Practice date, availability, and full name are required'
       }, { status: 400 });
     }
+
+    const practiceDate = toCanonicalDateKey(rawPracticeDate);
 
     // Check if practice is in the past
     if (isPracticeInPast(practiceDate)) {
@@ -216,11 +216,10 @@ export async function POST(
     // Get Practice Info data to check if practice is cancelled
     const practiceInfoData = await getCachedSheetData('PRACTICE_INFO');
     if (practiceInfoData && practiceInfoData.length > 1) {
-      // Find the practice to check if it's cancelled
       for (let i = 1; i < practiceInfoData.length; i++) {
         const row = practiceInfoData[i];
-        const date = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.DATE] || '';
-        if (date === practiceDate) {
+        const rowDate = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.DATE] || '';
+        if (toCanonicalDateKey(rowDate) === practiceDate) {
           const practiceNote = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.NOTE] || '';
           if (isPracticeCancelled(practiceNote)) {
             return NextResponse.json({

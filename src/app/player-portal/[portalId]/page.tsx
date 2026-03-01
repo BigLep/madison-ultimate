@@ -995,6 +995,7 @@ function GameAvailabilityScreen({ params }: { params: Promise<{ portalId: string
   const [gameData, setGameData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [gameSaveError, setGameSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchGameData = async () => {
@@ -1024,6 +1025,7 @@ function GameAvailabilityScreen({ params }: { params: Promise<{ portalId: string
       return;
     }
 
+    setGameSaveError(null);
     setUpdating(gameKey);
     try {
       const resolvedParams = await params;
@@ -1034,9 +1036,6 @@ function GameAvailabilityScreen({ params }: { params: Promise<{ portalId: string
         fullName: gameData.player.fullName,
       };
 
-      // Debug logging
-      console.log('Sending request body:', requestBody);
-
       const response = await fetch(`/api/game/${resolvedParams.portalId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1045,7 +1044,6 @@ function GameAvailabilityScreen({ params }: { params: Promise<{ portalId: string
 
       const result = await response.json();
       if (result.success) {
-        // Update the local state
         setGameData((prev: any) => ({
           ...prev,
           games: prev.games.map((game: any) =>
@@ -1055,10 +1053,10 @@ function GameAvailabilityScreen({ params }: { params: Promise<{ portalId: string
           )
         }));
       } else {
-        console.error('Failed to update availability:', result.error);
+        setGameSaveError(result.error || 'Failed to save. Please try again.');
       }
     } catch (error) {
-      console.error('Error updating availability:', error);
+      setGameSaveError('Network error. Please try again.');
     } finally {
       setUpdating(null);
     }
@@ -1112,6 +1110,14 @@ function GameAvailabilityScreen({ params }: { params: Promise<{ portalId: string
           availabilityOptions={availabilityOptions}
           allUpcomingResponded={allUpcomingResponded}
         />
+      )}
+
+      {gameSaveError && (
+        <Card className="border-red-500/50" style={{background: 'var(--card-bg)', borderColor: 'var(--border)'}}>
+          <CardContent className="py-3">
+            <p className="text-sm text-red-600 dark:text-red-400">{gameSaveError}</p>
+          </CardContent>
+        </Card>
       )}
 
       {/* Upcoming Games */}

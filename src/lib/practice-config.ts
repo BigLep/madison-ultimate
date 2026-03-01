@@ -2,7 +2,7 @@
 // Update these column names if the sheet structure changes
 
 import { SHEET_CONFIG } from './sheet-config';
-import { formatFullDate } from './date-formatters';
+import { formatFullDate, parseMMDDDate } from './date-formatters';
 
 export const PRACTICE_CONFIG = {
   // Sheet names (imported from central config)
@@ -88,11 +88,10 @@ export function isPracticeInPast(practiceDate: string): boolean {
   const today = new Date();
   today.setHours(0, 0, 0, 0); // Start of today
 
-  // Parse practice date (assuming MM/DD format for current year)
-  const [month, day] = practiceDate.split('/').map(Number);
-  const currentYear = today.getFullYear();
-  const practiceDateTime = new Date(currentYear, month - 1, day);
+  const practiceDateTime = parseMMDDDate(practiceDate);
+  if (isNaN(practiceDateTime.getTime())) return false;
 
+  practiceDateTime.setHours(0, 0, 0, 0);
   return practiceDateTime < today;
 }
 
