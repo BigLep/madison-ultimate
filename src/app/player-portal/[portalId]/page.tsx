@@ -402,9 +402,6 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
 }
 
 function HomeScreen() {
-  // URL constants for easy maintenance
-  const SEASON_INFO_URL = 'https://madisonultimate.notion.site/2026-Spring-Madison-Ultimate-2ffc4da46f75805a8817f19327bfa970';
-
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
@@ -451,7 +448,7 @@ function HomeScreen() {
             <p style={{color: 'var(--primary-text)'}}>
               You can learn more about the season at our{' '}
               <a
-                href={SEASON_INFO_URL}
+                href={APP_CONFIG.SEASON_INFO_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{color: 'var(--accent)', textDecoration: 'underline'}}

@@ -1,3 +1,5 @@
+import { APP_CONFIG } from '@/lib/app-config';
+
 export default function Home() {
   return (
     <main className="container mx-auto px-4 py-8">
@@ -14,7 +16,7 @@ export default function Home() {
               Current Players Login
             </a>
             <a
-              href="https://bit.ly/MadisonUltimate2025Fall"
+              href={APP_CONFIG.SEASON_INFO_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block bg-gray-800 text-white px-6 py-3 rounded-lg hover:bg-gray-900 transition-colors"
