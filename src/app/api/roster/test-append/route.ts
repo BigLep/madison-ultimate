@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { appendSheetData } from '@/lib/google-api';
+import { SHEET_CONFIG, ROSTER_FIRST_DATA_ROW } from '@/lib/sheet-config';
 
-const ROSTER_SHEET_ID = process.env.ROSTER_SHEET_ID || '1ZZA5TxHu8nmtyNORm3xYtN5rzP3p1jtW178UgRcxLA8';
+const ROSTER_SHEET_ID = SHEET_CONFIG.ROSTER_SHEET_ID;
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,7 +10,7 @@ export async function POST(request: NextRequest) {
     
     // Test appending a simple row
     const testRow = ['Test Player', 'Test', 'Player', 'test@example.com', '', '', '', 'TRUE', 'TRUE', 'TRUE', 'M', '7'];
-    const range = 'A6:Z6'; // Start after metadata rows
+    const range = `A${ROSTER_FIRST_DATA_ROW}:Z${ROSTER_FIRST_DATA_ROW}`;
     
     console.log('🧪 Appending test row:', testRow);
     console.log('🧪 To sheet:', ROSTER_SHEET_ID);

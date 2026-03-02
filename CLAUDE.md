@@ -174,11 +174,9 @@ This ensures architectural knowledge is preserved and new developers understand 
 
 ### Row Numbers and Metadata
 - **NEVER** hardcode row numbers like `5`, `A5:`, `:5`, etc.
-- **ALWAYS** use metadata constants from `SHEET_CONFIG`:
-  - Use `SHEET_CONFIG.DATA_START_ROW` (1-indexed, for ranges like `A5:Z100`)
-  - Use `SHEET_CONFIG.DATA_START_ROW_INDEX` (0-indexed, for array operations)
-  - Use `SHEET_CONFIG.METADATA_ROWS` for metadata range operations
-- Example: Use `A${SHEET_CONFIG.DATA_START_ROW}:Z100` instead of `A5:Z100`
+- **ALWAYS** use `ROSTER_FIRST_DATA_ROW` from `sheet-config.ts` (1-indexed; first data row of roster). For 0-based index use `ROSTER_FIRST_DATA_ROW - 1`.
+  - Use `SHEET_CONFIG.METADATA_ROWS` for metadata range operations.
+- Example: Use `A${ROSTER_FIRST_DATA_ROW}:Z100` instead of `A5:Z100`
 
 ### Sheet IDs
 - **NEVER** hardcode sheet IDs or duplicate environment variable fallbacks

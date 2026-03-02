@@ -27,7 +27,17 @@ See [AUTHENTICATION_SETUP.md](AUTHENTICATION_SETUP.md) for service account detai
 
 ---
 
-## 3. Portal UI and links (player-facing)
+## 3. Roster sheet layout (first data row)
+
+If your roster sheet has a different layout than “row 1 = header, row 2 = first player,” update the constant so portal login and roster reads use the correct row.
+
+| What | Where | Notes |
+|------|--------|------|
+| **ROSTER_FIRST_DATA_ROW** | `src/lib/sheet-config.ts` | First data row **1-indexed** (e.g. `2` = row 2). Row 1 = header by default; increase if you have more header/metadata rows. |
+
+---
+
+## 4. Portal UI and links (player-facing)
 
 All of these live in **`src/app/player-portal/[portalId]/page.tsx`**. Decide each season and update as needed.
 
@@ -40,14 +50,14 @@ All of these live in **`src/app/player-portal/[portalId]/page.tsx`**. Decide eac
 
 ---
 
-## 4. Team updates and newsletter (Buttondown)
+## 5. Team updates and newsletter (Buttondown)
 
 - **Recent Team Updates** on the portal home come from the **public Buttondown RSS** at `https://buttondown.com/madisonultimate/rss` (cached 5 minutes). No API key needed. Ensure web archives are enabled in Buttondown so the RSS feed is available.
 - **Mailing list status** on the player page (whether parent/student emails are subscribed) uses the Buttondown Subscribers API when `BUTTONDOWN_API_KEY` is set (cached 5 minutes). See [AUTHENTICATION_SETUP.md](AUTHENTICATION_SETUP.md#getting-a-buttondown-api-key) for how to get the key.
 
 ---
 
-## 5. Game and team setup
+## 6. Game and team setup
 
 In **`src/lib/game-config.ts`**:
 
@@ -60,6 +70,7 @@ Sheet structure (single team vs Blue/Gold, etc.) is configured in the codebase a
 ## Quick reference: files to touch each season
 
 - **`.env.local`** – `ROSTER_SHEET_ID`; optionally `TEAM_MAILING_LIST_FOLDER_ID`, `BUTTONDOWN_API_KEY`.
+- **`src/lib/sheet-config.ts`** – `ROSTER_FIRST_DATA_ROW` if your roster has more than one header row (e.g. first data row is not row 2).
 - **`src/app/player-portal/[portalId]/page.tsx`** – Season label, `SEASON_INFO_URL`, `MAILING_LIST_INFO_URL`, `SHOW_ADDITIONAL_INFO_FORM`.
 - **`src/lib/game-config.ts`** – `TEAM_DISPLAY_NAME` if you use a different default team name.
 - **Google Sheet** – Share with service account; update tabs and data.

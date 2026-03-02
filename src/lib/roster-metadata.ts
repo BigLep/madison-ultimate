@@ -1,5 +1,5 @@
 import { getSheetData } from './google-api';
-import { SHEET_CONFIG } from './sheet-config';
+import { SHEET_CONFIG, ROSTER_FIRST_DATA_ROW } from './sheet-config';
 
 export interface RosterColumnMetadata {
   columnName: string;
@@ -46,7 +46,7 @@ export async function getRosterMetadata(): Promise<RosterMetadata> {
 
     return {
       columns,
-      dataStartRow: SHEET_CONFIG.DATA_START_ROW, // Data starts after metadata rows
+      dataStartRow: ROSTER_FIRST_DATA_ROW,
     };
   } catch (error) {
     console.error('Error fetching roster metadata:', error);

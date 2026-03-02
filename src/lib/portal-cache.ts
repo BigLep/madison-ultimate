@@ -1,5 +1,5 @@
 import { getCachedSheetData, findCachedSheetRow } from './sheet-cache';
-import { SHEET_CONFIG } from './sheet-config';
+import { SHEET_CONFIG, ROSTER_FIRST_DATA_ROW } from './sheet-config';
 import { validateColumns, createValidationErrorMessage, PORTAL_COLUMN_PATTERNS } from './column-validation';
 
 interface PortalEntry {
@@ -90,10 +90,9 @@ async function refreshPortalCache(): Promise<void> {
 
     console.log(`Found Portal columns: "${lookupKeyColumn}" at ${lookupKeyIndex}, "${portalIdColumn}" at ${portalIdIndex}`);
 
-    // Build portal entries from the data rows (skip header; support 1 header only or 4 metadata rows)
+    // Build portal entries from the data rows. Header row is index 0; first data row from ROSTER_FIRST_DATA_ROW (0-based = row - 1).
+    const dataStartIndex = ROSTER_FIRST_DATA_ROW - 1;
     const entries: PortalEntry[] = [];
-    const dataStartIndex = rosterData.length >= 5 ? SHEET_CONFIG.DATA_START_ROW_INDEX : 1;
-
     for (let i = dataStartIndex; i < rosterData.length; i++) {
       const row = rosterData[i];
       const lookupKey = row[lookupKeyIndex]?.toString().trim();
@@ -130,16 +129,24 @@ async function refreshPortalCache(): Promise<void> {
 }
 
 /**
- * Find portal ID by lookup key
+ * Normalize lookup key for comparison: lowercase, trim (so roster "APett1011" or " apett1011 " matches login "apett1011").
+ */
+function normalizeLookupKey(key: string): string {
+  return key.trim().toLowerCase();
+}
+
+/**
+ * Find portal ID by lookup key (case-insensitive, trim-safe).
  */
 export async function findPortalIdByLookupKey(lookupKey: string): Promise<string | null> {
   const entries = await getPortalCache();
-  const entry = entries.find(e => e.lookupKey === lookupKey);
+  const normalized = normalizeLookupKey(lookupKey);
+  const entry = entries.find(e => normalizeLookupKey(e.lookupKey) === normalized);
   if (entry) {
     console.log('[portal-cache] findPortalIdByLookupKey', { lookupKey, found: true, entryCount: entries.length });
     return entry.portalId;
   }
-  console.log('[portal-cache] findPortalIdByLookupKey', { lookupKey, found: false, entryCount: entries.length });
+  console.log('[portal-cache] findPortalIdByLookupKey', { lookupKey, normalized, found: false, entryCount: entries.length });
   return null;
 }
 

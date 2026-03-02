@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 import { getSheetData } from '../../../../lib/google-api';
-import { SHEET_CONFIG } from '../../../../lib/sheet-config';
+import { SHEET_CONFIG, ROSTER_FIRST_DATA_ROW } from '../../../../lib/sheet-config';
 
 const ROSTER_SHEET_ID = SHEET_CONFIG.ROSTER_SHEET_ID;
 
 export async function GET() {
   try {
     // Get sample data including Portal columns (AQ and AR)
-    const data = await getSheetData(ROSTER_SHEET_ID, `A${SHEET_CONFIG.DATA_START_ROW}:AR10`);
+    const data = await getSheetData(ROSTER_SHEET_ID, `A${ROSTER_FIRST_DATA_ROW}:AR10`);
 
     return NextResponse.json({
       success: true,
