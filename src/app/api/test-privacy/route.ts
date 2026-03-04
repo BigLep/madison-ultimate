@@ -2,13 +2,13 @@ import { NextResponse } from 'next/server';
 import { obfuscatePlayerName } from '@/lib/privacy';
 
 export async function GET() {
-  // Test the obfuscation function with some examples
+  // Test the obfuscation function with generic examples (no real names)
   const testCases = [
-    { firstName: 'Donovan', lastName: 'Alleen-Willems' },
-    { firstName: 'Bob', lastName: 'Frank' },
-    { firstName: 'Jane', lastName: 'Smith' },
-    { firstName: 'Alex', lastName: 'Johnson' },
-    { firstName: 'Maria', lastName: 'Garcia-Lopez' }
+    { firstName: 'TestFirst', lastName: 'TestLast' },
+    { firstName: 'A', lastName: 'B' },
+    { firstName: 'First', lastName: 'Last' },
+    { firstName: 'Sample', lastName: 'User' },
+    { firstName: 'X', lastName: 'Y-Z' }
   ];
 
   const results = testCases.map(test => ({

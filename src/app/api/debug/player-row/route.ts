@@ -4,7 +4,7 @@ import { getPlayerDataByPortalId } from '../../../../lib/portal-cache';
 /**
  * Debug: return raw column names and row values for a player so we can compare
  * spreadsheet headers vs what extractPlayerData expects.
- * GET /api/debug/player-row?portalId=e8l06b12
+ * GET /api/debug/player-row?portalId=...
  */
 export async function GET(request: NextRequest) {
   try {

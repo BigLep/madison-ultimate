@@ -11,7 +11,7 @@ A fundamental design principle of this application is to make it **easy for fami
 
 #### Player-Specific PWAs (Progressive Web Apps)
 - **Individual App Installations**: Each player gets their own installable PWA with personalized naming
-- **App Name Format**: "Madison Ultimate - [Player Name]" (e.g., "Madison Ultimate - Alex Smith")
+- **App Name Format**: "Madison Ultimate - [Player Name]" (e.g., "Madison Ultimate - [Full Name]")
 - **Separate App Icons**: Each family member appears as a distinct app on home screens and app drawers
 - **Independent Management**: Parents can install separate apps for each child, making it easy to switch between players
 
@@ -231,10 +231,11 @@ The application uses a simple in-memory caching strategy optimized for Vercel's 
 These endpoints are for development and troubleshooting. Use them when roster columns, cache, or per-player data don’t match expectations.
 
 #### `GET /api/debug` (Debug & force refresh)
-- **Purpose**: Email matching analysis and force cache refresh
+- **Purpose**: Email matching analysis and force cache refresh; optionally roster lookup keys from the sheet
+- **Query params**: `rosterKeys=1` — include `rosterLookupKeys: { source, count, keys[] }` (keys only, no names); `refresh=1` with `rosterKeys=1` forces sheet cache refresh before returning keys
 - **Caching**: Always fetches fresh data and updates the in-memory cache
-- **Response**: Debug data including matched/unmatched email breakdown
-- **When to use**: Troubleshooting email matching or when you need to force the cache to refresh and inspect the result
+- **Response**: Debug data including matched/unmatched email breakdown; with `rosterKeys=1`, also roster lookup keys from the sheet for comparing to login
+- **When to use**: Troubleshooting email matching or when you need to force the cache to refresh; use `?rosterKeys=1` to verify what lookup keys exist in the roster sheet
 
 #### `GET /api/system/column-health` (Roster column validation)
 - **Purpose**: Validate the roster sheet’s column headers against app expectations
@@ -247,6 +248,12 @@ These endpoints are for development and troubleshooting. Use them when roster co
 - **Query params**: `portalId` (required) — the player’s portal ID from the roster
 - **Response**: `columnNames`, `rowByColumn` (column name → value for that player), `columnCount`
 - **When to use**: Debugging a specific player’s data (e.g. missing pronouns, contacts, or allergies); compare `rowByColumn` to what the app expects to find header or value mismatches
+
+#### `GET /api/debug/lookup?firstName=...&lastName=...&birthMonth=...&birthYear=...` (Login key check)
+- **Purpose**: Compute the login lookup key for the given name/DOB and report whether it matches a roster row (spaces in names are normalized when matching)
+- **Query params**: `firstName`, `lastName`, `birthMonth` (2 digits), `birthYear` (2 or 4 digits)
+- **Response**: `lookupKeyComputed`, `found`, optional `playerPortalId`; no other player data
+- **When to use**: Verifying why a login failed; compare `lookupKeyComputed` to the roster’s Portal Lookup Key column (e.g. via `GET /api/debug?rosterKeys=1`)
 
 ## Data Source Details
 
@@ -379,7 +386,7 @@ vercel --prod --yes
 ✅ **Google APIs**: Authenticated and tested with all 3 sources
 ✅ **Server-Side Caching**: 2-minute in-memory cache with on-demand refresh (optimized for serverless)
 ✅ **UI Components**: Responsive signup table with mobile/desktop views
-✅ **Privacy Protection**: Student name obfuscation (e.g., "Bob F.")
+✅ **Privacy Protection**: Student name obfuscation (e.g., "First L.")
 ✅ **Debug Tools**: Email matching analysis and cache diagnostics
 ✅ **Performance Optimized**: ~10-20ms response times via caching
 ✅ **Production Features**:
@@ -539,11 +546,11 @@ The application uses a hybrid approach for player identification to balance secu
 
 #### Example Flow
 ```
-1. User visits: /player-portal/8l06b12
-2. System validates portal ID "8l06b12" → finds "Eli Loeppky"
+1. User visits: /player-portal/{portalId}
+2. System validates portal ID → finds player
 3. User submits practice availability
-4. Frontend sends: { fullName: "Eli Loeppky", availability: "👍 Planning to be there" }
-5. Backend finds "Eli Loeppky" in Practice Availability sheet
+4. Frontend sends: { fullName: "<player full name>", availability: "👍 Planning to be there" }
+5. Backend finds player in Practice Availability sheet
 ```
 
 ### Data Sources for Player Portal

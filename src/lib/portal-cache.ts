@@ -129,10 +129,11 @@ async function refreshPortalCache(): Promise<void> {
 }
 
 /**
- * Normalize lookup key for comparison: lowercase, trim (so roster "APett1011" or " apett1011 " matches login "apett1011").
+ * Normalize lookup key for comparison: lowercase, trim, and remove all spaces.
+ * Keys with spaces in the last name (e.g. "csmith jr0514") match roster keys without spaces ("csmithjr0514").
  */
 function normalizeLookupKey(key: string): string {
-  return key.trim().toLowerCase();
+  return key.trim().toLowerCase().replace(/\s+/g, '');
 }
 
 /**
