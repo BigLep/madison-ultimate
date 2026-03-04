@@ -45,7 +45,7 @@ A web application to track signup progress for Madison Middle School Ultimate Fr
 - **[PROJECT REQUIREMENTS.md](./PROJECT%20REQUIREMENTS.md)** - Business requirements and feature specifications
 - **[Stage 3 PLAN.md](./Stage%203%20PLAN.md)** - Player Portal implementation plan (active)
 - **[DESIGN.md](./DESIGN.md)** - Technical architecture, data mapping, and implementation details
-- **[CLAUDE.md](./CLAUDE.md)** - Claude Code development notes and commands
+- **[AGENT.md](./AGENT.md)** - Agent and developer guidelines, commit rules, and commands
 
 ## Project Structure
 

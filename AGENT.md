@@ -1,6 +1,6 @@
-# Claude Code Development Notes
+# Agent Development Notes
 
-This file contains development guidelines and commands for working with Claude Code on this project.
+This file contains development guidelines and commands for AI agents and developers on this project.
 
 ## Hard requirement: no PII
 
@@ -10,6 +10,15 @@ This file contains development guidelines and commands for working with Claude C
 - **Test data** – Fixtures, mocks, and test cases must use only generic or obviously fake data (e.g. `TestFirst`, `TestLast`, `p001`, `ab0512`). No real student or family data.
 
 This applies to all files in the repo, including docs and plan files. Verify before committing.
+
+## Hard requirement: conventional commits
+
+**Every commit message MUST use [Conventional Commits](https://www.conventionalcommits.org/):**
+- **Format**: `type(scope): description` (scope optional but preferred when relevant).
+- **Types**: `feat` (feature), `fix` (bugfix), `docs` (documentation only), `test` (tests only), `chore` (tooling, deps, config), `refactor` (no behavior change).
+- **Examples**: `feat(auth): normalize lookup key for compound last names`, `fix(availability): resolve note column by date header`, `docs: require conventional commits in AGENT.md`, `test: add Vitest unit tests and pre-commit hook`, `chore(scripts): add fetch-game-info-headers.mjs`.
+
+Do not commit with plain phrases like "Add X" or "Fix Y" without a type prefix. This is required for history clarity and tooling (changelogs, semver).
 
 ## Development Commands
 
@@ -37,12 +46,14 @@ Look for `"status": "fail"` items to identify configuration issues.
 
 ## Commit Message Guidelines
 
-Use conventional commits with emojis for fun:
+**Required**: See "Hard requirement: conventional commits" above. All commits must use the conventional format.
+
+Optional: add emojis for clarity (e.g. `feat: add new feature ✨`). Examples:
 
 ```bash
-git commit -m "feat: add new feature ✨"
-git commit -m "fix: resolve bug 🔧"
-git commit -m "docs: update documentation 📚"
+git commit -m "feat(scope): add new feature"
+git commit -m "fix(scope): resolve bug"
+git commit -m "docs: update documentation"
 ```
 
 **CRITICAL COMMIT WORKFLOW**: Always show file changes summary AND execute commit commands in the same response:
@@ -65,7 +76,7 @@ Files changed:
 - User retains ability to cancel if they spot issues
 - Balances efficiency with user control over the commit process
 
-## Claude Code Specific Notes
+## Agent-specific notes
 
 - Always use TodoWrite tool to track progress on multi-step tasks
 - Update PLAN.md as features are completed
