@@ -2,6 +2,15 @@
 
 This file contains development guidelines and commands for working with Claude Code on this project.
 
+## Hard requirement: no PII
+
+**Never include personally identifiable information (PII) in:**
+- **Commits** – Do not commit real names, emails, birth dates, or any data that identifies a person. Use placeholders or env/config only.
+- **Comments** – Do not use real names, example emails, or real identifiers in code comments or docstrings. Use generic placeholders (e.g. `"..."`, `"FirstName"`, `"portalId=..."`).
+- **Test data** – Fixtures, mocks, and test cases must use only generic or obviously fake data (e.g. `TestFirst`, `TestLast`, `p001`, `ab0512`). No real student or family data.
+
+This applies to all files in the repo, including docs and plan files. Verify before committing.
+
 ## Development Commands
 
 - `npm run dev` - Start development server (runs on http://localhost:3001 if 3000 is occupied)
@@ -212,11 +221,12 @@ This convention eliminates ambiguity about which day of the week events occur.
 
 ## Data Privacy Guidelines
 
-**CRITICAL**: Never commit personal or student information to the repository:
-- The `/tmp` directory is gitignored and contains cached data files
-- Never add actual student names, emails, or personal data to version control
-- Use placeholder/anonymized data for development and testing
-- Always verify `.gitignore` includes sensitive data directories before committing
+**CRITICAL (see also "Hard requirement: no PII" at top of this file)**: Never commit or introduce personal or student information anywhere:
+- **Commits**: No real names, emails, birth dates, or identifiers in any committed file.
+- **Comments**: No real names or identifiers in code comments; use placeholders only.
+- **Test data**: Use only generic/fake data in fixtures and tests (see `src/__tests__/fixtures/` and `docs/TEST_DESIGN.md`).
+- The `/tmp` directory is gitignored and contains cached data files.
+- Always verify `.gitignore` includes sensitive data directories before committing.
 
 ## Credential Security Guidelines
 
