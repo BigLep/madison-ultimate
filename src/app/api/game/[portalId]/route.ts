@@ -93,6 +93,34 @@ export async function GET(
       return index !== undefined ? (row[index]?.toString().trim() || '') : '';
     };
 
+    // Build field name -> URLs map from Fields sheet (Field Name, Google Map URL, DiscNW URL)
+    const fieldUrlByName: Record<string, { googleMapUrl: string | null; discNwUrl: string | null }> = {};
+    try {
+      const fieldsData = await getCachedSheetData('FIELDS');
+      if (fieldsData && fieldsData.length >= 2) {
+        const fieldsHeader = fieldsData[0];
+        const fn = GAME_CONFIG.FIELDS_COLUMN_NAMES.FIELD_NAME;
+        const gmu = GAME_CONFIG.FIELDS_COLUMN_NAMES.GOOGLE_MAP_URL;
+        const dnu = GAME_CONFIG.FIELDS_COLUMN_NAMES.DISC_NW_URL;
+        const fieldNameIdx = fieldsHeader.findIndex((h: unknown) => (h?.toString().trim() || '') === fn);
+        const googleMapIdx = fieldsHeader.findIndex((h: unknown) => (h?.toString().trim() || '') === gmu);
+        const discNwIdx = fieldsHeader.findIndex((h: unknown) => (h?.toString().trim() || '') === dnu);
+        if (fieldNameIdx >= 0) {
+          for (let r = 1; r < fieldsData.length; r++) {
+            const name = (fieldsData[r][fieldNameIdx]?.toString() || '').trim();
+            if (name) {
+              fieldUrlByName[name] = {
+                googleMapUrl: googleMapIdx >= 0 ? (fieldsData[r][googleMapIdx]?.toString()?.trim() || null) : null,
+                discNwUrl: discNwIdx >= 0 ? (fieldsData[r][discNwIdx]?.toString()?.trim() || null) : null,
+              };
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.log('Fields sheet not available, game location URLs will be missing:', e);
+    }
+
     // Parse games (skip header row) - one game per row (single team). Assign ordinal per date (1st, 2nd game on that date).
     const teamDisplay = playerTeam || GAME_CONFIG.TEAM_DISPLAY_NAME;
     const games: Game[] = [];
@@ -113,8 +141,12 @@ export async function GET(
       const warmupTime = getGameInfoValue(row, col.WARMUP);
       const gameStart = getGameInfoValue(row, col.START);
       const doneBy = getGameInfoValue(row, col.DONE);
-      const location = getGameInfoValue(row, col.LOCATION);
-      const locationUrl = getGameInfoValue(row, col.LOCATION_URL) || null;
+      const fieldName = getGameInfoValue(row, col.FIELD_NAME);
+      const fieldLocation = getGameInfoValue(row, col.FIELD_LOCATION);
+      // Display: "Walt Hudley (East)" when both set; "Walt Hudley" when location empty; else the one that's set
+      const location = fieldName && fieldLocation ? `${fieldName} (${fieldLocation})` : (fieldName || fieldLocation);
+      const fieldUrls = fieldName ? fieldUrlByName[fieldName] : undefined;
+      const locationUrl = fieldUrls?.googleMapUrl ?? null;
       const gameNote = getGameInfoValue(row, col.GAME_NOTE);
       const isBye = gameNumber.toLowerCase() === 'bye';
 

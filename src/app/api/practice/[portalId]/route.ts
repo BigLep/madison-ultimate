@@ -14,6 +14,7 @@ import {
   formatPracticeDate,
   formatPracticeTime
 } from '../../../../lib/practice-config';
+import { GAME_CONFIG } from '../../../../lib/game-config';
 import { parseMMDDDate, toCanonicalDateKey } from '../../../../lib/date-formatters';
 
 const ROSTER_SHEET_ID = SHEET_CONFIG.ROSTER_SHEET_ID;
@@ -66,31 +67,61 @@ export async function GET(
       }, { status: 404 });
     }
 
+    // Build field name -> URLs map from Fields sheet (same as game route)
+    const fieldUrlByName: Record<string, { googleMapUrl: string | null }> = {};
+    try {
+      const fieldsData = await getCachedSheetData('FIELDS');
+      if (fieldsData && fieldsData.length >= 2) {
+        const fieldsHeader = fieldsData[0];
+        const fn = GAME_CONFIG.FIELDS_COLUMN_NAMES.FIELD_NAME;
+        const gmu = GAME_CONFIG.FIELDS_COLUMN_NAMES.GOOGLE_MAP_URL;
+        const fieldNameIdx = fieldsHeader.findIndex((h: unknown) => (h?.toString().trim() || '') === fn);
+        const googleMapIdx = fieldsHeader.findIndex((h: unknown) => (h?.toString().trim() || '') === gmu);
+        if (fieldNameIdx >= 0) {
+          for (let r = 1; r < fieldsData.length; r++) {
+            const name = (fieldsData[r][fieldNameIdx]?.toString() || '').trim();
+            if (name) {
+              fieldUrlByName[name] = {
+                googleMapUrl: googleMapIdx >= 0 ? (fieldsData[r][googleMapIdx]?.toString()?.trim() || null) : null,
+              };
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.log('Fields sheet not available, practice location URLs will be missing:', e);
+    }
+
+    const cols = PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS;
     // Parse practices (skip header row)
     const practices: Practice[] = [];
     for (let i = 1; i < practiceInfoData.length; i++) {
       const row = practiceInfoData[i];
-      if (!row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.DATE]) continue;
+      if (!row[cols.DATE]) continue;
 
-      // Extract practice data from cached sheet; normalize date to M/D for availability column lookup
-      const rawDate = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.DATE] || '';
+      const rawDate = row[cols.DATE] || '';
       const date = toCanonicalDateKey(rawDate);
-      const location = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.LOCATION] || '';
-      const locationUrl = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.LOCATION_URL] || null;
-      const startTime = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.START] || '';
-      const endTime = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.END] || '';
-      const note = row[PRACTICE_CONFIG.PRACTICE_INFO_COLUMNS.NOTE] || '';
+      const fieldName = (row[cols.FIELD_NAME]?.toString() || '').trim();
+      const fieldLocation = (row[cols.FIELD_LOCATION]?.toString() || '').trim();
+      // Display: "Walt Hudley (East)" when both set; "Walt Hudley" when location empty; else the one that's set
+      const location = fieldName && fieldLocation ? `${fieldName} (${fieldLocation})` : (fieldName || fieldLocation);
+      const sheetLocationUrl = (row[cols.LOCATION_URL]?.toString() || '').trim() || null;
+      const locationUrl = fieldName && fieldUrlByName[fieldName]?.googleMapUrl
+        ? fieldUrlByName[fieldName].googleMapUrl
+        : sheetLocationUrl;
+      const startTime = row[cols.START] || '';
+      const endTime = row[cols.END] || '';
+      const note = row[cols.NOTE] || '';
 
       practices.push({
         date,
         location,
-        locationUrl,
+        locationUrl: locationUrl || null,
         startTime,
         endTime,
         note,
         isPast: isPracticeInPast(date),
         isCancelled: isPracticeCancelled(note),
-        // Column indices will be determined dynamically during data fetching
         availabilityColumnIndex: -1,
         noteColumnIndex: -1,
       });

@@ -12,14 +12,15 @@ export const PRACTICE_CONFIG = {
   // UI Configuration
   NOTE_DEBOUNCE_DELAY: 2500, // Milliseconds to wait before auto-saving notes
 
-  // Practice Info sheet columns (0-indexed)
+  // Practice Info sheet columns (0-indexed): Date, Field Name, Field Location, Location URL, Start, End, Note
   PRACTICE_INFO_COLUMNS: {
-    DATE: 0,        // "Date" - practice date
-    LOCATION: 1,    // "Location" - where practice is held
-    LOCATION_URL: 2, // "Location URL" - hyperlink to location
-    START: 3,       // "Start" - start time
-    END: 4,         // "End" - end time
-    NOTE: 5,        // "Note" - coaches note (optional)
+    DATE: 0,
+    FIELD_NAME: 1,
+    FIELD_LOCATION: 2,
+    LOCATION_URL: 3, // optional override; otherwise resolved from Fields sheet via Field Name
+    START: 4,
+    END: 5,
+    NOTE: 6,
   },
 
   // Practice Availability sheet columns

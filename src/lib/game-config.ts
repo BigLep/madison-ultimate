@@ -16,11 +16,18 @@ export const GAME_CONFIG = {
     WARMUP: "Warmup Arrival",
     START: "Game Start",
     DONE: "Done By",
-    LOCATION: "Location",
-    LOCATION_URL: "Location URL",
-    SNACK: "Snack Owner",
-    DISC: "DiscNW Page",
+    FIELD_NAME: "Field Name",
+    FIELD_LOCATION: "Field Location",
     GAME_NOTE: "Game Note",
+    OPPONENT: "Opponent",
+    OPPONENT_TEAM_PAGE: "Oponent Team Page", // sheet column name as-is
+  },
+
+  // Fields sheet column names (lookup by Field Name for Google Map URL, etc.)
+  FIELDS_COLUMN_NAMES: {
+    FIELD_NAME: "Field Name",
+    GOOGLE_MAP_URL: "Google Map URL",
+    DISC_NW_URL: "DiscNW URL",
   },
 
   // Game Availability sheet column names for dynamic discovery

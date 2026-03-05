@@ -11,6 +11,7 @@ export const SHEET_CONFIG = {
   PRACTICE_AVAILABILITY_SHEET_NAME: 'Practice Availability',
   GAME_INFO_SHEET_NAME: '📍Game Info',
   GAME_AVAILABILITY_SHEET_NAME: 'Game Availability',
+  FIELDS_SHEET_NAME: '📍Fields',
 
   METADATA_ROWS: 4, // Used by roster-metadata (build tooling) for sheets with type/source/note rows
 

@@ -86,6 +86,7 @@ export async function POST(request: NextRequest) {
           forceRefreshSheetCache('ROSTER'),
           forceRefreshSheetCache('PRACTICE_INFO'),
           forceRefreshSheetCache('GAME_INFO'),
+          forceRefreshSheetCache('FIELDS'),
           forceRefreshSheetCache('PRACTICE_AVAILABILITY_PLAYERS'),
           forceRefreshSheetCache('GAME_AVAILABILITY_PLAYERS'),
           forceRefreshPortalCache()

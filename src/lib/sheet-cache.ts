@@ -26,6 +26,11 @@ export const SHEET_CACHE_CONFIG: Record<string, SheetCacheConfig> = {
     sheetName: SHEET_CONFIG.GAME_INFO_SHEET_NAME,
     cacheTTL: 5 * 60 * 1000, // 5 minutes
   },
+  FIELDS: {
+    sheetId: SHEET_CONFIG.ROSTER_SHEET_ID,
+    sheetName: SHEET_CONFIG.FIELDS_SHEET_NAME,
+    cacheTTL: 5 * 60 * 1000, // 5 minutes
+  },
   PRACTICE_AVAILABILITY_PLAYERS: {
     sheetId: SHEET_CONFIG.ROSTER_SHEET_ID,
     sheetName: SHEET_CONFIG.PRACTICE_AVAILABILITY_SHEET_NAME,
@@ -236,7 +241,8 @@ export async function preloadSheetCaches(): Promise<void> {
     await Promise.allSettled([
       getCachedSheetData('ROSTER'),
       getCachedSheetData('PRACTICE_INFO'),
-      getCachedSheetData('GAME_INFO')
+      getCachedSheetData('GAME_INFO'),
+      getCachedSheetData('FIELDS'),
     ]);
 
     console.log('Sheet caches preloaded successfully');
