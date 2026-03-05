@@ -157,7 +157,7 @@ export async function GET(
       }
     });
 
-    // Step 3: Get player's current availability responses (fresh data)
+    // Step 3: Get availability header row (for filtering) and player's responses
     let playerAvailability: PlayerGameAvailability[] = [];
 
     try {
@@ -166,33 +166,47 @@ export async function GET(
       if (availabilityResult) {
         const { headerRow, playerRow } = availabilityResult;
 
-        // Extract availability and activation status for each game using dynamic column discovery
-        playerAvailability = games.map(game => {
-          const gameColumns = findGameColumns(headerRow, game.date);
-          if (gameColumns) {
-            const activationStatus = gameColumns.activationStatusColumn !== undefined
-              ? normalizeActivationStatus(playerRow[gameColumns.activationStatusColumn]?.toString())
-              : '';
-            return {
-              gameKey: getGameKey(game.team, game.gameNumber),
-              availability: (playerRow[gameColumns.availabilityColumn]?.toString() || '').trim(),
-              note: (playerRow[gameColumns.noteColumn]?.toString() || '').trim(),
-              activationStatus,
-            };
-          } else {
-            console.warn(`Game columns not found for date: ${game.date}`);
-            return {
-              gameKey: getGameKey(game.team, game.gameNumber),
-              availability: '',
-              note: '',
-              activationStatus: '' as ActivationStatus,
-            };
-          }
+        // Only include games that have a column in the availability sheet (so players can enter availability)
+        const gamesWithColumns = games.filter(g => findGameColumns(headerRow, g.date) !== null);
+
+        // Extract availability and activation status for each game that has columns
+        playerAvailability = gamesWithColumns.map(game => {
+          const gameColumns = findGameColumns(headerRow, game.date)!;
+          const activationStatus = gameColumns.activationStatusColumn !== undefined
+            ? normalizeActivationStatus(playerRow[gameColumns.activationStatusColumn]?.toString())
+            : '';
+          return {
+            gameKey: getGameKey(game.team, game.gameNumber),
+            availability: (playerRow[gameColumns.availabilityColumn]?.toString() || '').trim(),
+            note: (playerRow[gameColumns.noteColumn]?.toString() || '').trim(),
+            activationStatus,
+          };
         });
+
+        // Replace games with filtered list so response only shows ones we can collect availability for
+        games.length = 0;
+        games.push(...gamesWithColumns);
+      } else {
+        // Player not in sheet; still need header to know which games have columns (don't show the rest)
+        const headerData = await getSheetData(ROSTER_SHEET_ID, `'${GAME_CONFIG.GAME_AVAILABILITY_SHEET}'!1:1`);
+        const availabilityHeaderRow = (Array.isArray(headerData) && headerData[0]) ? headerData[0] : [];
+        const gamesWithColumns = games.filter(g => findGameColumns(availabilityHeaderRow, g.date) !== null);
+        games.length = 0;
+        games.push(...gamesWithColumns);
       }
     } catch (error) {
       console.log('Could not fetch game availability:', error);
-      // Continue with empty availability - non-critical for page load
+      // Fallback: get header row so we can still filter (no player data)
+      try {
+        const headerData = await getSheetData(ROSTER_SHEET_ID, `'${GAME_CONFIG.GAME_AVAILABILITY_SHEET}'!1:1`);
+        const availabilityHeaderRow = (Array.isArray(headerData) && headerData[0]) ? headerData[0] : [];
+        const gamesWithColumns = games.filter(g => findGameColumns(availabilityHeaderRow, g.date) !== null);
+        games.length = 0;
+        games.push(...gamesWithColumns);
+      } catch {
+        // No header; show no games so we don't show items users can't respond to
+        games.length = 0;
+      }
     }
 
     return NextResponse.json({

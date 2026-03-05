@@ -117,7 +117,7 @@ export async function GET(
       }
     });
 
-    // Step 3: Get player's current availability responses (fresh data)
+    // Step 3: Get availability header row (for filtering) and player's responses
     let playerAvailability: PlayerAvailability[] = [];
 
     try {
@@ -126,28 +126,43 @@ export async function GET(
       if (availabilityResult) {
         const { playerRow, headerRow } = availabilityResult;
 
-        // Extract availability for each practice using dynamic column discovery
-        playerAvailability = practices.map(practice => {
-          const columns = findPracticeColumns(headerRow, practice.date);
-          if (columns) {
-            return {
-              practiceDate: practice.date,
-              availability: playerRow[columns.availabilityColumn] || '',
-              note: playerRow[columns.noteColumn] || '',
-            };
-          } else {
-            console.warn(`Practice columns not found for date: ${practice.date}`);
-            return {
-              practiceDate: practice.date,
-              availability: '',
-              note: '',
-            };
-          }
+        // Only include practices that have a column in the availability sheet (so players can enter availability)
+        const practicesWithColumns = practices.filter(p => findPracticeColumns(headerRow, p.date) !== null);
+
+        // Extract availability for each practice that has columns
+        playerAvailability = practicesWithColumns.map(practice => {
+          const columns = findPracticeColumns(headerRow, practice.date)!;
+          return {
+            practiceDate: practice.date,
+            availability: playerRow[columns.availabilityColumn] || '',
+            note: playerRow[columns.noteColumn] || '',
+          };
         });
+
+        // Replace practices with filtered list so response only shows ones we can collect availability for
+        practices.length = 0;
+        practices.push(...practicesWithColumns);
+      } else {
+        // Player not in sheet; still need header to know which practices have columns (don't show the rest)
+        const headerData = await getSheetData(ROSTER_SHEET_ID, `'${PRACTICE_CONFIG.PRACTICE_AVAILABILITY_SHEET}'!1:1`);
+        const availabilityHeaderRow = (Array.isArray(headerData) && headerData[0]) ? headerData[0] : [];
+        const practicesWithColumns = practices.filter(p => findPracticeColumns(availabilityHeaderRow, p.date) !== null);
+        practices.length = 0;
+        practices.push(...practicesWithColumns);
       }
     } catch (error) {
       console.log('Could not fetch practice availability:', error);
-      // Continue with empty availability - non-critical for page load
+      // Fallback: get header row so we can still filter (no player data)
+      try {
+        const headerData = await getSheetData(ROSTER_SHEET_ID, `'${PRACTICE_CONFIG.PRACTICE_AVAILABILITY_SHEET}'!1:1`);
+        const availabilityHeaderRow = (Array.isArray(headerData) && headerData[0]) ? headerData[0] : [];
+        const practicesWithColumns = practices.filter(p => findPracticeColumns(availabilityHeaderRow, p.date) !== null);
+        practices.length = 0;
+        practices.push(...practicesWithColumns);
+      } catch {
+        // No header; show no practices so we don't show items users can't respond to
+        practices.length = 0;
+      }
     }
 
     return NextResponse.json({
