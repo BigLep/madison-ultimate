@@ -2,6 +2,8 @@ import { describe, it, expect, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { GET as practiceGet } from '@/app/api/practice/[portalId]/route';
 import { GET as gameGet } from '@/app/api/game/[portalId]/route';
+import { getCachedSheetData } from '@/lib/sheet-cache';
+import { getPlayerGameAvailability } from '@/lib/game-availability-helper';
 
 // Avoid loading real Google auth when route imports google-api
 vi.mock('@/lib/google-api', () => ({
@@ -90,5 +92,46 @@ describe('Practice and Game API – filter by availability columns', () => {
     // 3/21 game is in Game Info but has no column in Game Availability, so it must not appear
     const dates = data.games.map((g: { date: string }) => g.date);
     expect(dates).not.toContain('3/21');
+  });
+
+  it('GET /api/game/[portalId] returns both games when two games on same date have columns (unsuffixed + Game 2)', async () => {
+    const gameInfoTwoOnSameDay = [
+      ['Date', 'Game #', 'Warmup Arrival', 'Game Start', 'Done By', 'Location', 'Location URL', 'Snack Owner', 'DiscNW Page', 'Game Note'],
+      ['3/7', '1', '4:00', '4:30', '6:00', 'Field', '', '', '', ''],
+      ['3/7', '2', '5:00', '5:30', '7:00', 'Field', '', '', '', ''],
+    ];
+    const headerWithGame2 = [
+      'Full Name',
+      'Grade',
+      'Gender Identification',
+      '3/7',
+      '3/7 Note',
+      '3/7 Activation Status',
+      '3/7 Availability (Game 2)',
+      '3/7 Note (Game 2)',
+      '3/7 Activation Status (Game 2)',
+    ];
+    vi.mocked(getCachedSheetData).mockImplementation(async (sheetType: string) => {
+      if (sheetType === 'PRACTICE_INFO') return PRACTICE_INFO_MOCK.map((row) => [...row]);
+      if (sheetType === 'GAME_INFO') return gameInfoTwoOnSameDay.map((row) => [...row]);
+      return [];
+    });
+    vi.mocked(getPlayerGameAvailability).mockResolvedValue({
+      headerRow: headerWithGame2,
+      playerRow: ['TestPlayer', '', '', '', '', '', '', '', ''],
+      rowIndex: 2,
+      columnMapping: {},
+    });
+
+    const req = new NextRequest('http://localhost/api/game/p123');
+    const res = await gameGet(req, { params: Promise.resolve({ portalId: 'p123' }) });
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.success).toBe(true);
+    expect(data.games).toHaveLength(2);
+    expect(data.games[0].date).toBe('3/7');
+    expect(data.games[0].gameNumber).toBe('1');
+    expect(data.games[1].date).toBe('3/7');
+    expect(data.games[1].gameNumber).toBe('2');
   });
 });

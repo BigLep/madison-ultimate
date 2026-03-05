@@ -93,10 +93,11 @@ export async function GET(
       return index !== undefined ? (row[index]?.toString().trim() || '') : '';
     };
 
-    // Parse games (skip header row) - one game per row (single team)
+    // Parse games (skip header row) - one game per row (single team). Assign ordinal per date (1st, 2nd game on that date).
     const teamDisplay = playerTeam || GAME_CONFIG.TEAM_DISPLAY_NAME;
     const games: Game[] = [];
     const col = GAME_CONFIG.GAME_INFO_COLUMN_NAMES;
+    const dateOrdinal: Record<string, number> = {};
 
     for (let i = 1; i < gameInfoData.length; i++) {
       const row = gameInfoData[i];
@@ -106,6 +107,9 @@ export async function GET(
       if (!rawDate || !gameNumber) continue;
 
       const date = toCanonicalDateKey(rawDate);
+      const ordinalForDate = (dateOrdinal[date] ?? 0) + 1;
+      dateOrdinal[date] = ordinalForDate;
+
       const warmupTime = getGameInfoValue(row, col.WARMUP);
       const gameStart = getGameInfoValue(row, col.START);
       const doneBy = getGameInfoValue(row, col.DONE);
@@ -118,6 +122,7 @@ export async function GET(
         team: teamDisplay,
         gameNumber,
         date,
+        ordinalForDate,
         location,
         locationUrl,
         warmupTime,
@@ -167,11 +172,11 @@ export async function GET(
         const { headerRow, playerRow } = availabilityResult;
 
         // Only include games that have a column in the availability sheet (so players can enter availability)
-        const gamesWithColumns = games.filter(g => findGameColumns(headerRow, g.date) !== null);
+        const gamesWithColumns = games.filter(g => findGameColumns(headerRow, g.date, g.ordinalForDate) !== null);
 
         // Extract availability and activation status for each game that has columns
         playerAvailability = gamesWithColumns.map(game => {
-          const gameColumns = findGameColumns(headerRow, game.date)!;
+          const gameColumns = findGameColumns(headerRow, game.date, game.ordinalForDate)!;
           const activationStatus = gameColumns.activationStatusColumn !== undefined
             ? normalizeActivationStatus(playerRow[gameColumns.activationStatusColumn]?.toString())
             : '';
@@ -190,7 +195,7 @@ export async function GET(
         // Player not in sheet; still need header to know which games have columns (don't show the rest)
         const headerData = await getSheetData(ROSTER_SHEET_ID, `'${GAME_CONFIG.GAME_AVAILABILITY_SHEET}'!1:1`);
         const availabilityHeaderRow = (Array.isArray(headerData) && headerData[0]) ? headerData[0] : [];
-        const gamesWithColumns = games.filter(g => findGameColumns(availabilityHeaderRow, g.date) !== null);
+        const gamesWithColumns = games.filter(g => findGameColumns(availabilityHeaderRow, g.date, g.ordinalForDate) !== null);
         games.length = 0;
         games.push(...gamesWithColumns);
       }
@@ -200,7 +205,7 @@ export async function GET(
       try {
         const headerData = await getSheetData(ROSTER_SHEET_ID, `'${GAME_CONFIG.GAME_AVAILABILITY_SHEET}'!1:1`);
         const availabilityHeaderRow = (Array.isArray(headerData) && headerData[0]) ? headerData[0] : [];
-        const gamesWithColumns = games.filter(g => findGameColumns(availabilityHeaderRow, g.date) !== null);
+        const gamesWithColumns = games.filter(g => findGameColumns(availabilityHeaderRow, g.date, g.ordinalForDate) !== null);
         games.length = 0;
         games.push(...gamesWithColumns);
       } catch {
@@ -357,32 +362,38 @@ export async function POST(
 
     const { headerRow: availabilityHeaderRow, rowIndex: playerRowIndex } = availabilityResult;
 
-    // Find the game date to use as column key in availability sheet
+    // Find the game date and ordinal (1st, 2nd, ... game on that date) from Game Info row order
     let gameDate = '';
+    let ordinalForDate = 0;
+    const dateOrdinal: Record<string, number> = {};
     for (let i = 1; i < gameInfoData.length; i++) {
       const row = gameInfoData[i];
       const date = getGameInfoValue(row, GAME_CONFIG.GAME_INFO_COLUMN_NAMES.DATE);
       const rowGameNumber = getGameInfoValue(row, GAME_CONFIG.GAME_INFO_COLUMN_NAMES.GAME_NUMBER);
 
+      if (!date || !rowGameNumber) continue;
+      const canonicalDate = toCanonicalDateKey(date);
+      dateOrdinal[canonicalDate] = (dateOrdinal[canonicalDate] ?? 0) + 1;
       if (rowGameNumber === gameNumber) {
-        gameDate = toCanonicalDateKey(date);
+        ordinalForDate = dateOrdinal[canonicalDate];
+        gameDate = canonicalDate;
         break;
       }
     }
 
-    if (!gameDate) {
+    if (!gameDate || ordinalForDate === 0) {
       return NextResponse.json({
         success: false,
         error: 'Could not find game date'
       }, { status: 404 });
     }
 
-    const gameColumns = findGameColumns(availabilityHeaderRow, gameDate);
+    const gameColumns = findGameColumns(availabilityHeaderRow, gameDate, ordinalForDate);
 
     if (!gameColumns) {
       return NextResponse.json({
         success: false,
-        error: `This game (${gameDate}) is not yet available for availability tracking. The availability sheet needs to have a "${gameDate}" column added.`
+        error: `This game (${gameDate}, game ${ordinalForDate}) is not yet available for availability tracking. Add columns for this game in the availability sheet.`
       }, { status: 404 });
     }
 

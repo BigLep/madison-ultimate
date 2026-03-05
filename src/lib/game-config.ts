@@ -64,6 +64,8 @@ export interface Game {
   team: string;
   gameNumber: string;
   date: string;
+  /** 1-based index for this date in Game Info (1st game on date = 1, 2nd = 2). Used to match columns like "3/7 Availability (Game 2)". */
+  ordinalForDate: number;
   location: string;
   locationUrl?: string | null;
   warmupTime: string;
