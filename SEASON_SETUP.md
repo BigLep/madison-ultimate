@@ -48,6 +48,14 @@ All of these live in **`src/app/player-portal/[portalId]/page.tsx`**. Decide eac
 | **MAILING_LIST_INFO_URL** | Top of file: `const MAILING_LIST_INFO_URL = '…'` | Notion (or other) URL for mailing list / more info. |
 | **Show “Additional Info Form”** | Top of file: `const SHOW_ADDITIONAL_INFO_FORM = true \| false` | Whether to show the “Additional Info Form” link and questionnaire status in **Player Info**. Set to `false` to hide for seasons that don’t use it (e.g. Spring 2026). |
 
+**Join the Community** (WhatsApp and game snack links on the portal home) are in **`src/lib/app-config.ts`**:
+
+| Setting | What to decide |
+|--------|-----------------|
+| **WHATSAPP_COMMUNITY_JOIN_URL** | WhatsApp invite link for the team community. |
+| **WHATSAPP_LEARN_MORE_URL** | Notion (or other) "learn more" page for the WhatsApp community. |
+| **GAME_SNACK_SIGNUP_URL** | Notion (or other) page for game snack signup. |
+
 ---
 
 ## 5. Team updates and newsletter (Buttondown)
@@ -71,7 +79,8 @@ Sheet structure (single team vs Blue/Gold, etc.) is configured in the codebase a
 
 - **`.env.local`** – `ROSTER_SHEET_ID`; optionally `TEAM_MAILING_LIST_FOLDER_ID`, `BUTTONDOWN_API_KEY`.
 - **`src/lib/sheet-config.ts`** – `ROSTER_FIRST_DATA_ROW` if your roster has more than one header row (e.g. first data row is not row 2).
-- **`src/app/player-portal/[portalId]/page.tsx`** – Season label, `SEASON_INFO_URL`, `MAILING_LIST_INFO_URL`, `SHOW_ADDITIONAL_INFO_FORM`.
+- **`src/app/player-portal/[portalId]/page.tsx`** – Season label, `MAILING_LIST_INFO_URL`, `SHOW_ADDITIONAL_INFO_FORM`.
+- **`src/lib/app-config.ts`** – `SEASON_INFO_URL`; Join the Community: `WHATSAPP_COMMUNITY_JOIN_URL`, `WHATSAPP_LEARN_MORE_URL`, `GAME_SNACK_SIGNUP_URL`.
 - **`src/lib/game-config.ts`** – `TEAM_DISPLAY_NAME` if you use a different default team name.
 - **Google Sheet** – Share with service account; update tabs and data.
 - **Buttondown** – RSS is public; set `BUTTONDOWN_API_KEY` if you want mailing list status on the player page.
