@@ -12,18 +12,18 @@ vi.mock('@/lib/google-api', () => ({
   getBatchSheetData: vi.fn(async () => []),
 }));
 
-// Practice Info: header + 2 practices (3/7 and 3/14). Availability sheet will only have column for 3/7.
+// Practice Info: header + 2 practices (3/7 and 3/14). Columns: Date, Field Name, Field Location, Start, End, Duration, Note
 const PRACTICE_INFO_MOCK = [
-  ['Date', 'Field Name', 'Field Location', 'Location URL', 'Start', 'End', 'Note'],
-  ['3/7', 'Field A', 'Field A', '', '4:00 PM', '5:30 PM', ''],
-  ['3/14', 'Field B', 'Field B', '', '4:00 PM', '5:30 PM', ''],
+  ['Date', 'Field Name', 'Field Location', 'Start', 'End', 'Duration', 'Note'],
+  ['3/7', 'Field A', 'Field A', '4:00 PM', '5:30 PM', '1:30', ''],
+  ['3/14', 'Field B', 'Field B', '4:00 PM', '5:30 PM', '1:30', ''],
 ];
 
-// Game Info: header + 2 games (3/7 and 3/21). Availability sheet will only have column for 3/7.
+// Game Info: full header to match real sheet; availability sheet will only have column for 3/7.
 const GAME_INFO_MOCK = [
-  ['Date', 'Game #', 'Warmup Arrival', 'Game Start', 'Done By', 'Field Name', 'Field Location', 'Game Note', 'Opponent', 'Oponent Team Page'],
-  ['3/7', '1', '4:00', '4:30', '6:00', 'Main Field', 'Main Field', '', '', ''],
-  ['3/21', '2', '4:00', '4:30', '6:00', 'Main Field', 'Main Field', '', '', ''],
+  ['Date', 'Game #', 'Warmup Arrival', 'Game Start', 'Done By', 'Field Name', 'Field Location', 'Game Note', 'Opponent', 'Oponent Team Page', 'Google Calendar Event ID', 'Google Calendar Warmup Event ID'],
+  ['3/7', '1', '4:00', '4:30', '6:00', 'Main Field', 'Main Field', '', '', '', '', ''],
+  ['3/21', '2', '4:00', '4:30', '6:00', 'Main Field', 'Main Field', '', '', '', '', ''],
 ];
 
 vi.mock('@/lib/portal-cache', () => ({

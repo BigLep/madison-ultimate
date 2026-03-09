@@ -105,10 +105,9 @@ export async function GET(
       const fieldLocation = (row[cols.FIELD_LOCATION]?.toString() || '').trim();
       // Display: "Walt Hudley (East)" when both set; "Walt Hudley" when location empty; else the one that's set
       const location = fieldName && fieldLocation ? `${fieldName} (${fieldLocation})` : (fieldName || fieldLocation);
-      const sheetLocationUrl = (row[cols.LOCATION_URL]?.toString() || '').trim() || null;
       const locationUrl = fieldName && fieldUrlByName[fieldName]?.googleMapUrl
         ? fieldUrlByName[fieldName].googleMapUrl
-        : sheetLocationUrl;
+        : null;
       const startTime = row[cols.START] || '';
       const endTime = row[cols.END] || '';
       const note = row[cols.NOTE] || '';

@@ -12,14 +12,13 @@ export const PRACTICE_CONFIG = {
   // UI Configuration
   NOTE_DEBOUNCE_DELAY: 2500, // Milliseconds to wait before auto-saving notes
 
-  // Practice Info sheet columns (0-indexed): Date, Field Name, Field Location, Location URL, Start, End, Note
+  // Practice Info sheet columns (0-indexed): Date, Field Name, Field Location, Start, End, Duration, Note, Google Calendar Event ID
   PRACTICE_INFO_COLUMNS: {
     DATE: 0,
     FIELD_NAME: 1,
     FIELD_LOCATION: 2,
-    LOCATION_URL: 3, // optional override; otherwise resolved from Fields sheet via Field Name
-    START: 4,
-    END: 5,
+    START: 3,
+    END: 4,
     NOTE: 6,
   },
 

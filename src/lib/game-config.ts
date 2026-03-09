@@ -9,7 +9,8 @@ export const GAME_CONFIG = {
   GAME_INFO_SHEET: SHEET_CONFIG.GAME_INFO_SHEET_NAME,
   GAME_AVAILABILITY_SHEET: SHEET_CONFIG.GAME_AVAILABILITY_SHEET_NAME,
 
-  // Game Info sheet column names for dynamic discovery (single team)
+  // Game Info sheet: columns discovered by header name (order does not matter).
+  // Full header: Date, Game #, Warmup Arrival, Game Start, Done By, Field Name, Field Location, Game Note, Opponent, Oponent Team Page, Google Calendar Event ID, Google Calendar Warmup Event ID
   GAME_INFO_COLUMN_NAMES: {
     DATE: "Date",
     GAME_NUMBER: "Game #",
