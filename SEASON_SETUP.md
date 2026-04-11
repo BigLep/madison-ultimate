@@ -75,6 +75,43 @@ Sheet structure (single team vs Blue/Gold, etc.) is configured in the codebase a
 
 ---
 
+## 7. Special portal behaviors (Bye, Cancelled, etc.)
+
+These behaviors are driven by values in the **Practice Info** and **Game Info** sheets.
+
+- **Cancelled practices**
+  - Sheet: **Practice Info** → `Note` column.
+  - If the note **contains `Cancelled`** (any capitalization), the portal will:
+    - Show a “Practice Cancelled” card for that date.
+    - **Hide availability buttons** for that practice (players cannot change availability).
+    - Block updates to availability for that practice via the API.
+  - To cancel a practice: put something like `Cancelled` or `Cancelled – rainout` in the Note cell for that practice row.
+
+- **Bye games**
+  - Sheet: **Game Info** → `Game #` column.
+  - If `Game #` is `bye` (any capitalization), the portal will:
+    - Show a “Bye Week – No Game Scheduled” card instead of the usual availability card.
+    - Not show availability buttons for that game.
+
+- **Field Name / Field Location / Fields sheet**
+  - `Field Name` in **Game Info** and **Practice Info** must match a row in the **📍Fields** sheet to get a Google Map link.
+  - `Field Location` is a free-text subfield (e.g. `East`).
+  - The portal displays location as `Field Name (Field Location)` when both are set, e.g. `Madison (All)`. If `Field Location` is empty, it just shows `Field Name`.
+
+- **Practice and game times**
+  - Times are read from **Practice Info** (`Start`, `End`) and **Game Info** (`Warmup Arrival`, `Game Start`, `Done By`).
+  - Values can be either:
+    - Already formatted with AM/PM (e.g. `3:55 PM`), or
+    - 24‑hour `HH:MM` (e.g. `15:55`), which the portal converts to `3:55 PM`.
+  - For practices, make sure the columns are:  
+    `Date, Field Name, Field Location, Start, End, Duration, Note, Google Calendar Event ID`.
+    The portal uses **Start** and **End** and ignores Duration and the calendar ID.
+
+- **Ignored Game Info columns**
+  - Extra columns like `Google Calendar Event ID` and `Google Calendar Warmup Event ID` are safe to use; the portal ignores them and only reads the named Game Info columns documented in `src/lib/game-config.ts`.
+
+---
+
 ## Quick reference: files to touch each season
 
 - **`.env.local`** – `ROSTER_SHEET_ID`; optionally `TEAM_MAILING_LIST_FOLDER_ID`, `BUTTONDOWN_API_KEY`.
