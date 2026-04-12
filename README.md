@@ -211,7 +211,21 @@ TEAM_MAILING_LIST_FOLDER_ID=<folder-id>
 ADDITIONAL_QUESTIONNAIRE_SHEET_ID=<sheet-id>
 ```
 
-### Deployment Steps
+### Continuous Deployment (GitHub → Vercel)
+
+The Vercel project is connected to the `BigLep/madison-ultimate` GitHub repository. Every push to `main` automatically triggers a production deployment — no manual steps required.
+
+To set this up on a new Vercel project: Project → Settings → Git → Connect Git Repository → select the repo → set Production Branch to `main`.
+
+### Manual Deployment
+
+If you need to deploy manually (e.g. without a GitHub push), use the Vercel CLI:
+
+```bash
+vercel --prod
+```
+
+### First-Time Setup Steps
 
 1. **Complete authentication setup** following [AUTHENTICATION_SETUP.md](./AUTHENTICATION_SETUP.md)
 
@@ -220,8 +234,9 @@ ADDITIONAL_QUESTIONNAIRE_SHEET_ID=<sheet-id>
 
 3. **Set environment variables** in Vercel dashboard
 
-4. **Deploy and test**:
+4. **Connect GitHub repository** for auto-deploys (see above)
+
+5. **Test**:
    ```bash
-   # Test the application APIs
    curl https://your-app.vercel.app/api/team-updates
    ```

@@ -88,8 +88,8 @@ These behaviors are driven by values in the **Practice Info** and **Game Info** 
   - To cancel a practice: put something like `Cancelled` or `Cancelled – rainout` in the Note cell for that practice row.
 
 - **Bye games**
-  - Sheet: **Game Info** → `Game #` column.
-  - If `Game #` is `bye` (any capitalization), the portal will:
+  - Sheet: **Game Info** → `Label` column.
+  - If `Label` is `bye` (any capitalization), the portal will:
     - Show a “Bye Week – No Game Scheduled” card instead of the usual availability card.
     - Not show availability buttons for that game.
 
@@ -106,6 +106,16 @@ These behaviors are driven by values in the **Practice Info** and **Game Info** 
   - For practices, make sure the columns are:  
     `Date, Field Name, Field Location, Start, End, Duration, Note, Google Calendar Event ID`.
     The portal uses **Start** and **End** and ignores Duration and the calendar ID.
+
+- **Extra game fields (e.g. tournament carpooling, lodging)**
+  - For special games (tournaments, away games, etc.) you can add extra player-facing text fields by adding date-prefixed columns to the **Game Availability** sheet.
+  - Any column whose header starts with `{date} ` (e.g. `4/25 `) that is not the standard availability, note, or activation status column is automatically discovered and shown to players as an autosaving text field on their game card.
+  - **Naming convention:** `{date} {Field Label}` — e.g. `4/25 Can Carpool There?`, `4/25 Need Carpool There`, `4/25 Lodging Plan`.
+    - The date prefix is stripped for display; players see just the label (e.g. "Can Carpool There?").
+    - For a second game on the same date, append `(Game 2)` to all columns for that game: `4/25 Can Carpool There? (Game 2)`, etc.
+  - **Column subtitles:** Add a cell note (right-click → Insert note) to the header cell in the Game Availability sheet to provide a subtitle/hint shown below the field label in the portal (e.g. "If driving, how many seats do you have?"). Notes are cached for 30 minutes.
+  - **Column ordering:** Extra fields appear in the order they appear in the sheet, before the Note field on the game card.
+  - No code changes are required — the portal discovers these columns dynamically from the sheet header.
 
 - **Ignored Game Info columns**
   - Extra columns like `Google Calendar Event ID` and `Google Calendar Warmup Event ID` are safe to use; the portal ignores them and only reads the named Game Info columns documented in `src/lib/game-config.ts`.
