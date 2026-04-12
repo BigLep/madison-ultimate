@@ -21,9 +21,9 @@ const PRACTICE_INFO_MOCK = [
 
 // Game Info: full header to match real sheet; availability sheet will only have column for 3/7.
 const GAME_INFO_MOCK = [
-  ['Date', 'Game #', 'Warmup Arrival', 'Game Start', 'Done By', 'Field Name', 'Field Location', 'Game Note', 'Opponent', 'Oponent Team Page', 'Google Calendar Event ID', 'Google Calendar Warmup Event ID'],
-  ['3/7', '1', '4:00', '4:30', '6:00', 'Main Field', 'Main Field', '', '', '', '', ''],
-  ['3/21', '2', '4:00', '4:30', '6:00', 'Main Field', 'Main Field', '', '', '', '', ''],
+  ['Date', 'Label', 'Warmup Arrival', 'Game Start', 'Done By', 'Field Name', 'Field Location', 'Game Note', 'Opponent', 'Oponent Team Page', 'Google Calendar Event ID', 'Google Calendar Warmup Event ID'],
+  ['3/7', 'Game 1', '4:00', '4:30', '6:00', 'Main Field', 'Main Field', '', '', '', '', ''],
+  ['3/21', 'Game 2', '4:00', '4:30', '6:00', 'Main Field', 'Main Field', '', '', '', '', ''],
 ];
 
 vi.mock('@/lib/portal-cache', () => ({
@@ -88,7 +88,7 @@ describe('Practice and Game API – filter by availability columns', () => {
     expect(data.success).toBe(true);
     expect(data.games).toHaveLength(1);
     expect(data.games[0].date).toBe('3/7');
-    expect(data.games[0].gameNumber).toBe('1');
+    expect(data.games[0].gameLabel).toBe('Game 1');
     // 3/21 game is in Game Info but has no column in Game Availability, so it must not appear
     const dates = data.games.map((g: { date: string }) => g.date);
     expect(dates).not.toContain('3/21');
@@ -96,9 +96,9 @@ describe('Practice and Game API – filter by availability columns', () => {
 
   it('GET /api/game/[portalId] returns both games when two games on same date have columns (unsuffixed + Game 2)', async () => {
     const gameInfoTwoOnSameDay = [
-      ['Date', 'Game #', 'Warmup Arrival', 'Game Start', 'Done By', 'Field Name', 'Field Location', 'Game Note', 'Opponent', 'Oponent Team Page'],
-      ['3/7', '1', '4:00', '4:30', '6:00', 'Main Field', 'Main Field', '', '', ''],
-      ['3/7', '2', '5:00', '5:30', '7:00', 'Main Field', 'Main Field', '', '', ''],
+      ['Date', 'Label', 'Warmup Arrival', 'Game Start', 'Done By', 'Field Name', 'Field Location', 'Game Note', 'Opponent', 'Oponent Team Page'],
+      ['3/7', 'Game 1', '4:00', '4:30', '6:00', 'Main Field', 'Main Field', '', '', ''],
+      ['3/7', 'Game 2', '5:00', '5:30', '7:00', 'Main Field', 'Main Field', '', '', ''],
     ];
     const headerWithGame2 = [
       'Full Name',
@@ -130,8 +130,8 @@ describe('Practice and Game API – filter by availability columns', () => {
     expect(data.success).toBe(true);
     expect(data.games).toHaveLength(2);
     expect(data.games[0].date).toBe('3/7');
-    expect(data.games[0].gameNumber).toBe('1');
+    expect(data.games[0].gameLabel).toBe('Game 1');
     expect(data.games[1].date).toBe('3/7');
-    expect(data.games[1].gameNumber).toBe('2');
+    expect(data.games[1].gameLabel).toBe('Game 2');
   });
 });

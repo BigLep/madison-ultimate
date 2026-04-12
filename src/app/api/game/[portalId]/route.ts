@@ -131,9 +131,9 @@ export async function GET(
     for (let i = 1; i < gameInfoData.length; i++) {
       const row = gameInfoData[i];
       const rawDate = getGameInfoValue(row, col.DATE);
-      const gameNumber = getGameInfoValue(row, col.GAME_NUMBER);
+      const gameLabel = getGameInfoValue(row, col.GAME_LABEL);
 
-      if (!rawDate || !gameNumber) continue;
+      if (!rawDate || !gameLabel) continue;
 
       const date = toCanonicalDateKey(rawDate);
       const ordinalForDate = (dateOrdinal[date] ?? 0) + 1;
@@ -149,11 +149,11 @@ export async function GET(
       const fieldUrls = fieldName ? fieldUrlByName[fieldName] : undefined;
       const locationUrl = fieldUrls?.googleMapUrl ?? null;
       const gameNote = getGameInfoValue(row, col.GAME_NOTE);
-      const isBye = gameNumber.toLowerCase() === 'bye';
+      const isBye = gameLabel.toLowerCase() === 'bye';
 
       games.push({
         team: teamDisplay,
-        gameNumber,
+        gameLabel,
         date,
         ordinalForDate,
         location,
@@ -229,7 +229,7 @@ export async function GET(
             columnIndex: col.columnIndex,
           }));
           return {
-            gameKey: getGameKey(game.team, game.gameNumber),
+            gameKey: getGameKey(game.team, game.gameLabel),
             availability: (playerRow[gameColumns.availabilityColumn]?.toString() || '').trim(),
             note: (playerRow[gameColumns.noteColumn]?.toString() || '').trim(),
             activationStatus,
@@ -276,10 +276,10 @@ export async function GET(
         formattedWarmupTime: formatGameTime(game.warmupTime),
         formattedGameStart: formatGameTime(game.gameStart),
         formattedDoneBy: formatGameTime(game.doneBy),
-        gameKey: getGameKey(game.team, game.gameNumber),
+        gameKey: getGameKey(game.team, game.gameLabel),
         // Find this game's availability
-        availability: playerAvailability.find(a => a.gameKey === getGameKey(game.team, game.gameNumber)) || {
-          gameKey: getGameKey(game.team, game.gameNumber),
+        availability: playerAvailability.find(a => a.gameKey === getGameKey(game.team, game.gameLabel)) || {
+          gameKey: getGameKey(game.team, game.gameLabel),
           availability: '',
           note: '',
           activationStatus: '' as ActivationStatus,
@@ -321,8 +321,8 @@ export async function POST(
       }, { status: 400 });
     }
 
-    // Extract game info from gameKey (e.g., "Varsity Team Game #1" or "Game #Playoff #1")
-    const gameKeyMatch = gameKey.match(/^(.+?) Game #(.+)$/);
+    // Extract game info from gameKey (e.g., "Varsity Team: Game 1" or "Varsity Team: Spring Reign Day 1")
+    const gameKeyMatch = gameKey.match(/^(.+?): (.+)$/);
     if (!gameKeyMatch) {
       return NextResponse.json({
         success: false,
@@ -330,7 +330,7 @@ export async function POST(
       }, { status: 400 });
     }
 
-    const [, team, gameNumber] = gameKeyMatch;
+    const [, team, gameLabel] = gameKeyMatch;
 
     // Validate availability value
     const validValues = Object.values(GAME_CONFIG.AVAILABILITY_OPTIONS);
@@ -372,12 +372,12 @@ export async function POST(
     for (let i = 1; i < gameInfoData.length; i++) {
       const row = gameInfoData[i];
       const date = getGameInfoValue(row, GAME_CONFIG.GAME_INFO_COLUMN_NAMES.DATE);
-      const rowGameNumber = getGameInfoValue(row, GAME_CONFIG.GAME_INFO_COLUMN_NAMES.GAME_NUMBER);
+      const rowGameLabel = getGameInfoValue(row, GAME_CONFIG.GAME_INFO_COLUMN_NAMES.GAME_LABEL);
 
-      if (!date || !rowGameNumber) continue;
+      if (!date || !rowGameLabel) continue;
 
       // Check if this row contains the game we're looking for
-      if (rowGameNumber === gameNumber) {
+      if (rowGameLabel === gameLabel) {
         gameFound = true;
 
         // Check if game is in the past
@@ -418,12 +418,12 @@ export async function POST(
     for (let i = 1; i < gameInfoData.length; i++) {
       const row = gameInfoData[i];
       const date = getGameInfoValue(row, GAME_CONFIG.GAME_INFO_COLUMN_NAMES.DATE);
-      const rowGameNumber = getGameInfoValue(row, GAME_CONFIG.GAME_INFO_COLUMN_NAMES.GAME_NUMBER);
+      const rowGameLabel = getGameInfoValue(row, GAME_CONFIG.GAME_INFO_COLUMN_NAMES.GAME_LABEL);
 
-      if (!date || !rowGameNumber) continue;
+      if (!date || !rowGameLabel) continue;
       const canonicalDate = toCanonicalDateKey(date);
       dateOrdinal[canonicalDate] = (dateOrdinal[canonicalDate] ?? 0) + 1;
-      if (rowGameNumber === gameNumber) {
+      if (rowGameLabel === gameLabel) {
         ordinalForDate = dateOrdinal[canonicalDate];
         gameDate = canonicalDate;
         break;

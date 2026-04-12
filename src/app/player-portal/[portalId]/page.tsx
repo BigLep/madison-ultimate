@@ -1235,7 +1235,7 @@ function GameAvailabilityScreen({ params }: { params: Promise<{ portalId: string
           {upcomingGames.map((game: any) => (
             <AvailabilityCard
               key={game.gameKey}
-              title={game.isBye ? game.formattedDate : `Game #${game.gameNumber}: ${game.formattedDate}`}
+              title={game.isBye ? game.formattedDate : `${game.gameLabel}: ${game.formattedDate}`}
               subtitle={!game.isBye ? `Warmups: ${game.formattedWarmupTime} • Start: ${game.formattedGameStart} • Done: ${game.formattedDoneBy}` : ''}
               location={game.location}
               locationUrl={game.locationUrl}
@@ -1269,7 +1269,7 @@ function GameAvailabilityScreen({ params }: { params: Promise<{ portalId: string
           {pastGames.map((game: any) => (
             <AvailabilityCard
               key={game.gameKey}
-              title={game.isBye ? game.formattedDate : `Game #${game.gameNumber}: ${game.formattedDate}`}
+              title={game.isBye ? game.formattedDate : `${game.gameLabel}: ${game.formattedDate}`}
               subtitle={!game.isBye ? `Warmups: ${game.formattedWarmupTime} • Start: ${game.formattedGameStart} • Done: ${game.formattedDoneBy}` : ''}
               location={game.location}
               locationUrl={game.locationUrl}

@@ -10,10 +10,10 @@ export const GAME_CONFIG = {
   GAME_AVAILABILITY_SHEET: SHEET_CONFIG.GAME_AVAILABILITY_SHEET_NAME,
 
   // Game Info sheet: columns discovered by header name (order does not matter).
-  // Full header: Date, Game #, Warmup Arrival, Game Start, Done By, Field Name, Field Location, Game Note, Opponent, Oponent Team Page, Google Calendar Event ID, Google Calendar Warmup Event ID
+  // Full header: Date, Label, Warmup Arrival, Game Start, Done By, Field Name, Field Location, Game Note, Opponent, Oponent Team Page, Google Calendar Event ID, Google Calendar Warmup Event ID
   GAME_INFO_COLUMN_NAMES: {
     DATE: "Date",
-    GAME_NUMBER: "Game #",
+    GAME_LABEL: "Label",
     WARMUP: "Warmup Arrival",
     START: "Game Start",
     DONE: "Done By",
@@ -70,7 +70,7 @@ export const GAME_CONFIG = {
 // Type definitions
 export interface Game {
   team: string;
-  gameNumber: string;
+  gameLabel: string;
   date: string;
   /** 1-based index for this date in Game Info (1st game on date = 1, 2nd = 2). Used to match columns like "3/7 Availability (Game 2)". */
   ordinalForDate: number;
@@ -155,7 +155,7 @@ export function formatGameTime(time: string): string {
   return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
 }
 
-export function getGameKey(team: string, gameNumber: string): string {
+export function getGameKey(team: string, gameLabel: string): string {
   const displayTeam = team && team.trim() ? team : GAME_CONFIG.TEAM_DISPLAY_NAME;
-  return `${displayTeam} Game #${gameNumber}`;
+  return `${displayTeam}: ${gameLabel}`;
 }

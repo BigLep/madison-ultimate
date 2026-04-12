@@ -11,7 +11,7 @@ import { getCachedSheetData } from '@/lib/sheet-cache';
 
 describe('findGameColumns – extra column discovery', () => {
   const GAME_INFO_MOCK = [
-    ['Date', 'Game #', 'Warmup Arrival', 'Game Start', 'Done By', 'Field Name', 'Field Location', 'Game Note'],
+    ['Date', 'Label', 'Warmup Arrival', 'Game Start', 'Done By', 'Field Name', 'Field Location', 'Game Note'],
     ['4/25', 'Spring Reign Day 1', '8:00 AM', '9:00 AM', '5:00 PM', 'Burlington Field', '', ''],
   ];
 
@@ -133,7 +133,7 @@ vi.mock('@/lib/portal-cache', () => ({
 }));
 
 const GAME_INFO_MOCK = [
-  ['Date', 'Game #', 'Warmup Arrival', 'Game Start', 'Done By', 'Field Name', 'Field Location', 'Game Note'],
+  ['Date', 'Label', 'Warmup Arrival', 'Game Start', 'Done By', 'Field Name', 'Field Location', 'Game Note'],
   ['4/25', 'Spring Reign Day 1', '8:00 AM', '9:00 AM', '5:00 PM', 'Field', '', ''],
 ];
 
