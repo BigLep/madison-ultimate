@@ -285,6 +285,34 @@ export async function appendSheetData(sheetId: string, range: string, values: an
   }
 }
 
+// Fetch the first (header) row of a sheet and return each cell's display value + note.
+// Uses spreadsheets.get (not values.get) because notes are not returned by values API.
+export async function getHeaderRowWithNotes(
+  sheetId: string,
+  sheetName: string
+): Promise<Array<{ value: string; note: string }>> {
+  try {
+    const response = await sheets.spreadsheets.get({
+      spreadsheetId: sheetId,
+      ranges: [`'${sheetName}'!1:1`],
+      includeGridData: true,
+    });
+
+    const sheet = response.data.sheets?.[0];
+    const firstRow = sheet?.data?.[0]?.rowData?.[0];
+
+    if (!firstRow?.values) return [];
+
+    return firstRow.values.map(cell => ({
+      value: (cell.formattedValue || cell.effectiveValue?.stringValue || '').trim(),
+      note: (cell.note || '').trim(),
+    }));
+  } catch (error) {
+    console.error(`Error fetching header row with notes for ${sheetId}/${sheetName}:`, error);
+    return [];
+  }
+}
+
 // Helper function to clear a range in Google Sheets
 export async function clearSheetData(sheetId: string, range: string) {
   try {

@@ -1107,9 +1107,58 @@ function GameAvailabilityScreen({ params }: { params: Promise<{ portalId: string
           ...prev,
           games: prev.games.map((game: any) =>
             game.gameKey === gameKey
-              ? { ...game, availability: { gameKey, availability, note } }
+              ? { ...game, availability: { ...game.availability, gameKey, availability, note } }
               : game
           )
+        }));
+      } else {
+        setGameSaveError(result.error || 'Failed to save. Please try again.');
+      }
+    } catch (error) {
+      setGameSaveError('Network error. Please try again.');
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const updateExtraField = async (gameKey: string, currentAvailability: string, currentNote: string, columnName: string, value: string) => {
+    if (!gameData?.player?.fullName) return;
+
+    setGameSaveError(null);
+    setUpdating(gameKey);
+    try {
+      const resolvedParams = await params;
+      const requestBody = {
+        gameKey,
+        availability: currentAvailability,
+        note: currentNote,
+        fullName: gameData.player.fullName,
+        extraFieldUpdates: { [columnName]: value },
+      };
+
+      const response = await fetch(`/api/game/${resolvedParams.portalId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setGameData((prev: any) => ({
+          ...prev,
+          games: prev.games.map((game: any) =>
+            game.gameKey === gameKey
+              ? {
+                  ...game,
+                  availability: {
+                    ...game.availability,
+                    extraFields: (game.availability.extraFields || []).map((f: any) =>
+                      f.columnName === columnName ? { ...f, value } : f
+                    ),
+                  },
+                }
+              : game
+          ),
         }));
       } else {
         setGameSaveError(result.error || 'Failed to save. Please try again.');
@@ -1198,6 +1247,10 @@ function GameAvailabilityScreen({ params }: { params: Promise<{ portalId: string
               isEditable={true}
               isBye={game.isBye}
               activationStatus={game.availability.activationStatus ?? ''}
+              extraFields={game.availability.extraFields}
+              onUpdateExtraField={(columnName, value) =>
+                updateExtraField(game.gameKey, game.availability.availability, game.availability.note, columnName, value)
+              }
             >
               {game.gameNote && (
                 <div className="text-xs italic mt-2" style={{color: 'var(--secondary-text)'}}>
@@ -1228,6 +1281,7 @@ function GameAvailabilityScreen({ params }: { params: Promise<{ portalId: string
               isEditable={false}
               isBye={game.isBye}
               activationStatus={game.availability.activationStatus ?? ''}
+              extraFields={game.availability.extraFields}
             >
               {game.gameNote && (
                 <div className="text-xs italic mt-2" style={{color: 'var(--secondary-text)'}}>

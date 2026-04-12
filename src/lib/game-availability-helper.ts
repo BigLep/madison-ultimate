@@ -13,10 +13,23 @@ export async function getPlayerGameAvailability(playerFullName: string): Promise
   );
 }
 
+/** A non-standard column prefixed with the game date (e.g. "4/25 Can Carpool There?") */
+export interface ExtraColumn {
+  /** Full header name from the sheet, e.g. "4/25 Can Carpool There?" */
+  columnName: string;
+  /** Date prefix stripped, e.g. "Can Carpool There?" */
+  label: string;
+  /** Cell note from the sheet header, e.g. "If driving to Burlington…" */
+  note: string;
+  columnIndex: number;
+}
+
 export interface GameColumnIndices {
   availabilityColumn: number;
   noteColumn: number;
   activationStatusColumn?: number;
+  /** Any additional date-prefixed columns beyond availability / note / activation status */
+  extraColumns: ExtraColumn[];
 }
 
 /** Zero-padded M/D for column header fallback (e.g. "2/27" -> "02/27"). */
@@ -32,13 +45,18 @@ function toPaddedDateKey(date: string): string | null {
  * Find game columns by date and ordinal in the header row.
  * - ordinalForDate 1: matches unsuffixed columns ("3/7", "3/7 Note", "3/7 Activation Status") or " (Game 1)" suffix.
  * - ordinalForDate >= 2: matches only " (Game N)" suffix (e.g. "3/7 Availability (Game 2)").
+ *
+ * @param headerNotes Optional map of columnName → cell note text, used to populate ExtraColumn.note.
  */
-export function findGameColumns(headerRow: any[], gameDate: string, ordinalForDate: number): GameColumnIndices | null {
+export function findGameColumns(
+  headerRow: any[],
+  gameDate: string,
+  ordinalForDate: number,
+  headerNotes?: Record<string, string>
+): GameColumnIndices | null {
   const datesToTry = [gameDate];
   const padded = toPaddedDateKey(gameDate);
   if (padded && padded !== gameDate) datesToTry.push(padded);
-
-  const suffix = ordinalForDate === 1 ? null : ` (Game ${ordinalForDate})`;
 
   for (const tryDate of datesToTry) {
     let availabilityColumn = -1;
@@ -84,10 +102,46 @@ export function findGameColumns(headerRow: any[], gameDate: string, ordinalForDa
       }
     }
 
+    // Discover extra columns: any date-prefixed header that isn't one of the known column types.
+    const knownIndices = new Set<number>([availabilityColumn]);
+    if (noteColumn >= 0) knownIndices.add(noteColumn);
+    if (activationStatusColumn !== undefined) knownIndices.add(activationStatusColumn);
+
+    const extraColumns: ExtraColumn[] = [];
+    for (let i = 0; i < headerRow.length; i++) {
+      if (knownIndices.has(i)) continue;
+      const header = (headerRow[i]?.toString() || '').trim();
+      if (!header) continue;
+
+      let label = '';
+      if (ordinalForDate === 1) {
+        // Match any "DATE SomeName" that doesn't have a " (Game N)" suffix
+        if (header.startsWith(tryDate + ' ') && !header.includes(' (Game ')) {
+          label = header.slice(tryDate.length + 1);
+        }
+      } else {
+        // Match "DATE SomeName (Game N)"
+        const gameSuffix = ` (Game ${ordinalForDate})`;
+        if (header.startsWith(tryDate + ' ') && header.endsWith(gameSuffix)) {
+          label = header.slice(tryDate.length + 1, header.length - gameSuffix.length);
+        }
+      }
+
+      if (label) {
+        extraColumns.push({
+          columnName: header,
+          label,
+          note: headerNotes?.[header] || '',
+          columnIndex: i,
+        });
+      }
+    }
+
     return {
       availabilityColumn,
       noteColumn: noteColumn >= 0 ? noteColumn : -1,
       ...(activationStatusColumn !== undefined && { activationStatusColumn }),
+      extraColumns,
     };
   }
 

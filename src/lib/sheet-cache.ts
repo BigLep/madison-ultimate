@@ -1,4 +1,4 @@
-import { getSheetData } from './google-api';
+import { getSheetData, getHeaderRowWithNotes } from './google-api';
 import { SHEET_CONFIG } from './sheet-config';
 
 // Cache configuration for each sheet type
@@ -203,6 +203,47 @@ export function getSheetCacheStats(): Record<string, any> {
   return stats;
 }
 
+// ---------------------------------------------------------------------------
+// Header notes cache — separate from the main sheet cache because it uses a
+// different API (spreadsheets.get with includeGridData) and has a longer TTL.
+// ---------------------------------------------------------------------------
+
+interface HeaderNotesCacheEntry {
+  /** columnName → note text */
+  data: Record<string, string>;
+  lastUpdated: number;
+}
+
+const HEADER_NOTES_TTL = 30 * 60 * 1000; // 30 minutes
+const headerNotesCache: Map<string, HeaderNotesCacheEntry> = new Map();
+
+/**
+ * Returns a map of { columnHeaderName → cell note text } for the Game Availability
+ * sheet header row. Cached for 30 minutes since column structure rarely changes.
+ */
+export async function getCachedGameAvailabilityHeaderNotes(): Promise<Record<string, string>> {
+  const cacheKey = 'GAME_AVAILABILITY_HEADER_NOTES';
+  const now = Date.now();
+  const cached = headerNotesCache.get(cacheKey);
+
+  if (cached && now - cached.lastUpdated < HEADER_NOTES_TTL) {
+    return cached.data;
+  }
+
+  const cells = await getHeaderRowWithNotes(
+    SHEET_CONFIG.ROSTER_SHEET_ID,
+    SHEET_CONFIG.GAME_AVAILABILITY_SHEET_NAME
+  );
+
+  const data: Record<string, string> = {};
+  for (const { value, note } of cells) {
+    if (value && note) data[value] = note;
+  }
+
+  headerNotesCache.set(cacheKey, { data, lastUpdated: now });
+  return data;
+}
+
 /**
  * Force clear all sheet caches
  */
@@ -210,6 +251,7 @@ export function clearAllSheetCaches(): void {
   console.log('Clearing all sheet caches...');
   sheetCache.clear();
   refreshPromises.clear();
+  headerNotesCache.clear();
 }
 
 /**

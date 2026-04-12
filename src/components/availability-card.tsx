@@ -4,6 +4,76 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clock, MapPin } from 'lucide-react';
 import { PRACTICE_CONFIG } from '@/lib/practice-config';
 
+export interface ExtraField {
+  columnName: string;
+  label: string;
+  /** Subtitle text from the sheet header cell note */
+  note: string;
+  value: string;
+  columnIndex: number;
+}
+
+/** Renders a single extra text field with its own independent debounced autosave. */
+function ExtraFieldInput({
+  field,
+  onUpdate,
+  isEditable,
+  isUpdating,
+}: {
+  field: ExtraField;
+  onUpdate: (columnName: string, value: string) => void;
+  isEditable: boolean;
+  isUpdating: boolean;
+}) {
+  const [value, setValue] = useState(field.value);
+  const [debouncedValue] = useDebounce(value, PRACTICE_CONFIG.NOTE_DEBOUNCE_DELAY);
+
+  useEffect(() => {
+    if (debouncedValue !== field.value) {
+      onUpdate(field.columnName, debouncedValue);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedValue]);
+
+  // Sync when the saved value changes (e.g. after successful POST)
+  useEffect(() => {
+    setValue(field.value);
+  }, [field.value]);
+
+  return (
+    <div className="space-y-1">
+      <label className="text-sm font-medium" style={{ color: 'var(--primary-text)' }}>
+        {field.label}
+      </label>
+      {field.note && (
+        <p className="text-xs italic" style={{ color: 'var(--secondary-text)' }}>
+          {field.note}
+        </p>
+      )}
+      {isEditable ? (
+        <textarea
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          disabled={isUpdating}
+          rows={2}
+          className="w-full px-3 py-2 text-sm border rounded-md resize-none"
+          style={{
+            backgroundColor: 'var(--card-bg)',
+            borderColor: 'var(--border)',
+            color: 'var(--primary-text)',
+          }}
+        />
+      ) : (
+        value && (
+          <div className="p-2 rounded-md" style={{ background: 'var(--secondary-bg)' }}>
+            <p className="text-xs" style={{ color: 'var(--secondary-text)' }}>{value}</p>
+          </div>
+        )
+      )}
+    </div>
+  );
+}
+
 interface AvailabilityCardProps {
   title: string;
   subtitle: string;
@@ -19,6 +89,9 @@ interface AvailabilityCardProps {
   isCancelled?: boolean; // Whether this practice is cancelled (FYI only)
   /** Game activation status: show pill above "Select your availability" (empty → TBD) */
   activationStatus?: string;
+  /** Extra date-specific fields (e.g. tournament carpool, lodging) */
+  extraFields?: ExtraField[];
+  onUpdateExtraField?: (columnName: string, value: string) => void;
   children?: React.ReactNode; // For additional content like time details
 }
 
@@ -36,6 +109,8 @@ export function AvailabilityCard({
   isBye = false,
   isCancelled = false,
   activationStatus,
+  extraFields,
+  onUpdateExtraField,
   children
 }: AvailabilityCardProps) {
   const [selectedAvailability, setSelectedAvailability] = useState(currentAvailability);
@@ -199,6 +274,21 @@ export function AvailabilityCard({
                 <p className="text-sm font-medium" style={{color: 'var(--primary-text)'}}>
                   Your attendance: {currentAvailability === 'Was there' ? '✅ ' : currentAvailability === "Wasn't there" ? '❌ ' : ''}{currentAvailability || 'No response'}
                 </p>
+              </div>
+            )}
+
+{/* Extra fields (e.g. carpool, lodging for tournament games) — shown before Note */}
+            {extraFields && extraFields.length > 0 && onUpdateExtraField && (
+              <div className="space-y-4">
+                {extraFields.map(field => (
+                  <ExtraFieldInput
+                    key={field.columnName}
+                    field={field}
+                    onUpdate={onUpdateExtraField}
+                    isEditable={isEditable}
+                    isUpdating={isUpdating}
+                  />
+                ))}
               </div>
             )}
 

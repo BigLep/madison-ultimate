@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSheetData, updateSheetData } from '../../../../lib/google-api';
 import { findPortalEntryByPortalId } from '../../../../lib/portal-cache';
-import { getCachedSheetData } from '../../../../lib/sheet-cache';
+import { getCachedSheetData, getCachedGameAvailabilityHeaderNotes } from '../../../../lib/sheet-cache';
 import { getPlayerGameAvailability, findGameColumns } from '../../../../lib/game-availability-helper';
 import { getColumnLetter } from '../../../../lib/availability-helper';
 import { SHEET_CONFIG } from '../../../../lib/sheet-config';
@@ -9,6 +9,7 @@ import {
   GAME_CONFIG,
   Game,
   PlayerGameAvailability,
+  ExtraFieldValue,
   ActivationStatus,
   ACTIVATION_STATUS_VALUES,
   isGameInPast,
@@ -194,8 +195,16 @@ export async function GET(
       }
     });
 
-    // Step 3: Get availability header row (for filtering) and player's responses
+    // Step 3: Get availability header row (for filtering) and player's responses.
+    // Also fetch header notes (cached 30 min) for extra column labels/subtitles.
     let playerAvailability: PlayerGameAvailability[] = [];
+
+    let headerNotes: Record<string, string> = {};
+    try {
+      headerNotes = await getCachedGameAvailabilityHeaderNotes();
+    } catch {
+      // Non-fatal: extra field notes will just be empty
+    }
 
     try {
       const availabilityResult = await getPlayerGameAvailability(playerFullName);
@@ -204,19 +213,27 @@ export async function GET(
         const { headerRow, playerRow } = availabilityResult;
 
         // Only include games that have a column in the availability sheet (so players can enter availability)
-        const gamesWithColumns = games.filter(g => findGameColumns(headerRow, g.date, g.ordinalForDate) !== null);
+        const gamesWithColumns = games.filter(g => findGameColumns(headerRow, g.date, g.ordinalForDate, headerNotes) !== null);
 
-        // Extract availability and activation status for each game that has columns
+        // Extract availability, activation status, and extra fields for each game that has columns
         playerAvailability = gamesWithColumns.map(game => {
-          const gameColumns = findGameColumns(headerRow, game.date, game.ordinalForDate)!;
+          const gameColumns = findGameColumns(headerRow, game.date, game.ordinalForDate, headerNotes)!;
           const activationStatus = gameColumns.activationStatusColumn !== undefined
             ? normalizeActivationStatus(playerRow[gameColumns.activationStatusColumn]?.toString())
             : '';
+          const extraFields: ExtraFieldValue[] = gameColumns.extraColumns.map(col => ({
+            columnName: col.columnName,
+            label: col.label,
+            note: col.note,
+            value: (playerRow[col.columnIndex]?.toString() || '').trim(),
+            columnIndex: col.columnIndex,
+          }));
           return {
             gameKey: getGameKey(game.team, game.gameNumber),
             availability: (playerRow[gameColumns.availabilityColumn]?.toString() || '').trim(),
             note: (playerRow[gameColumns.noteColumn]?.toString() || '').trim(),
             activationStatus,
+            extraFields,
           };
         });
 
@@ -295,7 +312,7 @@ export async function POST(
       }, { status: 400 });
     }
 
-    const { gameKey, availability, note, fullName } = body;
+    const { gameKey, availability, note, fullName, extraFieldUpdates } = body;
 
     if (!gameKey || !availability || !fullName) {
       return NextResponse.json({
@@ -434,11 +451,23 @@ export async function POST(
     const availabilityRange = `'${GAME_CONFIG.GAME_AVAILABILITY_SHEET}'!${availabilityColumn}${playerRowIndex}`;
     await updateSheetData(ROSTER_SHEET_ID, availabilityRange, [[availability]]);
 
-    // Update note if provided
-    if (note) {
+    // Update note (write even if empty string, to allow clearing)
+    if (note !== undefined) {
       const noteColumn = getColumnLetter(gameColumns.noteColumn);
       const noteRange = `'${GAME_CONFIG.GAME_AVAILABILITY_SHEET}'!${noteColumn}${playerRowIndex}`;
       await updateSheetData(ROSTER_SHEET_ID, noteRange, [[note]]);
+    }
+
+    // Update extra fields (e.g. carpool, lodging) — write each to its column, including empty strings
+    if (extraFieldUpdates && typeof extraFieldUpdates === 'object') {
+      for (const [columnName, value] of Object.entries(extraFieldUpdates)) {
+        const col = gameColumns.extraColumns.find(c => c.columnName === columnName);
+        if (col && col.columnIndex >= 0) {
+          const colLetter = getColumnLetter(col.columnIndex);
+          const range = `'${GAME_CONFIG.GAME_AVAILABILITY_SHEET}'!${colLetter}${playerRowIndex}`;
+          await updateSheetData(ROSTER_SHEET_ID, range, [[value]]);
+        }
+      }
     }
 
     return NextResponse.json({
@@ -447,7 +476,7 @@ export async function POST(
       data: {
         gameKey,
         availability,
-        note: note || '',
+        note: note !== undefined ? note : '',
         player: fullName,
       }
     });

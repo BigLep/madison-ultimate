@@ -92,11 +92,20 @@ export type ActivationStatus = 'Active' | 'Inactive' | 'TBD' | '';
 
 export const ACTIVATION_STATUS_VALUES: ActivationStatus[] = ['Active', 'Inactive', 'TBD'];
 
+export interface ExtraFieldValue {
+  columnName: string;
+  label: string;
+  note: string;
+  value: string;
+  columnIndex: number;
+}
+
 export interface PlayerGameAvailability {
   gameKey: string; // e.g., "Varsity Team Game #1"
   availability: string;
   note: string;
   activationStatus?: ActivationStatus;
+  extraFields?: ExtraFieldValue[];
 }
 
 export interface GameAvailabilityRow {
