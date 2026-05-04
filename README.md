@@ -93,6 +93,14 @@ The application provides a Progressive Web App (PWA) player portal where student
 
 See `Stage 3 PLAN.md` for implementation details.
 
+### Double headers (multiple games on the same day)
+
+The portal supports **more than one game on the same calendar date** (e.g. a double-header). Games are ordered from **Game Info** top to bottom: the first row for a date is **game 1**, the second row with the same date is **game 2**, and so on.
+
+- **Availability columns** in the **Game Availability** sheet use `M/D Availability`, `M/D Note`, and `M/D Activation Status` for the first game that day, and `M/D Availability (Game 2)`, `M/D Note (Game 2)`, `M/D Activation Status (Game 2)` for the second (and `(Game 3)` if needed). The player app matches columns using that naming; duplicate headers like two columns both called `5/9 Availability` are not supported.
+- **Coach spreadsheet:** Run **Build Game Availability** in the team Google Sheet (madison-ultimate-admin *Coach Sheet Apps Script*) so those headers exist for each game row.
+- **Season setup:** Naming, extra optional fields, and subtitles are documented in **[SEASON_SETUP.md](./SEASON_SETUP.md)** (see *Extra game fields* for optional columns that also use the `(Game 2)` pattern).
+
 ## Google API Setup
 
 This application requires access to Google Sheets and Google Drive to fetch player signup data. Follow these steps to set up API access:
