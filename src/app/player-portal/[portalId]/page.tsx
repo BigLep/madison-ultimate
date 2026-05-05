@@ -1252,6 +1252,7 @@ function GameAvailabilityScreen({ params }: { params: Promise<{ portalId: string
                 updateExtraField(game.gameKey, game.availability.availability, game.availability.note, columnName, value)
               }
             >
+              {/* Future idea: linkify URLs / optional labeled links in coach notes — see DESIGN.md (Game coach notes) */}
               {game.gameNote && (
                 <div className="text-xs italic mt-2" style={{color: 'var(--secondary-text)'}}>
                   Coach note: {game.gameNote}
@@ -1283,6 +1284,7 @@ function GameAvailabilityScreen({ params }: { params: Promise<{ portalId: string
               activationStatus={game.availability.activationStatus ?? ''}
               extraFields={game.availability.extraFields}
             >
+              {/* Future idea: linkify URLs / optional labeled links in coach notes — see DESIGN.md (Game coach notes) */}
               {game.gameNote && (
                 <div className="text-xs italic mt-2" style={{color: 'var(--secondary-text)'}}>
                   Coach note: {game.gameNote}

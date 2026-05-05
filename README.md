@@ -101,6 +101,10 @@ The portal supports **more than one game on the same calendar date** (e.g. a dou
 - **Coach spreadsheet:** Run **Build Game Availability** in the team Google Sheet (madison-ultimate-admin *Coach Sheet Apps Script*) so those headers exist for each game row.
 - **Season setup:** Naming, extra optional fields, and subtitles are documented in **[SEASON_SETUP.md](./SEASON_SETUP.md)** (see *Extra game fields* for optional columns that also use the `(Game 2)` pattern).
 
+### Future ideas (player portal)
+
+- **Coach notes and links:** Game coach notes are rendered as **plain text** today, so long URLs can dominate the card. A planned improvement is to **render hyperlinks** (auto-link detected URLs, optional labeled-link syntax, sanitization). See **DESIGN.md** → *Data Sources for Player Portal* → *Game coach notes (plain text today; future: hyperlinks)*.
+
 ## Google API Setup
 
 This application requires access to Google Sheets and Google Drive to fetch player signup data. Follow these steps to set up API access:

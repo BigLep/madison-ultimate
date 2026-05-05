@@ -570,6 +570,17 @@ The application uses a hybrid approach for player identification to balance secu
 - **Key**: Full Name column
 - **Purpose**: Store and retrieve practice attendance responses
 
+#### Game coach notes (plain text today; future: hyperlinks)
+
+- **Source**: Game Info sheet / season config flows into the game API as `gameNote` (see game route helpers).
+- **Current UI**: On the Game Availability portal screen, coach notes render as plain text: `Coach note: {game.gameNote}` in `src/app/player-portal/[portalId]/page.tsx` (upcoming and past game cards).
+- **Limitation**: If a coach pastes a long URL (e.g. bracket spreadsheet), families see the full string instead of a short, accessible label (e.g. “See bracket”) or a single tappable link with sensible link text.
+- **Future idea — hyperlink rendering**:
+  1. **Auto-link URLs**: Detect `http(s)://…` in the note and render each as an `<a>` with `rel="noopener noreferrer"` and `target="_blank"` (and optionally truncate display text with ellipsis while keeping `href` full).
+  2. **Optional labeled links**: Support a small, documented convention in the sheet (e.g. markdown `[label](url)` or `label|url` on its own line) so coaches can supply readable labels without raw URLs in prose.
+  3. **Safety**: Sanitize or strictly whitelist tags so we never execute arbitrary HTML from the sheet; prefer linkifying + escaping over full rich HTML.
+  4. **Scope**: Apply the same treatment anywhere portal-facing free text from coaches might include URLs (game notes first; extend if other fields gain long links).
+
 ### Authentication Philosophy for Player Portal
 
 This is designed as a casual team management app, not a high-security system. The portal ID serves as a simple access token - if you have the URL, you can access that player's portal. This design prioritizes:
