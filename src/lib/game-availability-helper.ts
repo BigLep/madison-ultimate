@@ -43,8 +43,8 @@ function toPaddedDateKey(date: string): string | null {
 
 /**
  * Find game columns by date and ordinal in the header row.
- * - ordinalForDate 1: matches unsuffixed columns ("3/7", "3/7 Note", "3/7 Activation Status") or " (Game 1)" suffix.
- * - ordinalForDate >= 2: matches only " (Game N)" suffix (e.g. "3/7 Availability (Game 2)").
+ * - ordinalForDate 1: availability is "M/D Availability" or legacy bare "M/D"; note and activation are exact "M/D Note" / "M/D Activation Status" (order of columns on the sheet does not matter).
+ * - ordinalForDate >= 2: matches "M/D Availability (Game N)", "M/D Note (Game N)", "M/D Activation Status (Game N)".
  *
  * @param headerNotes Optional map of columnName → cell note text, used to populate ExtraColumn.note.
  */
