@@ -107,9 +107,9 @@ These behaviors are driven by values in the **Practice Info** and **Game Info** 
     `Date, Field Name, Field Location, Start, End, Duration, Note, Google Calendar Event ID`.
     The portal uses **Start** and **End** and ignores Duration and the calendar ID.
 
-- **Double headers (two games, same calendar day)**
+- **Multiple games on the same calendar day** (multiple events on one date; sometimes called a *double-header*)
   - Use **separate rows** in **Game Info** for each game (same **Date**, different **Game #** / label). Row order defines game 1 vs game 2 (first row for that date = first game).
-  - In **Game Availability**, the standard triple is `{date} Availability`, `{date} Activation Status`, `{date} Note` for the **first** game that day, and `{date} Availability (Game 2)`, `{date} Activation Status (Game 2)`, `{date} Note (Game 2)` for the **second** (see the madison-ultimate-admin Coach Sheet README, *Double headers*). Run **Build Game Availability** in the spreadsheet menu to create missing columns.
+  - In **Game Availability**, the standard triple is `{date} Availability`, `{date} Activation Status`, `{date} Note` for the **first** game that day, and `{date} Availability (Game 2)`, `{date} Activation Status (Game 2)`, `{date} Note (Game 2)` for the **second** (see the madison-ultimate-admin *Coach Sheet Apps Script* README, section **Multiple events on the same calendar day**). Run **Build Game Availability** in the spreadsheet menu to create missing columns.
   - The player portal discovers availability using those exact header patterns; do not create two columns with the same header text.
 
 - **Extra game fields (e.g. tournament carpooling, lodging)**
