@@ -10,7 +10,7 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  title: 'Madison Ultimate App',
+  title: 'Madison Ultimate',
   description: 'Signup tracking for Madison Middle School Ultimate Frisbee team',
   icons: {
     icon: [

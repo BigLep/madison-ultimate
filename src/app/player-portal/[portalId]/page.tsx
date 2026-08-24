@@ -523,7 +523,7 @@ function HomeScreen() {
           <CardDescription style={{color: 'var(--secondary-header)'}}>
             Recent posts from our{' '}
             <a
-              href="https://buttondown.com/madisonultimate"
+              href="/news"
               target="_blank"
               rel="noopener noreferrer"
               className="hyperlink"

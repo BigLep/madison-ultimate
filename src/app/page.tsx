@@ -1,5 +1,4 @@
 import Image from 'next/image';
-import { APP_CONFIG } from '@/lib/app-config';
 import { Button } from '@/components/ui/button';
 
 export default function Home() {
@@ -28,9 +27,7 @@ export default function Home() {
               className="text-white font-semibold hover:opacity-90 transition-opacity"
               style={{ background: 'var(--accent)' }}
             >
-              <a href={APP_CONFIG.SEASON_INFO_URL} target="_blank" rel="noopener noreferrer">
-                Learn More About Madison Ultimate
-              </a>
+              <a href="/info">ℹ️ Learn More</a>
             </Button>
             <Button
               asChild
@@ -42,9 +39,7 @@ export default function Home() {
                 color: 'var(--primary-text)',
               }}
             >
-              <a href={APP_CONFIG.MAILING_LIST_JOIN_URL} target="_blank" rel="noopener noreferrer">
-                Join Mailing List
-              </a>
+              <a href="/subscribe">📬 Join the Mailing List</a>
             </Button>
             <Button
               size="lg"
@@ -56,9 +51,18 @@ export default function Home() {
                 opacity: 0.6,
               }}
             >
-              Current Players Login (coming soon)
+              🔒 Current Players Login (coming soon)
             </Button>
           </div>
+          <a
+            href="/news"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block mt-6 text-sm underline hover:opacity-80 transition-opacity"
+            style={{ color: 'var(--secondary-text)' }}
+          >
+            📰 Recent News
+          </a>
         </div>
       </div>
     </main>
