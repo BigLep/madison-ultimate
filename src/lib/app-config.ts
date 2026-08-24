@@ -7,8 +7,10 @@ export const APP_CONFIG = {
 
   // External Links
   /** Season / "Learn more" Notion page. Used on landing page and player portal home. */
-  SEASON_INFO_URL: 'https://madisonultimate.notion.site/2026-Spring-Madison-Ultimate-2ffc4da46f75805a8817f19327bfa970',
+  SEASON_INFO_URL: 'https://madisonultimate.notion.site/2026-Fall-Madison-Ultimate-3bdc4da46f758073930af31f3af0cc4c',
   PLAYER_PORTAL_DOCUMENTATION: 'https://madisonultimate.notion.site/Player-Portal-276c4da46f7580f2b431dab687ef5f01',
+  /** Buttondown newsletter subscribe/archive page. */
+  MAILING_LIST_JOIN_URL: 'https://buttondown.com/madisonultimate',
 
   // Join the Community (player portal home) — update each new season; see SEASON_SETUP.md
   /** WhatsApp community join link. */
