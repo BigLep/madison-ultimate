@@ -20,7 +20,16 @@ function Check({ label, done }: { label: string; done?: boolean }) {
   )
 }
 
-export function FinalFormsRow({ preferredFirstName, playerId }: { preferredFirstName: string; playerId: string }) {
+export function FinalFormsRow({
+  preferredFirstName,
+  playerId,
+  refreshSignal,
+}: {
+  preferredFirstName: string
+  playerId: string
+  /** Bump this (e.g. after a profile save) to force a re-fetch, so a corrected identity field re-joins immediately. */
+  refreshSignal?: number
+}) {
   const [status, setStatus] = useState<FinalFormsStatus | null>(null)
   const [refreshMessage, setRefreshMessage] = useState('')
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -34,7 +43,7 @@ export function FinalFormsRow({ preferredFirstName, playerId }: { preferredFirst
   useEffect(() => {
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playerId])
+  }, [playerId, refreshSignal])
 
   const refresh = async () => {
     setIsRefreshing(true)

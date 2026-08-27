@@ -9,15 +9,16 @@ import { PlayerDashboard } from '@/components/PlayerDashboard'
 import { rememberPlayer } from '@/lib/player-switcher'
 import { SignupRecord } from '@/lib/signups-sheet'
 import { SIGNUPS_COLUMNS } from '@/lib/signups-config'
-import { recordToFormValues, isProfileComplete, ProfileFormValues } from '@/lib/signup-form-schema'
+import { recordToFormValues, ProfileFormValues } from '@/lib/signup-form-schema'
 import { DeadlineBanner } from '@/components/DeadlineBanner'
 
 export default function PlayerPage() {
   const params = useParams<{ playerId: string }>()
   const playerId = params.playerId
-  const [status, setStatus] = useState<'loading' | 'not-found' | 'form' | 'dashboard'>('loading')
+  const [status, setStatus] = useState<'loading' | 'not-found' | 'ready'>('loading')
   const [record, setRecord] = useState<SignupRecord | null>(null)
   const [seeded, setSeeded] = useState<Record<string, string>>({})
+  const [finalFormsRefreshSignal, setFinalFormsRefreshSignal] = useState(0)
 
   const load = useCallback(async () => {
     try {
@@ -35,17 +36,14 @@ export default function PlayerPage() {
       const displayName = `${loaded[SIGNUPS_COLUMNS.PREFERRED_FIRST_NAME]} ${loaded[SIGNUPS_COLUMNS.LAST_NAME]}`.trim()
       rememberPlayer({ playerId, displayName })
 
-      const complete = isProfileComplete(loaded)
-      setStatus(complete ? 'dashboard' : 'form')
+      setStatus('ready')
 
-      if (!complete) {
-        try {
-          const ffRes = await fetch(`/api/signup/player/${playerId}/finalforms`)
-          const ffData = await ffRes.json()
-          if (ffRes.ok && ffData.success && ffData.found) setSeeded(ffData.seeded || {})
-        } catch {
-          // Seeded fields are a convenience; the plain form still works without them.
-        }
+      try {
+        const ffRes = await fetch(`/api/signup/player/${playerId}/finalforms`)
+        const ffData = await ffRes.json()
+        if (ffRes.ok && ffData.success && ffData.found) setSeeded(ffData.seeded || {})
+      } catch {
+        // Seeded fields are a convenience; the plain form still works without them.
       }
     } catch {
       setStatus('not-found')
@@ -67,7 +65,7 @@ export default function PlayerPage() {
       throw new Error(data.error || 'Save failed');
     }
     setRecord(data.record)
-    setStatus('dashboard')
+    setFinalFormsRefreshSignal(n => n + 1)
   }
 
   return (
@@ -95,22 +93,22 @@ export default function PlayerPage() {
           </Card>
         )}
 
-        {status === 'form' && record && (
-          <Card style={{ background: 'var(--card-bg)', borderColor: 'var(--border)' }}>
-            <CardHeader>
-              <CardTitle style={{ color: 'var(--page-title)' }}>Player profile</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <PlayerProfileForm defaultValues={recordToFormValues(record)} seeded={seeded} onSave={handleSave} />
-            </CardContent>
-          </Card>
-        )}
+        {status === 'ready' && record && (
+          <>
+            <PlayerDashboard record={record} onPhotoUploaded={load} finalFormsRefreshSignal={finalFormsRefreshSignal} />
 
-        {status === 'dashboard' && record && (
-          <PlayerDashboard record={record} onEdit={() => setStatus('form')} onPhotoUploaded={load} />
-        )}
+            <Card style={{ background: 'var(--card-bg)', borderColor: 'var(--border)' }}>
+              <CardHeader>
+                <CardTitle style={{ color: 'var(--page-title)' }}>Player profile</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <PlayerProfileForm defaultValues={recordToFormValues(record)} seeded={seeded} onSave={handleSave} />
+              </CardContent>
+            </Card>
 
-        {status === 'dashboard' && <PlayerSwitcher currentPlayerId={playerId} />}
+            <PlayerSwitcher currentPlayerId={playerId} />
+          </>
+        )}
       </div>
     </div>
   )
