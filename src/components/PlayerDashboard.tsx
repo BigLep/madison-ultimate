@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SignupRecord } from '@/lib/signups-sheet'
 import { SIGNUPS_COLUMNS } from '@/lib/signups-config'
 import { MailingListRow } from '@/components/MailingListRow'
+import { PhotoUpload } from '@/components/PhotoUpload'
 
 function DashboardRow({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -14,7 +15,17 @@ function DashboardRow({ title, children }: { title: string; children: React.Reac
   )
 }
 
-export function PlayerDashboard({ record, onEdit }: { record: SignupRecord; onEdit: () => void }) {
+export function PlayerDashboard({
+  record,
+  onEdit,
+  onPhotoUploaded,
+}: {
+  record: SignupRecord
+  onEdit: () => void
+  onPhotoUploaded: () => void
+}) {
+  const hasPhoto = Boolean(record[SIGNUPS_COLUMNS.PHOTO_DRIVE_FILE_ID])
+
   return (
     <Card style={{ background: 'var(--card-bg)', borderColor: 'var(--border)' }}>
       <CardHeader>
@@ -30,6 +41,10 @@ export function PlayerDashboard({ record, onEdit }: { record: SignupRecord; onEd
               Edit
             </button>
           </div>
+        </DashboardRow>
+
+        <DashboardRow title="Photo">
+          <PhotoUpload playerId={record[SIGNUPS_COLUMNS.PLAYER_ID]} hasPhoto={hasPhoto} onUploaded={onPhotoUploaded} />
         </DashboardRow>
 
         <DashboardRow title="Mailing list">

@@ -92,7 +92,7 @@ export default function PlayerPage() {
         )}
 
         {status === 'dashboard' && record && (
-          <PlayerDashboard record={record} onEdit={() => setStatus('form')} />
+          <PlayerDashboard record={record} onEdit={() => setStatus('form')} onPhotoUploaded={load} />
         )}
 
         {status === 'dashboard' && <PlayerSwitcher currentPlayerId={playerId} />}
