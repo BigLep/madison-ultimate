@@ -48,8 +48,12 @@ export const SIGNUPS_COLUMNS = {
   SUBSCRIBED_AT: 'Subscribed At',
 
   // Volunteer
+  COACH_VOLUNTEERING_INTEREST: 'Coach Volunteering Interest',
   VOLUNTEER_ROLES: 'Volunteer Roles',
   VOLUNTEER_NOTES: 'Volunteer Notes',
+
+  // Feedback
+  ADDITIONAL_FEEDBACK: 'Additional Feedback',
 
   // Joins
   SPS_STUDENT_ID: 'SPS Student ID',

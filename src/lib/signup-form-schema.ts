@@ -8,8 +8,42 @@ import { SignupRecord } from './signups-sheet';
 export const GRADE_OPTIONS = ['6', '7', '8'] as const;
 export const JERSEY_SIZE_OPTIONS = ['YM', 'YL', 'AS', 'AM', 'AL', 'AXL'] as const;
 
+export const PRONOUN_OPTIONS = ['he', 'him', 'she', 'her', 'they', 'them'] as const;
+
+export const GENDER_IDENTIFICATION_OPTIONS = [
+  'Girl-Matching/Gx/Non-binary',
+  'Boy-Matching/Bx/Non-binary',
+] as const;
+
+export const ELEMENTARY_SCHOOL_OPTIONS = [
+  'Alki Elementary School',
+  'Arbor Heights Elementary School',
+  'Concord International School',
+  'Fairmount Park Elementary School',
+  'Gatewood Elementary School',
+  'Genesee Hill Elementary School',
+  'Highland Park Elementary School',
+  'Holy Rosary School',
+  'Hope Lutheran School',
+  'Lafayette Elementary School',
+  'Louisa Boren STEM K-8',
+  'Our Lady of Guadalupe School',
+  'Pathfinder K-8 School',
+  'Roxhill Elementary School',
+  'Sanislo Elementary School',
+  'Tilden School',
+  'West Seattle Elementary School',
+  'West Seattle Montessori School & Academy',
+  'Westside School',
+] as const;
+
+export const COACH_VOLUNTEERING_OPTIONS = [
+  'Yes',
+  "Maybe (I'd like to talk more about the possibility)",
+  'No',
+] as const;
+
 export const VOLUNTEER_ROLE_OPTIONS = [
-  'Helping coach at practices',
   'Game-day help / field manager',
   'Team photographer',
   'Team admin / communications',
@@ -25,14 +59,15 @@ export const profileFormSchema = z.object({
   dateOfBirth: z.string().trim().min(1, 'Required'),
   legalFirstName: z.string().trim().optional(),
 
-  // Player
-  grade: z.enum(GRADE_OPTIONS, { message: 'Required' }),
+  // Player. Grade/jersey size stay visually required in the UI but are not blocking here
+  // (round 2 decision: profile save no longer requires completeness).
+  grade: z.string().trim().optional(),
   elementarySchool: z.string().trim().optional(),
-  pronouns: z.string().trim().optional(),
+  pronouns: z.array(z.string()),
   genderIdentification: z.string().trim().optional(),
   allergies: z.string().trim().optional(),
   competingSports: z.string().trim().optional(),
-  jerseySize: z.enum(JERSEY_SIZE_OPTIONS, { message: 'Required' }),
+  jerseySize: z.string().trim().optional(),
   playingExperience: z.string().trim().optional(),
   hopes: z.string().trim().optional(),
   otherInfo: z.string().trim().optional(),
@@ -42,9 +77,9 @@ export const profileFormSchema = z.object({
   studentSpsEmail: z.string().trim().email('Invalid email').optional().or(z.literal('')),
   studentCellPhone: z.string().trim().optional(),
 
-  // Caretakers
-  caretaker1Name: z.string().trim().min(1, 'Required'),
-  caretaker1Email: z.string().trim().email('Invalid email').min(1, 'Required'),
+  // Caretakers. Caretaker 1 name/email stay visually required but not blocking (round 2).
+  caretaker1Name: z.string().trim().optional(),
+  caretaker1Email: z.string().trim().email('Invalid email').optional().or(z.literal('')),
   caretaker1Phone: z.string().trim().optional(),
   caretaker2Name: z.string().trim().optional(),
   caretaker2Email: z.string().trim().email('Invalid email').optional().or(z.literal('')),
@@ -53,9 +88,15 @@ export const profileFormSchema = z.object({
   // Media
   mediaOptOut: z.boolean(),
 
-  // Volunteering
+  // Coach volunteering
+  coachVolunteeringInterest: z.string().trim().optional(),
+
+  // Other volunteering
   volunteerRoles: z.array(z.string()),
   volunteerNotes: z.string().trim().optional(),
+
+  // Anything else
+  additionalFeedback: z.string().trim().optional(),
 });
 
 export type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -66,13 +107,15 @@ export function recordToFormValues(record: SignupRecord): ProfileFormValues {
     lastName: record[SIGNUPS_COLUMNS.LAST_NAME] || '',
     dateOfBirth: record[SIGNUPS_COLUMNS.DATE_OF_BIRTH] || '',
     legalFirstName: record[SIGNUPS_COLUMNS.LEGAL_FIRST_NAME] || '',
-    grade: (record[SIGNUPS_COLUMNS.GRADE] || '6') as ProfileFormValues['grade'],
+    grade: record[SIGNUPS_COLUMNS.GRADE] || '',
     elementarySchool: record[SIGNUPS_COLUMNS.ELEMENTARY_SCHOOL] || '',
-    pronouns: record[SIGNUPS_COLUMNS.PRONOUNS] || '',
+    pronouns: record[SIGNUPS_COLUMNS.PRONOUNS]
+      ? record[SIGNUPS_COLUMNS.PRONOUNS].split(';').map(s => s.trim()).filter(Boolean)
+      : [],
     genderIdentification: record[SIGNUPS_COLUMNS.GENDER_IDENTIFICATION] || '',
     allergies: record[SIGNUPS_COLUMNS.ALLERGIES] || '',
     competingSports: record[SIGNUPS_COLUMNS.COMPETING_SPORTS_AND_ACTIVITIES] || '',
-    jerseySize: (record[SIGNUPS_COLUMNS.JERSEY_SIZE] || 'YM') as ProfileFormValues['jerseySize'],
+    jerseySize: record[SIGNUPS_COLUMNS.JERSEY_SIZE] || '',
     playingExperience: record[SIGNUPS_COLUMNS.PLAYING_EXPERIENCE] || '',
     hopes: record[SIGNUPS_COLUMNS.HOPES] || '',
     otherInfo: record[SIGNUPS_COLUMNS.OTHER_INFO] || '',
@@ -86,10 +129,12 @@ export function recordToFormValues(record: SignupRecord): ProfileFormValues {
     caretaker2Email: record[SIGNUPS_COLUMNS.CARETAKER_2_EMAIL] || '',
     caretaker2Phone: record[SIGNUPS_COLUMNS.CARETAKER_2_PHONE] || '',
     mediaOptOut: record[SIGNUPS_COLUMNS.MEDIA_OPT_OUT] === 'true',
+    coachVolunteeringInterest: record[SIGNUPS_COLUMNS.COACH_VOLUNTEERING_INTEREST] || '',
     volunteerRoles: record[SIGNUPS_COLUMNS.VOLUNTEER_ROLES]
       ? record[SIGNUPS_COLUMNS.VOLUNTEER_ROLES].split(';').map(s => s.trim()).filter(Boolean)
       : [],
     volunteerNotes: record[SIGNUPS_COLUMNS.VOLUNTEER_NOTES] || '',
+    additionalFeedback: record[SIGNUPS_COLUMNS.ADDITIONAL_FEEDBACK] || '',
   };
 }
 
@@ -99,32 +144,54 @@ export function formValuesToRecord(values: ProfileFormValues): Partial<SignupRec
     [SIGNUPS_COLUMNS.LAST_NAME]: values.lastName,
     [SIGNUPS_COLUMNS.DATE_OF_BIRTH]: values.dateOfBirth,
     [SIGNUPS_COLUMNS.LEGAL_FIRST_NAME]: values.legalFirstName || '',
-    [SIGNUPS_COLUMNS.GRADE]: values.grade,
+    [SIGNUPS_COLUMNS.GRADE]: values.grade || '',
     [SIGNUPS_COLUMNS.ELEMENTARY_SCHOOL]: values.elementarySchool || '',
-    [SIGNUPS_COLUMNS.PRONOUNS]: values.pronouns || '',
+    [SIGNUPS_COLUMNS.PRONOUNS]: values.pronouns.join('; '),
     [SIGNUPS_COLUMNS.GENDER_IDENTIFICATION]: values.genderIdentification || '',
     [SIGNUPS_COLUMNS.ALLERGIES]: values.allergies || '',
     [SIGNUPS_COLUMNS.COMPETING_SPORTS_AND_ACTIVITIES]: values.competingSports || '',
-    [SIGNUPS_COLUMNS.JERSEY_SIZE]: values.jerseySize,
+    [SIGNUPS_COLUMNS.JERSEY_SIZE]: values.jerseySize || '',
     [SIGNUPS_COLUMNS.PLAYING_EXPERIENCE]: values.playingExperience || '',
     [SIGNUPS_COLUMNS.HOPES]: values.hopes || '',
     [SIGNUPS_COLUMNS.OTHER_INFO]: values.otherInfo || '',
     [SIGNUPS_COLUMNS.STUDENT_PERSONAL_EMAIL]: values.studentPersonalEmail || '',
     [SIGNUPS_COLUMNS.STUDENT_SPS_EMAIL]: values.studentSpsEmail || '',
     [SIGNUPS_COLUMNS.STUDENT_CELL_PHONE]: values.studentCellPhone || '',
-    [SIGNUPS_COLUMNS.CARETAKER_1_NAME]: values.caretaker1Name,
-    [SIGNUPS_COLUMNS.CARETAKER_1_EMAIL]: values.caretaker1Email,
+    [SIGNUPS_COLUMNS.CARETAKER_1_NAME]: values.caretaker1Name || '',
+    [SIGNUPS_COLUMNS.CARETAKER_1_EMAIL]: values.caretaker1Email || '',
     [SIGNUPS_COLUMNS.CARETAKER_1_PHONE]: values.caretaker1Phone || '',
     [SIGNUPS_COLUMNS.CARETAKER_2_NAME]: values.caretaker2Name || '',
     [SIGNUPS_COLUMNS.CARETAKER_2_EMAIL]: values.caretaker2Email || '',
     [SIGNUPS_COLUMNS.CARETAKER_2_PHONE]: values.caretaker2Phone || '',
     [SIGNUPS_COLUMNS.MEDIA_OPT_OUT]: values.mediaOptOut ? 'true' : '',
+    [SIGNUPS_COLUMNS.COACH_VOLUNTEERING_INTEREST]: values.coachVolunteeringInterest || '',
     [SIGNUPS_COLUMNS.VOLUNTEER_ROLES]: values.volunteerRoles.join('; '),
     [SIGNUPS_COLUMNS.VOLUNTEER_NOTES]: values.volunteerNotes || '',
+    [SIGNUPS_COLUMNS.ADDITIONAL_FEEDBACK]: values.additionalFeedback || '',
   };
 }
 
-/** A profile counts as "complete" (dashboard mode) once the required caretaker fields are saved. */
+/**
+ * Whether the profile has every field the spec marks required (grade, jersey size,
+ * caretaker 1 name/email). Purely informational since round 2: it drives the dashboard's
+ * "Profile: Complete" vs. "Missing: ..." display, not whether the row can be saved.
+ */
 export function isProfileComplete(record: SignupRecord): boolean {
-  return Boolean(record[SIGNUPS_COLUMNS.CARETAKER_1_NAME] && record[SIGNUPS_COLUMNS.CARETAKER_1_EMAIL]);
+  return Boolean(
+    record[SIGNUPS_COLUMNS.GRADE] &&
+    record[SIGNUPS_COLUMNS.JERSEY_SIZE] &&
+    record[SIGNUPS_COLUMNS.CARETAKER_1_NAME] &&
+    record[SIGNUPS_COLUMNS.CARETAKER_1_EMAIL]
+  );
+}
+
+/** Which required fields (per the spec) are still missing, for the dashboard's Profile row. */
+export function missingRequiredFields(record: SignupRecord): string[] {
+  const missing: string[] = [];
+  if (!record[SIGNUPS_COLUMNS.GRADE]) missing.push('Grade');
+  if (!record[SIGNUPS_COLUMNS.JERSEY_SIZE]) missing.push('Jersey Size');
+  if (!record[SIGNUPS_COLUMNS.CARETAKER_1_NAME] || !record[SIGNUPS_COLUMNS.CARETAKER_1_EMAIL]) {
+    missing.push('Caretaker 1 info');
+  }
+  return missing;
 }
