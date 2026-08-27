@@ -38,7 +38,7 @@ export function PlayerDashboard({
         <DashboardRow title="Profile">
           <div className="flex items-center justify-between">
             <span>Complete</span>
-            <button type="button" className="underline text-sm" style={{ color: 'var(--accent)' }} onClick={onEdit}>
+            <button type="button" className="underline text-sm py-2 px-1" style={{ color: 'var(--accent)' }} onClick={onEdit}>
               Edit
             </button>
           </div>

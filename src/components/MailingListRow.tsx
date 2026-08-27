@@ -44,13 +44,13 @@ export function MailingListRow({ playerId }: { playerId: string }) {
   return (
     <ul className="space-y-2">
       {statuses.map(status => (
-        <li key={status.email} className="flex items-center justify-between gap-2">
+        <li key={status.email} className="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
           <span>
             {status.label}: {status.subscribed ? 'Subscribed' : 'Not subscribed'}
           </span>
           <button
             type="button"
-            className="underline text-sm"
+            className="underline text-sm py-1 px-1 -mx-1 sm:py-2"
             style={{ color: 'var(--accent)' }}
             disabled={pending === status.email}
             onClick={() => toggle(status.email, status.subscribed)}

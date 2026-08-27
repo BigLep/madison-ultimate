@@ -93,7 +93,7 @@ export function FinalFormsRow({ preferredFirstName, playerId }: { preferredFirst
       )}
       <button
         type="button"
-        className="underline text-sm"
+        className="underline text-sm py-2 px-1 -mx-1 text-left"
         style={{ color: 'var(--accent)' }}
         disabled={isRefreshing}
         onClick={refresh}

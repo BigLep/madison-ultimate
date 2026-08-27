@@ -32,7 +32,7 @@ export function PlayerSwitcher({ currentPlayerId }: { currentPlayerId: string })
           <li key={player.playerId} className="flex items-center justify-between gap-2">
             <button
               type="button"
-              className="underline text-left"
+              className="underline text-left py-2 pr-1 -my-2"
               style={{ color: 'var(--accent)' }}
               onClick={() => router.push(`/player/${player.playerId}`)}
             >
@@ -40,7 +40,7 @@ export function PlayerSwitcher({ currentPlayerId }: { currentPlayerId: string })
             </button>
             <button
               type="button"
-              className="text-xs"
+              className="text-xs py-2 px-1 -my-2"
               style={{ color: 'var(--secondary-text)' }}
               onClick={() => {
                 forgetPlayer(player.playerId)

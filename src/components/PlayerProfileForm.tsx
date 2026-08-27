@@ -29,7 +29,7 @@ function SeededHint({ value, onUse }: { value?: string; onUse: () => void }) {
   return (
     <p className="text-xs flex items-center gap-2 flex-wrap" style={{ color: 'var(--secondary-text)' }}>
       <span>From Final Forms: {value}</span>
-      <button type="button" className="underline" style={{ color: 'var(--accent)' }} onClick={onUse}>
+      <button type="button" className="underline py-1 px-1" style={{ color: 'var(--accent)' }} onClick={onUse}>
         Use it
       </button>
     </p>
@@ -84,7 +84,7 @@ export function PlayerProfileForm({
       <section className="space-y-4">
         <h3 className="font-semibold text-lg" style={sectionHeadingStyle}>Player</h3>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label style={fieldLabelStyle}>Preferred first name</Label>
             <Input {...register('preferredFirstName')} />
@@ -97,7 +97,7 @@ export function PlayerProfileForm({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label style={fieldLabelStyle}>Date of birth</Label>
             <Input type="date" {...register('dateOfBirth')} />
@@ -109,7 +109,7 @@ export function PlayerProfileForm({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label style={fieldLabelStyle}>Grade this fall</Label>
             <select {...register('grade')} className="flex h-9 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900">
@@ -126,7 +126,7 @@ export function PlayerProfileForm({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label style={fieldLabelStyle}>Pronouns</Label>
             <Input {...register('pronouns')} />
@@ -217,7 +217,7 @@ export function PlayerProfileForm({
         {!showCaretaker2 && (
           <button
             type="button"
-            className="text-sm underline"
+            className="text-sm underline py-2 px-1 -mx-1"
             style={{ color: 'var(--accent)' }}
             onClick={() => setShowCaretaker2(true)}
           >

@@ -139,8 +139,22 @@ export default function SignupPage() {
               />
             </div>
 
-            {/* Honeypot: hidden from real users, bots tend to fill every field */}
-            <div style={{ position: 'absolute', left: '-9999px' }} aria-hidden="true">
+            {/* Honeypot: visually hidden without off-screen positioning, which can otherwise
+                stretch the page's scrollable area horizontally on mobile browsers. */}
+            <div
+              style={{
+                position: 'absolute',
+                width: '1px',
+                height: '1px',
+                margin: '-1px',
+                padding: 0,
+                overflow: 'hidden',
+                clip: 'rect(0, 0, 0, 0)',
+                whiteSpace: 'nowrap',
+                border: 0,
+              }}
+              aria-hidden="true"
+            >
               <label htmlFor="website">Leave this field blank</label>
               <input
                 id="website"
