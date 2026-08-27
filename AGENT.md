@@ -125,6 +125,8 @@ const availability = playerRow[3 + (i - 1) * 2]; // Breaks when columns change
 - Example: `puppeteer_screenshot({name: "test", width: 375, height: 812})`
 - This ensures screenshots reflect the actual mobile user experience
 
+**Signup Final Forms test fixtures**: to test `/signup` and the player dashboard in every Final Forms state (found/not-found, signed/cleared combinations) without a real registration, use one of the magic last names documented in `docs/fall-2026/signup-test-fixtures.md` (e.g. `TestCleared`).
+
 ## Styling Guidelines
 
 **CRITICAL**: Prefer CSS classes and CSS variables over JavaScript-based styling:
