@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SignupRecord } from '@/lib/signups-sheet'
 import { SIGNUPS_COLUMNS } from '@/lib/signups-config'
+import { MailingListRow } from '@/components/MailingListRow'
 
 function DashboardRow({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -29,6 +30,10 @@ export function PlayerDashboard({ record, onEdit }: { record: SignupRecord; onEd
               Edit
             </button>
           </div>
+        </DashboardRow>
+
+        <DashboardRow title="Mailing list">
+          <MailingListRow playerId={record[SIGNUPS_COLUMNS.PLAYER_ID]} />
         </DashboardRow>
       </CardContent>
     </Card>

@@ -84,3 +84,70 @@ export async function isSubscriber(email: string): Promise<boolean | null> {
     return null;
   }
 }
+
+function invalidateSubscriberCache(): void {
+  subscriberCache = null;
+}
+
+/**
+ * Subscribe an email as type "regular" (skips double opt-in/confirmation email), using the
+ * collision-behavior header so re-saving an already-subscribed email never errors.
+ * Returns true on success, false on failure (never throws; a subscribe failure should not block a profile save).
+ */
+export async function subscribeEmail(email: string): Promise<boolean> {
+  const apiKey = process.env.BUTTONDOWN_API_KEY;
+  const trimmed = email?.trim();
+  if (!apiKey || !trimmed) return false;
+
+  try {
+    const res = await fetch(`${API_BASE}/subscribers`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Token ${apiKey}`,
+        'Content-Type': 'application/json',
+        'X-Buttondown-Collision-Behavior': 'overwrite',
+      },
+      body: JSON.stringify({ email_address: trimmed, type: 'regular' }),
+    });
+
+    if (!res.ok) {
+      console.error(`Buttondown subscribe failed for an email: ${res.status}`);
+      return false;
+    }
+
+    invalidateSubscriberCache();
+    return true;
+  } catch (error) {
+    console.error('Error subscribing email to Buttondown:', error);
+    return false;
+  }
+}
+
+/** Unsubscribe an email (one-click opt-out). Returns true on success, false on failure. */
+export async function unsubscribeEmail(email: string): Promise<boolean> {
+  const apiKey = process.env.BUTTONDOWN_API_KEY;
+  const trimmed = email?.trim();
+  if (!apiKey || !trimmed) return false;
+
+  try {
+    const res = await fetch(`${API_BASE}/subscribers/${encodeURIComponent(trimmed)}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Token ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ type: 'unsubscribed' }),
+    });
+
+    if (!res.ok) {
+      console.error(`Buttondown unsubscribe failed for an email: ${res.status}`);
+      return false;
+    }
+
+    invalidateSubscriberCache();
+    return true;
+  } catch (error) {
+    console.error('Error unsubscribing email from Buttondown:', error);
+    return false;
+  }
+}
