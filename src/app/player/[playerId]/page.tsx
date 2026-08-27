@@ -17,6 +17,7 @@ export default function PlayerPage() {
   const playerId = params.playerId
   const [status, setStatus] = useState<'loading' | 'not-found' | 'form' | 'dashboard'>('loading')
   const [record, setRecord] = useState<SignupRecord | null>(null)
+  const [seeded, setSeeded] = useState<Record<string, string>>({})
 
   const load = useCallback(async () => {
     try {
@@ -34,7 +35,18 @@ export default function PlayerPage() {
       const displayName = `${loaded[SIGNUPS_COLUMNS.PREFERRED_FIRST_NAME]} ${loaded[SIGNUPS_COLUMNS.LAST_NAME]}`.trim()
       rememberPlayer({ playerId, displayName })
 
-      setStatus(isProfileComplete(loaded) ? 'dashboard' : 'form')
+      const complete = isProfileComplete(loaded)
+      setStatus(complete ? 'dashboard' : 'form')
+
+      if (!complete) {
+        try {
+          const ffRes = await fetch(`/api/signup/player/${playerId}/finalforms`)
+          const ffData = await ffRes.json()
+          if (ffRes.ok && ffData.success && ffData.found) setSeeded(ffData.seeded || {})
+        } catch {
+          // Seeded fields are a convenience; the plain form still works without them.
+        }
+      }
     } catch {
       setStatus('not-found')
     }
@@ -89,7 +101,7 @@ export default function PlayerPage() {
               <CardTitle style={{ color: 'var(--page-title)' }}>Player profile</CardTitle>
             </CardHeader>
             <CardContent>
-              <PlayerProfileForm defaultValues={recordToFormValues(record)} onSave={handleSave} />
+              <PlayerProfileForm defaultValues={recordToFormValues(record)} seeded={seeded} onSave={handleSave} />
             </CardContent>
           </Card>
         )}

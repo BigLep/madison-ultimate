@@ -23,11 +23,26 @@ function FieldError({ message }: { message?: string }) {
   return <p className="text-xs" style={{ color: '#f87171' }}>{message}</p>
 }
 
+/** Seeded field hint (ADR 0002): "this is what we have; use it or enter something different." Unmasked. */
+function SeededHint({ value, onUse }: { value?: string; onUse: () => void }) {
+  if (!value) return null
+  return (
+    <p className="text-xs flex items-center gap-2 flex-wrap" style={{ color: 'var(--secondary-text)' }}>
+      <span>From Final Forms: {value}</span>
+      <button type="button" className="underline" style={{ color: 'var(--accent)' }} onClick={onUse}>
+        Use it
+      </button>
+    </p>
+  )
+}
+
 export function PlayerProfileForm({
   defaultValues,
+  seeded = {},
   onSave,
 }: {
   defaultValues: ProfileFormValues
+  seeded?: Record<string, string>
   onSave: (values: ProfileFormValues) => Promise<void>
 }) {
   const {
@@ -42,7 +57,7 @@ export function PlayerProfileForm({
   })
 
   const [showCaretaker2, setShowCaretaker2] = useState(
-    Boolean(defaultValues.caretaker2Name || defaultValues.caretaker2Email)
+    Boolean(defaultValues.caretaker2Name || defaultValues.caretaker2Email || seeded.caretaker2Name || seeded.caretaker2Email)
   )
   const [saveError, setSaveError] = useState('')
   const volunteerRoles = watch('volunteerRoles') || []
@@ -103,6 +118,7 @@ export function PlayerProfileForm({
               ))}
             </select>
             <FieldError message={errors.grade?.message} />
+            <SeededHint value={seeded.grade} onUse={() => setValue('grade', seeded.grade as ProfileFormValues['grade'])} />
           </div>
           <div className="space-y-2">
             <Label style={fieldLabelStyle}>Elementary school attended</Label>
@@ -163,15 +179,18 @@ export function PlayerProfileForm({
           <Label style={fieldLabelStyle}>Player&apos;s personal email</Label>
           <Input type="email" {...register('studentPersonalEmail')} />
           <FieldError message={errors.studentPersonalEmail?.message} />
+          <SeededHint value={seeded.studentPersonalEmail} onUse={() => setValue('studentPersonalEmail', seeded.studentPersonalEmail!)} />
         </div>
         <div className="space-y-2">
           <Label style={fieldLabelStyle}>Player&apos;s SPS email</Label>
           <Input type="email" {...register('studentSpsEmail')} />
           <FieldError message={errors.studentSpsEmail?.message} />
+          <SeededHint value={seeded.studentSpsEmail} onUse={() => setValue('studentSpsEmail', seeded.studentSpsEmail!)} />
         </div>
         <div className="space-y-2">
           <Label style={fieldLabelStyle}>Player&apos;s cell phone</Label>
           <Input type="tel" {...register('studentCellPhone')} />
+          <SeededHint value={seeded.studentCellPhone} onUse={() => setValue('studentCellPhone', seeded.studentCellPhone!)} />
         </div>
       </section>
 
@@ -181,15 +200,18 @@ export function PlayerProfileForm({
           <Label style={fieldLabelStyle}>Caretaker 1 name</Label>
           <Input {...register('caretaker1Name')} />
           <FieldError message={errors.caretaker1Name?.message} />
+          <SeededHint value={seeded.caretaker1Name} onUse={() => setValue('caretaker1Name', seeded.caretaker1Name!)} />
         </div>
         <div className="space-y-2">
           <Label style={fieldLabelStyle}>Caretaker 1 email</Label>
           <Input type="email" {...register('caretaker1Email')} />
           <FieldError message={errors.caretaker1Email?.message} />
+          <SeededHint value={seeded.caretaker1Email} onUse={() => setValue('caretaker1Email', seeded.caretaker1Email!)} />
         </div>
         <div className="space-y-2">
           <Label style={fieldLabelStyle}>Caretaker 1 phone (the number to contact in an emergency)</Label>
           <Input type="tel" {...register('caretaker1Phone')} />
+          <SeededHint value={seeded.caretaker1Phone} onUse={() => setValue('caretaker1Phone', seeded.caretaker1Phone!)} />
         </div>
 
         {!showCaretaker2 && (
@@ -208,15 +230,18 @@ export function PlayerProfileForm({
             <div className="space-y-2">
               <Label style={fieldLabelStyle}>Caretaker 2 name</Label>
               <Input {...register('caretaker2Name')} />
+              <SeededHint value={seeded.caretaker2Name} onUse={() => setValue('caretaker2Name', seeded.caretaker2Name!)} />
             </div>
             <div className="space-y-2">
               <Label style={fieldLabelStyle}>Caretaker 2 email</Label>
               <Input type="email" {...register('caretaker2Email')} />
               <FieldError message={errors.caretaker2Email?.message} />
+              <SeededHint value={seeded.caretaker2Email} onUse={() => setValue('caretaker2Email', seeded.caretaker2Email!)} />
             </div>
             <div className="space-y-2">
               <Label style={fieldLabelStyle}>Caretaker 2 phone</Label>
               <Input type="tel" {...register('caretaker2Phone')} />
+              <SeededHint value={seeded.caretaker2Phone} onUse={() => setValue('caretaker2Phone', seeded.caretaker2Phone!)} />
             </div>
           </div>
         )}
