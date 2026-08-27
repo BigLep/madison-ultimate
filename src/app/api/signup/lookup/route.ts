@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { findSignupByIdentity, findNearMatches, createSignupRow } from '../../../../lib/signups-sheet';
 import { SIGNUPS_COLUMNS } from '../../../../lib/signups-config';
+import { getDeadlineState, isNewSignupClosed } from '../../../../lib/signup-deadlines';
 
 const MIN_SUBMIT_MS = 3000; // minimum time-to-submit; faster than this is treated as a bot
 
@@ -56,6 +57,13 @@ export async function POST(request: NextRequest) {
           nearMatch: true,
         });
       }
+    }
+
+    if (isNewSignupClosed(getDeadlineState())) {
+      return NextResponse.json({
+        success: false,
+        error: 'Signups for the fall season are closed. Contact the coaches at madisonultimate@gmail.com.',
+      }, { status: 403 });
     }
 
     const created = await createSignupRow({

@@ -10,6 +10,7 @@ import { rememberPlayer } from '@/lib/player-switcher'
 import { SignupRecord } from '@/lib/signups-sheet'
 import { SIGNUPS_COLUMNS } from '@/lib/signups-config'
 import { recordToFormValues, isProfileComplete, ProfileFormValues } from '@/lib/signup-form-schema'
+import { DeadlineBanner } from '@/components/DeadlineBanner'
 
 export default function PlayerPage() {
   const params = useParams<{ playerId: string }>()
@@ -60,6 +61,8 @@ export default function PlayerPage() {
   return (
     <div className="min-h-screen p-4" style={{ background: 'var(--primary-bg)' }}>
       <div className="max-w-2xl mx-auto space-y-4">
+        <DeadlineBanner />
+
         {status === 'loading' && (
           <Card style={{ background: 'var(--card-bg)', borderColor: 'var(--border)' }}>
             <CardContent className="pt-6" style={{ color: 'var(--primary-text)' }}>

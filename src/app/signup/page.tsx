@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { rememberPlayer } from '@/lib/player-switcher'
+import { DeadlineBanner } from '@/components/DeadlineBanner'
 
 export default function SignupPage() {
   const [preferredFirstName, setPreferredFirstName] = useState('')
@@ -64,7 +65,10 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--primary-bg)' }}>
+    <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-4" style={{ background: 'var(--primary-bg)' }}>
+      <div className="w-full max-w-md">
+        <DeadlineBanner />
+      </div>
       <Card className="w-full max-w-md shadow-lg" style={{ background: 'var(--card-bg)', borderColor: 'var(--border)' }}>
         <CardHeader className="text-center space-y-4">
           <div className="mx-auto w-20 h-20 mb-2">

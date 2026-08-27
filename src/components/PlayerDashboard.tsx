@@ -43,6 +43,29 @@ export function PlayerDashboard({
           </div>
         </DashboardRow>
 
+        <DashboardRow title="Final Forms">
+          <p>
+            We couldn&apos;t find {record[SIGNUPS_COLUMNS.PREFERRED_FIRST_NAME] || 'your player'} in the school&apos;s
+            Final Forms registration yet. Two common reasons: (1) You haven&apos;t registered in Final Forms; start
+            at{' '}
+            <a href="https://seattleschools-wa.finalforms.com" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: 'var(--accent)' }}>
+              seattleschools-wa.finalforms.com
+            </a>{' '}
+            (a sports physical within the last 2 years is also required). (2) The name we have doesn&apos;t match
+            school records; enter the last name and legal first name exactly as they appear in Final Forms above.
+            Preferred name is what we&apos;ll actually use with your player. Having trouble inside Final Forms itself
+            (login, forms, clearance)? Contact Madison&apos;s Athletic Director, Valerie McDonald, at{' '}
+            <a href="mailto:vamcdonald@seattleschools.org" className="underline" style={{ color: 'var(--accent)' }}>
+              vamcdonald@seattleschools.org
+            </a>
+            . Anything else:{' '}
+            <a href="mailto:madisonultimate@gmail.com" className="underline" style={{ color: 'var(--accent)' }}>
+              madisonultimate@gmail.com
+            </a>
+            .
+          </p>
+        </DashboardRow>
+
         <DashboardRow title="Photo">
           <PhotoUpload playerId={record[SIGNUPS_COLUMNS.PLAYER_ID]} hasPhoto={hasPhoto} onUploaded={onPhotoUploaded} />
         </DashboardRow>
