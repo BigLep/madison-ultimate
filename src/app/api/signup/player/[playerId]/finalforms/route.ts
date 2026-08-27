@@ -16,8 +16,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ success: true, found: false });
     }
 
-    // spsStudentId is authoritative once set: write it back only the first time we join (never overwrite).
-    if (!existing.record[SIGNUPS_COLUMNS.SPS_STUDENT_ID] && match.record.studentId) {
+    // spsStudentId is authoritative once set: write it back only the first time we join (never
+    // overwrite), and never for a magic-name test fixture.
+    if (!match.isTest && !existing.record[SIGNUPS_COLUMNS.SPS_STUDENT_ID] && match.record.studentId) {
       await updateSignupRow(playerId, { [SIGNUPS_COLUMNS.SPS_STUDENT_ID]: match.record.studentId });
     }
 

@@ -16,6 +16,7 @@ import { parseCsvString } from './data-processing';
 import { normalizeName, normalizeDateOfBirth } from './player-identity';
 import { SignupRecord } from './signups-sheet';
 import { SIGNUPS_COLUMNS } from './signups-config';
+import { findTestFixture } from './final-forms-test-fixtures';
 
 export interface FinalFormsRecord {
   studentId: string;
@@ -154,6 +155,7 @@ async function loadSnapshot(): Promise<FinalFormsSnapshot | null> {
 export interface FinalFormsJoinResult {
   record: FinalFormsRecord;
   dataAsOf: string;
+  isTest?: boolean; // from a magic-name test fixture (final-forms-test-fixtures.ts); never write spsStudentId back for these
 }
 
 /**
@@ -163,6 +165,11 @@ export interface FinalFormsJoinResult {
  * guessing.
  */
 export async function findFinalFormsMatch(signup: SignupRecord): Promise<FinalFormsJoinResult | null> {
+  const fixture = findTestFixture(signup[SIGNUPS_COLUMNS.LAST_NAME]);
+  if (fixture !== undefined) {
+    return fixture ? { record: fixture, dataAsOf: 'test data', isTest: true } : null;
+  }
+
   const snapshot = await loadSnapshot();
   if (!snapshot) return null;
 
