@@ -62,23 +62,39 @@ export function FinalFormsRow({
   if (!status) return <p style={{ color: 'var(--secondary-text)' }}>Loading...</p>
 
   if (!status.found) {
+    const linkStyle = { color: 'var(--accent)' }
     return (
       <div className="space-y-3">
+        <p className="flex items-start gap-2">
+          <span aria-hidden="true">⚠️</span>
+          <span>
+            We couldn&apos;t find {preferredFirstName || 'your player'} in the school&apos;s Final Forms
+            registration yet. Two common reasons:
+          </span>
+        </p>
+        <ol className="list-decimal ml-9 space-y-1">
+          <li>
+            You haven&apos;t registered in{' '}
+            <a href="https://seattleschools-wa.finalforms.com" target="_blank" rel="noopener noreferrer" className="underline" style={linkStyle}>
+              SPS Final Forms
+            </a>{' '}
+            (a sports physical within the last 2 years is also required).
+          </li>
+          <li>
+            The name we have doesn&apos;t match school records; enter the last name and legal first name exactly
+            as they appear in Final Forms above. Preferred name is what we&apos;ll actually use with your player.
+          </li>
+        </ol>
         <p>
-          We couldn&apos;t find {preferredFirstName || 'your player'} in the school&apos;s Final Forms registration
-          yet. Two common reasons: (1) You haven&apos;t registered in Final Forms; start at{' '}
-          <a href="https://seattleschools-wa.finalforms.com" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: 'var(--accent)' }}>
-            seattleschools-wa.finalforms.com
-          </a>{' '}
-          (a sports physical within the last 2 years is also required). (2) The name we have doesn&apos;t match
-          school records; enter the last name and legal first name exactly as they appear in Final Forms above.
-          Preferred name is what we&apos;ll actually use with your player. Having trouble inside Final Forms itself
-          (login, forms, clearance)? Contact Madison&apos;s Athletic Director, Valerie McDonald, at{' '}
-          <a href="mailto:vamcdonald@seattleschools.org" className="underline" style={{ color: 'var(--accent)' }}>
-            vamcdonald@seattleschools.org
+          If you are having trouble inside Final Forms itself (e.g., login, forms, clearance),{' '}
+          <a href="mailto:vamcdonald@seattleschools.org" className="underline" style={linkStyle}>
+            contact Madison&apos;s Athletic Director, Valerie McDonald 📧
           </a>
-          . Anything else:{' '}
-          <a href="mailto:madisonultimate@gmail.com" className="underline" style={{ color: 'var(--accent)' }}>
+          .
+        </p>
+        <p>
+          Anything else:{' '}
+          <a href="mailto:madisonultimate@gmail.com" className="underline" style={linkStyle}>
             madisonultimate@gmail.com
           </a>
           .

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { findSignupByPlayerId, updateSignupRow } from '../../../../../lib/signups-sheet';
 import { profileFormSchema, formValuesToRecord } from '../../../../../lib/signup-form-schema';
 import { subscribeEmail } from '../../../../../lib/buttondown-api';
-import { SIGNUPS_COLUMNS } from '../../../../../lib/signups-config';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ playerId: string }> }) {
   try {
@@ -48,7 +47,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     );
     if (caretakerEmails.length > 0) {
       await Promise.all(caretakerEmails.map(email => subscribeEmail(email)));
-      fields[SIGNUPS_COLUMNS.SUBSCRIBED_AT] = new Date().toISOString();
     }
 
     const updated = await updateSignupRow(playerId, fields);

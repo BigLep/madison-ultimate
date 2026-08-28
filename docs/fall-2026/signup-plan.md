@@ -82,7 +82,7 @@ Column groups (final list settled during build):
 - Profile: Pronouns, Gender Identification, Allergies, Competing Sports and Activities, Jersey Size, Playing Experience, Hopes, Other Info
 - Student contact: Personal Email, SPS Email, Cell Phone (all optional)
 - Family: Caretaker 1 Name/Email/Phone, Caretaker 2 Name/Email/Phone, Media Opt-Out, Subscribed At (per-email subscription state itself is read live from Buttondown, not stored)
-- Volunteer: Coach Volunteering Interest (added round 2, 2026-08-27; split out from Roles so coaching interest is its own question), Roles (multi-select), Notes
+- Volunteer: Coach Volunteering Interest (added round 2, 2026-08-27; split out from Roles so coaching interest is its own question), Coach Ultimate Experience, Coach Other Sports Experience (both added round 3, 2026-08-27; restored from the old Google Form's coaching-experience questions, not yet implemented in the form UI as of this column-list update), Roles (multi-select), Notes
 - Feedback: Additional Feedback (added round 2, 2026-08-27; general feedback closing question, restored from the old Google Form)
 - Joins: spsStudentId (written back once matched, coach-writable, authoritative once present), Photo Drive File ID
 
@@ -129,7 +129,8 @@ Sequencing rationale: A is the whole family-facing ask in one pass before school
 ## 10. Configuration and ops checklist
 
 - DONE 2026-08-26: Signups spreadsheet created (`1VmASr_xvc_pFtzsoGwfd6qdCJiY0dJ7ihE8mF2zsCWk`, in the fall Drive folder, `Signups` tab with the 32 spec columns) and shared with stevel@cedar-scene-471205-t3.iam.gserviceaccount.com as Editor. Still to share: Final Forms exports folder (1WgD4hY0fIZlQEBt7ekOlHIECA-HgOMIZ) and photos folder (folder itself not yet created)
-- TODO (round 2, 2026-08-27): the live sheet's header row is now one behind the spec — Steve needs to manually add two header cells for `Coach Volunteering Interest` and `Additional Feedback` (34 columns total) before those fields can be implemented; the webapp discovers columns by name dynamically but never creates them.
+- TODO (round 2, 2026-08-27): the live sheet's header row is now behind the spec — Steve needs to manually add header cells for `Coach Volunteering Interest` and `Additional Feedback` before those fields can be implemented; the webapp discovers columns by name dynamically but never creates them.
+- TODO (round 3, 2026-08-27): two more header cells needed, `Coach Ultimate Experience` and `Coach Other Sports Experience` (36 columns total across both TODOs above), once the round 3 form changes are implemented.
 - Widen the service account OAuth scope from drive.readonly to include write for the photo upload and CSV upload (drive.file where possible)
 - Vercel env: SIGNUPS_SHEET_ID=1VmASr_xvc_pFtzsoGwfd6qdCJiY0dJ7ihE8mF2zsCWk (new), SPS_FINAL_FORMS_FOLDER_ID → 1WgD4hY0fIZlQEBt7ekOlHIECA-HgOMIZ, BUTTONDOWN_API_KEY (exists), PHOTOS_FOLDER_ID (new), OAuth refresh-token credentials for photo upload (same identity as finalforms-export)
 - GitHub secrets: FINALFORMS_EMAIL, FINALFORMS_PASSWORD, GOOGLE_SERVICE_ACCOUNT_KEY

@@ -45,10 +45,11 @@ export const SIGNUPS_COLUMNS = {
   CARETAKER_2_EMAIL: 'Caretaker 2 Email',
   CARETAKER_2_PHONE: 'Caretaker 2 Phone',
   MEDIA_OPT_OUT: 'Media Opt-Out',
-  SUBSCRIBED_AT: 'Subscribed At',
 
   // Volunteer
   COACH_VOLUNTEERING_INTEREST: 'Coach Volunteering Interest',
+  COACH_ULTIMATE_EXPERIENCE: 'Coach Ultimate Experience',
+  COACH_OTHER_SPORTS_EXPERIENCE: 'Coach Other Sports Experience',
   VOLUNTEER_ROLES: 'Volunteer Roles',
   VOLUNTEER_NOTES: 'Volunteer Notes',
 
