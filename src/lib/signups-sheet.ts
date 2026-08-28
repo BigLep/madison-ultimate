@@ -25,9 +25,13 @@ async function loadSignupsSheet(): Promise<SignupsSheetData> {
     throw new Error('SIGNUPS_SHEET_ID is not set');
   }
 
+  // Whole-sheet range (no column bound): the sheet has grown well past column Z as fields
+  // were added, and a hardcoded 'A:Z' silently truncated every column beyond it out of
+  // headerMap, so those fields would validate and appear to save (the API echoed back
+  // what was sent) but never actually persist. Never hardcode a column bound here again.
   const values = await getSheetData(
     SIGNUPS_SHEET_CONFIG.SIGNUPS_SHEET_ID,
-    `'${SIGNUPS_SHEET_CONFIG.SIGNUPS_SHEET_NAME}'!A:Z`
+    `'${SIGNUPS_SHEET_CONFIG.SIGNUPS_SHEET_NAME}'`
   );
 
   const headerRow = (values[0] || []).map(v => (v || '').toString().trim());
@@ -132,7 +136,7 @@ export async function createSignupRow(fields: Partial<SignupRecord>): Promise<Si
 
   await appendSheetData(
     SIGNUPS_SHEET_CONFIG.SIGNUPS_SHEET_ID,
-    `'${SIGNUPS_SHEET_CONFIG.SIGNUPS_SHEET_NAME}'!A:Z`,
+    `'${SIGNUPS_SHEET_CONFIG.SIGNUPS_SHEET_NAME}'`,
     [row]
   );
 
