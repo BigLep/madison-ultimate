@@ -1,38 +1,51 @@
 "use client"
 
+import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SignupRecord } from '@/lib/signups-sheet'
 import { SIGNUPS_COLUMNS } from '@/lib/signups-config'
-import { isProfileComplete, missingRequiredFields } from '@/lib/signup-form-schema'
-import { MailingListRow } from '@/components/MailingListRow'
-import { PhotoUpload } from '@/components/PhotoUpload'
-import { FinalFormsRow } from '@/components/FinalFormsRow'
+import {
+  isPlayerInfoComplete,
+  isCaretakerInfoComplete,
+  isCoachVolunteeringComplete,
+  isOtherVolunteeringComplete,
+  isPhotoComplete,
+} from '@/lib/signup-checklist'
+import { FinalFormsRow, FinalFormsStatus } from '@/components/FinalFormsRow'
 
-function DashboardRow({ title, children }: { title: string; children: React.ReactNode }) {
+function ChecklistItem({ label, done, anchor }: { label: string; done: boolean; anchor: string }) {
   return (
-    <div className="border-t pt-4 first:border-t-0 first:pt-0" style={{ borderColor: 'var(--border)' }}>
-      <h4 className="font-semibold mb-2" style={{ color: 'var(--secondary-header)' }}>{title}</h4>
-      <div style={{ color: 'var(--primary-text)' }}>{children}</div>
-    </div>
+    <li>
+      <a href={`#${anchor}`} className="flex items-center justify-between gap-2 py-1.5" style={{ color: 'var(--primary-text)' }}>
+        <span className="flex items-center gap-2">
+          <span aria-hidden="true">{done ? '✅' : '⭕'}</span>
+          <span className="underline">{label}</span>
+        </span>
+        <span className="text-xs" style={{ color: 'var(--secondary-text)' }}>{done ? 'Done' : 'Not done'}</span>
+      </a>
+    </li>
   )
 }
 
 /**
- * Status summary shown above the always-editable profile form (round 2: save no longer
- * requires completeness, so this is purely informational, not a gate on anything).
+ * Top-level signup status: a checklist with jump links to each section (round 3), plus the
+ * SPS Final Forms Status detail panel. Purely informational except where noted; saving the
+ * profile form never requires any of this to be "done" (round 2 decision).
  */
 export function PlayerDashboard({
   record,
-  onPhotoUploaded,
   finalFormsRefreshSignal,
 }: {
   record: SignupRecord
-  onPhotoUploaded: () => void
   finalFormsRefreshSignal?: number
 }) {
-  const hasPhoto = Boolean(record[SIGNUPS_COLUMNS.PHOTO_DRIVE_FILE_ID])
-  const complete = isProfileComplete(record)
-  const missing = missingRequiredFields(record)
+  const [finalFormsStatus, setFinalFormsStatus] = useState<FinalFormsStatus | null>(null)
+  const finalFormsDone = Boolean(
+    finalFormsStatus?.found &&
+    finalFormsStatus.parentSigned &&
+    finalFormsStatus.studentSigned &&
+    finalFormsStatus.physicalCleared
+  )
 
   return (
     <Card style={{ background: 'var(--card-bg)', borderColor: 'var(--border)' }}>
@@ -42,25 +55,26 @@ export function PlayerDashboard({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <DashboardRow title="Final Forms">
-          <FinalFormsRow
-            preferredFirstName={record[SIGNUPS_COLUMNS.PREFERRED_FIRST_NAME]}
-            playerId={record[SIGNUPS_COLUMNS.PLAYER_ID]}
-            refreshSignal={finalFormsRefreshSignal}
-          />
-        </DashboardRow>
+        <ul className="space-y-0.5">
+          <ChecklistItem label="SPS Final Forms Status" done={finalFormsDone} anchor="final-forms" />
+          <ChecklistItem label="Player Info" done={isPlayerInfoComplete(record)} anchor="player-info" />
+          <ChecklistItem label="Photo Upload" done={isPhotoComplete(record)} anchor="photo-upload" />
+          <ChecklistItem label="Caretaker Info" done={isCaretakerInfoComplete(record)} anchor="caretaker-info" />
+          <ChecklistItem label="Coach Volunteering" done={isCoachVolunteeringComplete(record)} anchor="coach-volunteering" />
+          <ChecklistItem label="Other Volunteering" done={isOtherVolunteeringComplete(record)} anchor="other-volunteering" />
+        </ul>
 
-        <DashboardRow title="Profile">
-          <span>{complete ? 'Complete' : `Missing: ${missing.join(', ')}`}</span>
-        </DashboardRow>
-
-        <DashboardRow title="Photo">
-          <PhotoUpload playerId={record[SIGNUPS_COLUMNS.PLAYER_ID]} hasPhoto={hasPhoto} onUploaded={onPhotoUploaded} />
-        </DashboardRow>
-
-        <DashboardRow title="Mailing list">
-          <MailingListRow playerId={record[SIGNUPS_COLUMNS.PLAYER_ID]} />
-        </DashboardRow>
+        <div id="final-forms" className="border-t pt-4 scroll-mt-4" style={{ borderColor: 'var(--border)' }}>
+          <h4 className="font-semibold mb-2" style={{ color: 'var(--secondary-header)' }}>SPS Final Forms Status</h4>
+          <div style={{ color: 'var(--primary-text)' }}>
+            <FinalFormsRow
+              preferredFirstName={record[SIGNUPS_COLUMNS.PREFERRED_FIRST_NAME]}
+              playerId={record[SIGNUPS_COLUMNS.PLAYER_ID]}
+              refreshSignal={finalFormsRefreshSignal}
+              onStatusChange={setFinalFormsStatus}
+            />
+          </div>
+        </div>
       </CardContent>
     </Card>
   )

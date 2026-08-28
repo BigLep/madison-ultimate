@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { HelpBubble, LearnMoreLink } from '@/components/HelpBubble'
+import { PhotoUpload } from '@/components/PhotoUpload'
+import { MailingStatusInline } from '@/components/MailingStatusInline'
 import {
   profileFormSchema,
   ProfileFormValues,
@@ -18,6 +20,7 @@ import {
   ELEMENTARY_SCHOOL_OPTIONS,
   COACH_VOLUNTEERING_OPTIONS,
   VOLUNTEER_ROLE_OPTIONS,
+  NOT_THIS_SEASON,
 } from '@/lib/signup-form-schema'
 
 const fieldLabelStyle = { color: 'var(--primary-text)' }
@@ -30,7 +33,7 @@ function FieldError({ message }: { message?: string }) {
 }
 
 function HelperText({ children }: { children: React.ReactNode }) {
-  return <p className="text-xs" style={{ color: 'var(--secondary-text)' }}>{children}</p>
+  return <p className="text-xs mb-1" style={{ color: 'var(--secondary-text)' }}>{children}</p>
 }
 
 /** Seeded field hint (ADR 0002): "this is what we have; use it or enter something different." Unmasked. */
@@ -47,12 +50,21 @@ function SeededHint({ value, onUse }: { value?: string; onUse: () => void }) {
 }
 
 export function PlayerProfileForm({
+  playerId,
   defaultValues,
   seeded = {},
+  hasPhoto,
+  onPhotoUploaded,
+  refreshSignal,
   onSave,
 }: {
+  playerId: string
   defaultValues: ProfileFormValues
   seeded?: Record<string, string>
+  hasPhoto: boolean
+  onPhotoUploaded: () => void
+  /** Bumped after each save so mailing-status widgets re-fetch against the just-saved emails. */
+  refreshSignal?: number
   onSave: (values: ProfileFormValues) => Promise<void>
 }) {
   const {
@@ -78,10 +90,15 @@ export function PlayerProfileForm({
   const [showOtherSchool, setShowOtherSchool] = useState(Boolean(elementarySchool) && !isKnownSchool)
 
   const toggleVolunteerRole = (role: string) => {
-    if (volunteerRoles.includes(role)) {
-      setValue('volunteerRoles', volunteerRoles.filter(r => r !== role))
+    if (role === NOT_THIS_SEASON) {
+      setValue('volunteerRoles', volunteerRoles.includes(NOT_THIS_SEASON) ? [] : [NOT_THIS_SEASON])
+      return
+    }
+    const withoutNotThisSeason = volunteerRoles.filter(r => r !== NOT_THIS_SEASON)
+    if (withoutNotThisSeason.includes(role)) {
+      setValue('volunteerRoles', withoutNotThisSeason.filter(r => r !== role))
     } else {
-      setValue('volunteerRoles', [...volunteerRoles, role])
+      setValue('volunteerRoles', [...withoutNotThisSeason, role])
     }
   }
 
@@ -103,8 +120,8 @@ export function PlayerProfileForm({
   }
 
   return (
-    <form onSubmit={handleSubmit(submit)} className="space-y-8">
-      <section className="space-y-4">
+    <form onSubmit={handleSubmit(submit)} className="space-y-8 pb-24">
+      <section id="player-info" className="space-y-4 scroll-mt-4">
         <h3 className="font-semibold text-lg" style={sectionHeadingStyle}>🏃 Player</h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -147,7 +164,7 @@ export function PlayerProfileForm({
             <SeededHint value={seeded.grade} onUse={() => setValue('grade', seeded.grade!)} />
           </div>
           <div className="space-y-2">
-            <Label style={fieldLabelStyle}>Elementary school attended</Label>
+            <Label style={fieldLabelStyle}>Elementary school attended *</Label>
             <select
               className={selectClassName}
               value={showOtherSchool ? 'Other' : elementarySchool}
@@ -179,7 +196,7 @@ export function PlayerProfileForm({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label style={fieldLabelStyle}>Pronouns (select all that apply)</Label>
+            <Label style={fieldLabelStyle}>Pronouns (select all that apply) *</Label>
             <div className="space-y-1">
               {PRONOUN_OPTIONS.map(pronoun => (
                 <label key={pronoun} className="flex items-center gap-2 text-sm" style={fieldLabelStyle}>
@@ -191,7 +208,7 @@ export function PlayerProfileForm({
           </div>
           <div className="space-y-2">
             <Label style={fieldLabelStyle}>
-              Gender identification
+              Gender identification *
               <LearnMoreLink href="https://madisonultimate.notion.site/More-Season-Info-982c4da46f75826db2fd81b6a02568e1#4d6c4da46f7583d9a13a8176d948132c" />
             </Label>
             <div className="space-y-1">
@@ -211,63 +228,69 @@ export function PlayerProfileForm({
         </div>
 
         <div className="space-y-2">
-          <Label style={fieldLabelStyle}>Allergies or medical info coaches should know</Label>
-          <Textarea {...register('allergies')} />
+          <Label style={fieldLabelStyle}>Allergies or medical info coaches should know *</Label>
           <HelperText>If NONE, please list NONE.</HelperText>
+          <Textarea {...register('allergies')} />
         </div>
 
         <div className="space-y-2">
-          <Label style={fieldLabelStyle}>Other sports and activities this fall (helps us plan around conflicts)</Label>
-          <Textarea {...register('competingSports')} />
+          <Label style={fieldLabelStyle}>Other sports and activities this fall *</Label>
           <HelperText>
             It&apos;s totally fine if your athlete has competing priorities. We just want to get a sense of where
             ultimate is in the scheduling mix for this season.
           </HelperText>
+          <Textarea {...register('competingSports')} />
         </div>
 
         <div className="space-y-2">
           <Label style={fieldLabelStyle}>Jersey / t-shirt size *</Label>
+          <HelperText>What size jersey does the player normally wear? Y = youth, A = adult; these are unisex sizes.</HelperText>
           <select {...register('jerseySize')} className={selectClassName}>
             <option value="">Select...</option>
             {JERSEY_SIZE_OPTIONS.map(size => (
               <option key={size} value={size}>{size}</option>
             ))}
           </select>
-          <HelperText>What size jersey does the player normally wear? Y = youth, A = adult; these are unisex sizes.</HelperText>
         </div>
 
         <div className="space-y-2">
-          <Label style={fieldLabelStyle}>Ultimate playing experience</Label>
-          <Textarea {...register('playingExperience')} />
+          <Label style={fieldLabelStyle}>Ultimate playing experience *</Label>
           <HelperText>
             For example, how many past seasons has your player played? Have they attended ultimate frisbee summer
             camps? Are there other sports the player has played competitively previously?
           </HelperText>
+          <Textarea {...register('playingExperience')} />
         </div>
 
         <div className="space-y-2">
-          <Label style={fieldLabelStyle}>What does the player hope to get out of the season?</Label>
-          <Textarea {...register('hopes')} />
+          <Label style={fieldLabelStyle}>What does the player hope to get out of the season? *</Label>
           <HelperText>Is there a goal the player has for themself this season? Do they have a hope for the team this year?</HelperText>
+          <Textarea {...register('hopes')} />
         </div>
 
         <div className="space-y-2">
           <Label style={fieldLabelStyle}>Anything else we should know?</Label>
-          <Textarea {...register('otherInfo')} />
           <HelperText>
             List anything else we should know about your player (e.g., if they are new, what other sports they
             have played, any barriers to participation, behaviors to be aware of).
           </HelperText>
+          <Textarea {...register('otherInfo')} />
         </div>
       </section>
 
-      <section className="space-y-4">
+      <section id="photo-upload" className="space-y-4 scroll-mt-4">
+        <h3 className="font-semibold text-lg" style={sectionHeadingStyle}>📷 Photo *</h3>
+        <PhotoUpload playerId={playerId} hasPhoto={hasPhoto} onUploaded={onPhotoUploaded} />
+      </section>
+
+      <section id="player-contact" className="space-y-4 scroll-mt-4">
         <h3 className="font-semibold text-lg" style={sectionHeadingStyle}>📞 Player contact (all optional)</h3>
         <div className="space-y-2">
           <Label style={fieldLabelStyle}>Player&apos;s personal email</Label>
           <Input type="email" {...register('studentPersonalEmail')} />
           <FieldError message={errors.studentPersonalEmail?.message} />
           <SeededHint value={seeded.studentPersonalEmail} onUse={() => setValue('studentPersonalEmail', seeded.studentPersonalEmail!)} />
+          <MailingStatusInline playerId={playerId} matchLabel="Student personal email" refreshSignal={refreshSignal} />
         </div>
         <div className="space-y-2">
           <Label style={fieldLabelStyle}>Player&apos;s SPS email</Label>
@@ -282,7 +305,7 @@ export function PlayerProfileForm({
         </div>
       </section>
 
-      <section className="space-y-4">
+      <section id="caretaker-info" className="space-y-4 scroll-mt-4">
         <h3 className="font-semibold text-lg" style={sectionHeadingStyle}>👪 Caretakers</h3>
         <div className="space-y-2">
           <Label style={fieldLabelStyle}>Caretaker 1 name *</Label>
@@ -295,6 +318,7 @@ export function PlayerProfileForm({
           <Input type="email" {...register('caretaker1Email')} />
           <FieldError message={errors.caretaker1Email?.message} />
           <SeededHint value={seeded.caretaker1Email} onUse={() => setValue('caretaker1Email', seeded.caretaker1Email!)} />
+          <MailingStatusInline playerId={playerId} matchLabel="Caretaker 1" refreshSignal={refreshSignal} />
         </div>
         <div className="space-y-2">
           <Label style={fieldLabelStyle}>Caretaker 1 phone (the number to contact in an emergency)</Label>
@@ -325,6 +349,7 @@ export function PlayerProfileForm({
               <Input type="email" {...register('caretaker2Email')} />
               <FieldError message={errors.caretaker2Email?.message} />
               <SeededHint value={seeded.caretaker2Email} onUse={() => setValue('caretaker2Email', seeded.caretaker2Email!)} />
+              <MailingStatusInline playerId={playerId} matchLabel="Caretaker 2" refreshSignal={refreshSignal} />
             </div>
             <div className="space-y-2">
               <Label style={fieldLabelStyle}>Caretaker 2 phone</Label>
@@ -335,7 +360,7 @@ export function PlayerProfileForm({
         )}
       </section>
 
-      <section className="space-y-4">
+      <section id="media" className="space-y-4 scroll-mt-4">
         <h3 className="font-semibold text-lg" style={sectionHeadingStyle}>📸 Media</h3>
         <label className="flex items-start gap-2 text-sm" style={fieldLabelStyle}>
           <input type="checkbox" className="mt-1" {...register('mediaOptOut')} />
@@ -346,13 +371,19 @@ export function PlayerProfileForm({
         </label>
       </section>
 
-      <section className="space-y-4">
+      <section id="coach-volunteering" className="space-y-4 scroll-mt-4">
         <h3 className="font-semibold text-lg" style={sectionHeadingStyle}>👊 Coach volunteering</h3>
         <div className="space-y-2">
           <Label style={fieldLabelStyle}>
-            Are you interested in helping coach?
+            Are you interested in helping coach? *
             <LearnMoreLink href="https://madisonultimate.notion.site/Volunteering-60ec4da46f7583df9a2d015cf5cb03b2" />
           </Label>
+          <HelperText>
+            All coaches work together to plan and execute practice and game strategies. New coaches will be
+            supported by experienced staff/coaches and utilized in a way to help you and the program succeed. You
+            aren&apos;t obligated if you do say yes. You don&apos;t have to be there all the time. Prior Ultimate
+            Frisbee coaching experience is not required.
+          </HelperText>
           <div className="space-y-1">
             {COACH_VOLUNTEERING_OPTIONS.map(option => (
               <label key={option} className="flex items-center gap-2 text-sm" style={fieldLabelStyle}>
@@ -366,24 +397,41 @@ export function PlayerProfileForm({
               </label>
             ))}
           </div>
-          <HelperText>
-            All coaches work together to plan and execute practice and game strategies. New coaches will be
-            supported by experienced staff/coaches and utilized in a way to help you and the program succeed. You
-            aren&apos;t obligated if you do say yes. You don&apos;t have to be there all the time. Prior Ultimate
-            Frisbee coaching experience is not required.
-          </HelperText>
-          <HelperText>
-            We&apos;re especially hoping to hear from moms and other women interested in coaching; the team
-            benefits from more female leadership on the sideline.
-          </HelperText>
+          <div
+            className="rounded-md p-3 text-sm flex items-start gap-2 mt-2"
+            style={{ backgroundColor: 'rgba(96, 165, 250, 0.15)', border: '1px solid rgba(96, 165, 250, 0.4)', color: 'var(--primary-text)' }}
+          >
+            <span aria-hidden="true">🙋‍♀️</span>
+            <span>
+              We&apos;re especially hoping to hear from moms and other women interested in coaching; the team
+              benefits from more female leadership on the sideline.
+            </span>
+          </div>
           <HelperText>Already talked to Coach Steve about coaching? No need to fill this out again.</HelperText>
+        </div>
+
+        <div className="space-y-2">
+          <Label style={fieldLabelStyle}>Have you played or coached Ultimate before? What&apos;s been your experience?</Label>
+          <HelperText>There are no wrong answers here.</HelperText>
+          <Textarea {...register('coachUltimateExperience')} />
+        </div>
+
+        <div className="space-y-2">
+          <Label style={fieldLabelStyle}>Have you played or coached other team sports? What&apos;s been your experience?</Label>
+          <HelperText>Again, there are no right answers here.</HelperText>
+          <Textarea {...register('coachOtherSportsExperience')} />
         </div>
       </section>
 
-      <section className="space-y-4">
+      <section id="other-volunteering" className="space-y-4 scroll-mt-4">
         <h3 className="font-semibold text-lg" style={sectionHeadingStyle}>🙋 Other volunteering</h3>
         <div className="space-y-2">
-          <Label style={fieldLabelStyle}>Ways you might help this season (check any)</Label>
+          <Label style={fieldLabelStyle}>Ways you might help this season (check any) *</Label>
+          <HelperText>
+            Team admin - helps organize attendance and other admin duties. Snack organizing - helps organize
+            family volunteers for after game snacks. T-shirt ordering - helps collect info on who needs a jersey,
+            and what sizes we need. And other opportunities.
+          </HelperText>
           <div className="space-y-1">
             {VOLUNTEER_ROLE_OPTIONS.map(role => (
               <label key={role} className="flex items-center gap-2 text-sm" style={fieldLabelStyle}>
@@ -396,11 +444,6 @@ export function PlayerProfileForm({
               </label>
             ))}
           </div>
-          <HelperText>
-            Team admin - helps organize attendance and other admin duties. Snack organizing - helps organize
-            family volunteers for after game snacks. T-shirt ordering - helps collect info on who needs a jersey,
-            and what sizes we need. And other opportunities.
-          </HelperText>
         </div>
         <div className="space-y-2">
           <Label style={fieldLabelStyle}>Anything more about how you&apos;d like to help?</Label>
@@ -408,15 +451,14 @@ export function PlayerProfileForm({
         </div>
       </section>
 
-      <section className="space-y-4">
+      <section id="anything-else" className="space-y-4 scroll-mt-4">
         <h3 className="font-semibold text-lg" style={sectionHeadingStyle}>💬 Anything else</h3>
         <div className="space-y-2">
-          <Label style={fieldLabelStyle}>Anything else you want to share?</Label>
-          <Textarea {...register('additionalFeedback')} />
           <HelperText>
             Feel free to pass along any other ideas, feedback, or suggestions. Alternatively feel free to email
             madisonultimate@gmail.com anytime.
           </HelperText>
+          <Textarea {...register('additionalFeedback')} />
         </div>
       </section>
 
@@ -444,14 +486,22 @@ export function PlayerProfileForm({
         </div>
       )}
 
-      <Button
-        type="submit"
-        className="w-full text-white font-semibold"
-        style={{ background: 'var(--accent)' }}
-        disabled={isSubmitting}
+      {/* Sticky save bar: always visible while scrolling, so families don't have to hunt for Save. */}
+      <div
+        className="fixed bottom-0 left-0 right-0 border-t p-3 z-20"
+        style={{ background: 'var(--card-bg)', borderColor: 'var(--border)' }}
       >
-        {isSubmitting ? 'Saving...' : 'Save'}
-      </Button>
+        <div className="max-w-2xl mx-auto">
+          <Button
+            type="submit"
+            className="w-full text-white font-semibold"
+            style={{ background: 'var(--accent)' }}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Saving...' : 'Save'}
+          </Button>
+        </div>
+      </div>
     </form>
   )
 }

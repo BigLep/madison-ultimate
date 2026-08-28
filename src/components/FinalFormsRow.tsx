@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
-interface FinalFormsStatus {
+export interface FinalFormsStatus {
   found: boolean
   dataAsOf?: string
   parentSigned?: boolean
@@ -24,11 +24,14 @@ export function FinalFormsRow({
   preferredFirstName,
   playerId,
   refreshSignal,
+  onStatusChange,
 }: {
   preferredFirstName: string
   playerId: string
   /** Bump this (e.g. after a profile save) to force a re-fetch, so a corrected identity field re-joins immediately. */
   refreshSignal?: number
+  /** Reports the fetched status upward, e.g. for the top-level checklist's done/not-done indicator. */
+  onStatusChange?: (status: FinalFormsStatus) => void
 }) {
   const [status, setStatus] = useState<FinalFormsStatus | null>(null)
   const [refreshMessage, setRefreshMessage] = useState('')
@@ -37,7 +40,10 @@ export function FinalFormsRow({
   const load = async () => {
     const res = await fetch(`/api/signup/player/${playerId}/finalforms`)
     const data = await res.json()
-    if (res.ok && data.success) setStatus(data)
+    if (res.ok && data.success) {
+      setStatus(data)
+      onStatusChange?.(data)
+    }
   }
 
   useEffect(() => {

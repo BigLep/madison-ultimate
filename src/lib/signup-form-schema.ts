@@ -37,10 +37,13 @@ export const ELEMENTARY_SCHOOL_OPTIONS = [
   'Westside School',
 ] as const;
 
+export const NOT_THIS_SEASON = 'Not this season';
+
 export const COACH_VOLUNTEERING_OPTIONS = [
   'Yes',
   "Maybe (I'd like to talk more about the possibility)",
   'No',
+  NOT_THIS_SEASON,
 ] as const;
 
 export const VOLUNTEER_ROLE_OPTIONS = [
@@ -50,6 +53,7 @@ export const VOLUNTEER_ROLE_OPTIONS = [
   'Snacks / logistics',
   'Not sure yet, tell me more',
   'Other',
+  NOT_THIS_SEASON,
 ] as const;
 
 export const profileFormSchema = z.object({
@@ -90,6 +94,8 @@ export const profileFormSchema = z.object({
 
   // Coach volunteering
   coachVolunteeringInterest: z.string().trim().optional(),
+  coachUltimateExperience: z.string().trim().optional(),
+  coachOtherSportsExperience: z.string().trim().optional(),
 
   // Other volunteering
   volunteerRoles: z.array(z.string()),
@@ -130,6 +136,8 @@ export function recordToFormValues(record: SignupRecord): ProfileFormValues {
     caretaker2Phone: record[SIGNUPS_COLUMNS.CARETAKER_2_PHONE] || '',
     mediaOptOut: record[SIGNUPS_COLUMNS.MEDIA_OPT_OUT] === 'true',
     coachVolunteeringInterest: record[SIGNUPS_COLUMNS.COACH_VOLUNTEERING_INTEREST] || '',
+    coachUltimateExperience: record[SIGNUPS_COLUMNS.COACH_ULTIMATE_EXPERIENCE] || '',
+    coachOtherSportsExperience: record[SIGNUPS_COLUMNS.COACH_OTHER_SPORTS_EXPERIENCE] || '',
     volunteerRoles: record[SIGNUPS_COLUMNS.VOLUNTEER_ROLES]
       ? record[SIGNUPS_COLUMNS.VOLUNTEER_ROLES].split(';').map(s => s.trim()).filter(Boolean)
       : [],
@@ -165,33 +173,10 @@ export function formValuesToRecord(values: ProfileFormValues): Partial<SignupRec
     [SIGNUPS_COLUMNS.CARETAKER_2_PHONE]: values.caretaker2Phone || '',
     [SIGNUPS_COLUMNS.MEDIA_OPT_OUT]: values.mediaOptOut ? 'true' : '',
     [SIGNUPS_COLUMNS.COACH_VOLUNTEERING_INTEREST]: values.coachVolunteeringInterest || '',
+    [SIGNUPS_COLUMNS.COACH_ULTIMATE_EXPERIENCE]: values.coachUltimateExperience || '',
+    [SIGNUPS_COLUMNS.COACH_OTHER_SPORTS_EXPERIENCE]: values.coachOtherSportsExperience || '',
     [SIGNUPS_COLUMNS.VOLUNTEER_ROLES]: values.volunteerRoles.join('; '),
     [SIGNUPS_COLUMNS.VOLUNTEER_NOTES]: values.volunteerNotes || '',
     [SIGNUPS_COLUMNS.ADDITIONAL_FEEDBACK]: values.additionalFeedback || '',
   };
-}
-
-/**
- * Whether the profile has every field the spec marks required (grade, jersey size,
- * caretaker 1 name/email). Purely informational since round 2: it drives the dashboard's
- * "Profile: Complete" vs. "Missing: ..." display, not whether the row can be saved.
- */
-export function isProfileComplete(record: SignupRecord): boolean {
-  return Boolean(
-    record[SIGNUPS_COLUMNS.GRADE] &&
-    record[SIGNUPS_COLUMNS.JERSEY_SIZE] &&
-    record[SIGNUPS_COLUMNS.CARETAKER_1_NAME] &&
-    record[SIGNUPS_COLUMNS.CARETAKER_1_EMAIL]
-  );
-}
-
-/** Which required fields (per the spec) are still missing, for the dashboard's Profile row. */
-export function missingRequiredFields(record: SignupRecord): string[] {
-  const missing: string[] = [];
-  if (!record[SIGNUPS_COLUMNS.GRADE]) missing.push('Grade');
-  if (!record[SIGNUPS_COLUMNS.JERSEY_SIZE]) missing.push('Jersey Size');
-  if (!record[SIGNUPS_COLUMNS.CARETAKER_1_NAME] || !record[SIGNUPS_COLUMNS.CARETAKER_1_EMAIL]) {
-    missing.push('Caretaker 1 info');
-  }
-  return missing;
 }

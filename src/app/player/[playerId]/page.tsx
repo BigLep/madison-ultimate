@@ -95,14 +95,22 @@ export default function PlayerPage() {
 
         {status === 'ready' && record && (
           <>
-            <PlayerDashboard record={record} onPhotoUploaded={load} finalFormsRefreshSignal={finalFormsRefreshSignal} />
+            <PlayerDashboard record={record} finalFormsRefreshSignal={finalFormsRefreshSignal} />
 
             <Card style={{ background: 'var(--card-bg)', borderColor: 'var(--border)' }}>
               <CardHeader>
                 <CardTitle style={{ color: 'var(--page-title)' }}>Player profile</CardTitle>
               </CardHeader>
               <CardContent>
-                <PlayerProfileForm defaultValues={recordToFormValues(record)} seeded={seeded} onSave={handleSave} />
+                <PlayerProfileForm
+                  playerId={playerId}
+                  defaultValues={recordToFormValues(record)}
+                  seeded={seeded}
+                  hasPhoto={Boolean(record[SIGNUPS_COLUMNS.PHOTO_DRIVE_FILE_ID])}
+                  onPhotoUploaded={load}
+                  refreshSignal={finalFormsRefreshSignal}
+                  onSave={handleSave}
+                />
               </CardContent>
             </Card>
 
