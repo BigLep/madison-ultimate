@@ -95,30 +95,60 @@ export async function getMostRecentFileInfoFromFolder(folderId: string): Promise
       console.log(`  📄 ${file.name} (modified: ${file.modifiedTime})`);
     });
 
-    // Find all files with ISO8601 timestamps in filename
-    const filesWithTimestamp = files.filter(file => {
+    // Find all files with ISO8601 timestamps in filename (older export naming convention,
+    // e.g. "students_basic_2025_09_19 2025-09-19T16:39:19Z.csv").
+    let filesWithTimestamp = files.filter(file => {
       return file.name && /\d{4}-\d{2}-\d{2}T\d{2}[_:]\d{2}[_:]\d{2}Z/.test(file.name);
     });
 
-    if (filesWithTimestamp.length === 0) {
-      console.error(`No files with timestamp found in folder ${folderId}`);
-      return null;
-    }
+    let sortedFiles;
+    if (filesWithTimestamp.length > 0) {
+      console.log(`🕐 Found ${filesWithTimestamp.length} files with timestamps:`);
 
-    console.log(`🕐 Found ${filesWithTimestamp.length} files with timestamps:`);
-    
-    // Sort by timestamp in filename (most recent first)
-    const sortedFiles = filesWithTimestamp.map(file => {
-      const timestampMatch = file.name!.match(/(\d{4}-\d{2}-\d{2}T\d{2}[_:]\d{2}[_:]\d{2}Z)/);
-      const timestamp = timestampMatch ? timestampMatch[1].replace(/_/g, ':') : '';
-      return {
-        ...file,
-        extractedTimestamp: timestamp
-      };
-    }).sort((a, b) => {
-      // Sort by extracted timestamp descending (most recent first)
-      return b.extractedTimestamp.localeCompare(a.extractedTimestamp);
-    });
+      // Sort by timestamp in filename (most recent first)
+      sortedFiles = filesWithTimestamp.map(file => {
+        const timestampMatch = file.name!.match(/(\d{4}-\d{2}-\d{2}T\d{2}[_:]\d{2}[_:]\d{2}Z)/);
+        const timestamp = timestampMatch ? timestampMatch[1].replace(/_/g, ':') : '';
+        return {
+          ...file,
+          extractedTimestamp: timestamp
+        };
+      }).sort((a, b) => {
+        // Sort by extracted timestamp descending (most recent first)
+        return b.extractedTimestamp.localeCompare(a.extractedTimestamp);
+      });
+    } else {
+      // Fall back to a date-only naming convention (no time-of-day in the filename), e.g.
+      // "students_basic_2026_08_27.csv". Some export folders also contain a same-named
+      // native Google Sheet alongside the CSV (auto-created when someone opens the CSV in
+      // Sheets); alt=media downloads only work for the CSV, so prefer text/csv on a tie.
+      const filesWithDate = files.filter(file => {
+        return file.name && /\d{4}[-_]\d{2}[-_]\d{2}/.test(file.name);
+      });
+
+      if (filesWithDate.length === 0) {
+        console.error(`No files with timestamp found in folder ${folderId}`);
+        return null;
+      }
+
+      console.log(`📅 Found ${filesWithDate.length} files with date-only names:`);
+
+      sortedFiles = filesWithDate.map(file => {
+        const dateMatch = file.name!.match(/(\d{4})[-_](\d{2})[-_](\d{2})/);
+        const timestamp = dateMatch ? `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}` : '';
+        return {
+          ...file,
+          extractedTimestamp: timestamp
+        };
+      }).sort((a, b) => {
+        const dateCompare = b.extractedTimestamp.localeCompare(a.extractedTimestamp);
+        if (dateCompare !== 0) return dateCompare;
+        // Same date: prefer the actual CSV over a native Sheets duplicate.
+        const aIsCsv = a.mimeType === 'text/csv' || a.name?.endsWith('.csv');
+        const bIsCsv = b.mimeType === 'text/csv' || b.name?.endsWith('.csv');
+        return (bIsCsv ? 1 : 0) - (aIsCsv ? 1 : 0);
+      });
+    }
 
     sortedFiles.forEach((file, index) => {
       console.log(`  ${index + 1}. 📄 ${file.name} (timestamp: ${file.extractedTimestamp})`);

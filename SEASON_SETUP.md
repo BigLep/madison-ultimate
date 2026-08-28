@@ -9,6 +9,7 @@ Use this checklist at the start of each season so the portal and APIs point to t
 | What | Where | Notes |
 |------|--------|------|
 | **ROSTER_SHEET_ID** | `.env.local` | Google Sheet ID of the **season workbook** (roster + Practice Info, Game Info, availability tabs). |
+| **SPS_FINAL_FORMS_FOLDER_ID** | `.env.local` | Google Drive folder of SPS Final Forms exports (`students_basic_*.csv`) that the signup dashboard joins against for signed/cleared status. **Each season's Final Forms data lives in a different Drive folder**; forgetting to update this points the app at last season's (stale) exports and Final Forms status will silently fail to find current players. Verify the folder actually has a recent (same-week) `students_basic_*.csv` before trusting it, not just that the ID is set. |
 | **TEAM_MAILING_LIST_FOLDER_ID** | `.env.local` | Optional. Google Drive folder for mailing list CSV if you use that feature. |
 | **BUTTONDOWN_API_KEY** | `.env.local` | Optional. Buttondown API key so the player page can show whether contact emails are on the newsletter. Team updates use the public RSS and do not require this. |
 
@@ -129,7 +130,8 @@ These behaviors are driven by values in the **Practice Info** and **Game Info** 
 
 ## Quick reference: files to touch each season
 
-- **`.env.local`** – `ROSTER_SHEET_ID`; optionally `TEAM_MAILING_LIST_FOLDER_ID`, `BUTTONDOWN_API_KEY`.
+- **`.env.local`** – `ROSTER_SHEET_ID`, `SPS_FINAL_FORMS_FOLDER_ID`; optionally `TEAM_MAILING_LIST_FOLDER_ID`, `BUTTONDOWN_API_KEY`.
+- **Sheets integration test sheet** – `SIGNUPS_SHEET_ID_TEST` needs a new test spreadsheet each season once the real Signups sheet's schema is finalized; see "Recreating the test sheet" in [docs/TEST_DESIGN.md](docs/TEST_DESIGN.md).
 - **`src/lib/sheet-config.ts`** – `ROSTER_FIRST_DATA_ROW` if your roster has more than one header row (e.g. first data row is not row 2).
 - **`src/app/player-portal/[portalId]/page.tsx`** – Season label, `MAILING_LIST_INFO_URL`, `SHOW_ADDITIONAL_INFO_FORM`.
 - **`src/lib/app-config.ts`** – `SEASON_INFO_URL`; Join the Community: `WHATSAPP_COMMUNITY_JOIN_URL`, `WHATSAPP_LEARN_MORE_URL`, `GAME_SNACK_SIGNUP_URL`.
