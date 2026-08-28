@@ -1,0 +1,38 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run test:run
+      - run: npx tsc --noEmit
+
+  integration:
+    name: Sheets integration tests
+    runs-on: ubuntu-latest
+    # Runs against a dedicated test spreadsheet only (never the real Signups sheet). See
+    # docs/TEST_DESIGN.md. Skips itself (via signups-sheet.integration.test.ts's skipIf) if
+    # the secrets below aren't configured, so this job never fails a fork PR that can't see them.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run test:integration
+        env:
+          SIGNUPS_SHEET_ID_TEST: ${{ secrets.SIGNUPS_SHEET_ID_TEST }}
+          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}

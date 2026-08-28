@@ -48,16 +48,41 @@ We do **not** call the real Google Sheets API in unit tests. We mock the layer t
 ## What we don’t do
 
 - **No local Google Sheet**: We don’t run a “local Sheets server.” All sheet data in unit tests comes from fixtures and mocks.
-- **No integration tests in this suite**: These tests do not call the real Sheets or Drive APIs. An optional future step is a separate, minimal integration test against a test spreadsheet (with credentials in env).
+- **No real API calls in this suite**: `npm run test` / `npm run test:run` never call the real Sheets or Drive APIs. The real-API layer lives in the separate integration suite below.
 
 ## Running tests
 
 ```bash
-npm run test       # watch mode
-npm run test:run   # single run (e.g. for CI)
+npm run test              # watch mode (unit, mocked)
+npm run test:run          # single run (unit, mocked; e.g. for CI, and the pre-commit hook)
+npm run test:integration  # single run against the real Sheets integration test sheet
 ```
 
-Tests live under `src/` with names `*.test.ts` or `*.spec.ts`.
+Unit tests live under `src/` with names `*.test.ts` or `*.spec.ts`, excluding `src/__tests__/integration/`. The integration suite lives only under `src/__tests__/integration/` and uses its own [vitest.integration.config.ts](../vitest.integration.config.ts).
+
+## Layer 2: Sheets integration tests
+
+A second suite (`src/__tests__/integration/`) calls the *real* Google Sheets API (`@/lib/google-api`, not mocked) so we can catch things unit tests structurally cannot: range/column truncation, type coercion on read-back, and whatever else the real API does differently from the mock. This is what would have caught the `A:Z` truncation bug end-to-end, not just at the mapping layer.
+
+**Target**: a dedicated **”Signups Test - Fall 2026”** spreadsheet, never the real “2026 Fall Signups” sheet the coach depends on. Its `Signups` tab’s header row is a copy of the real sheet’s header row (same names, same count, deliberately past column Z), so the suite exercises the same shape of bug that hit production. Config: `SIGNUPS_SHEET_ID_TEST` in `.env.local` / GitHub Actions secrets.
+
+**Isolation is load-bearing.** `signups-config.ts` bakes `SIGNUPS_SHEET_ID` into a module-level constant at import time. A naive `process.env.SIGNUPS_SHEET_ID = testId` assignment is *not* enough if anything already imported `signups-config` first (the cached module keeps whatever sheet ID was live at *its* import time): this actually happened once while building this suite and wrote junk rows into the real production sheet before it was caught and fixed. `signups-sheet.integration.test.ts`’s `beforeAll` now calls `vi.resetModules()` + `vi.stubEnv()` before the *first* import of `signups-config` in the process, then asserts the resolved `SIGNUPS_SHEET_CONFIG.SIGNUPS_SHEET_ID` actually equals `SIGNUPS_SHEET_ID_TEST` before doing anything else — it throws instead of running if that check ever fails again. Don’t remove that guard when editing the test.
+
+**Cadence**: runs in CI (`.github/workflows/test.yml`, `integration` job) on every push/PR, using `SIGNUPS_SHEET_ID_TEST` and `GOOGLE_SERVICE_ACCOUNT_KEY` repo secrets. Not part of the pre-commit hook (network + slower). The suite `describe.skipIf`s itself when those env vars aren’t set, so it degrades gracefully for local runs or forks without the secrets.
+
+**Season setup**: each new season’s signup cycle needs its own test sheet once its real Signups sheet’s schema is finalized (see “Recreating the test sheet” below), since the test sheet’s header must track the real one.
+
+### Recreating the test sheet (e.g. at the start of a new season)
+
+1. Create a new spreadsheet with a `Signups` tab, in the same Drive folder as the current test sheet (ask the coach for the folder, or check `SIGNUPS_SHEET_ID_TEST`’s current sheet for its parent).
+2. Copy the real Signups sheet’s header row (`Signups!1:1`) into the new test sheet’s `Signups!1:1` verbatim: same names, same order. Do **not** hand-type `SIGNUPS_COLUMNS` values instead; the point is to mirror what production actually has, including any manual/coach-added columns.
+3. Share the new sheet with the service account (`GOOGLE_SERVICE_ACCOUNT_KEY`’s `client_email`) as a writer.
+4. Update `SIGNUPS_SHEET_ID_TEST` in `.env.local`, `.env.example`, and the `SIGNUPS_SHEET_ID_TEST` GitHub Actions secret.
+5. Run `npm run test:integration` locally once to confirm it’s wired up correctly before relying on CI.
+
+## Layer 3: browser/E2E scenarios (manual, ad hoc)
+
+There’s no Playwright or other headless-browser suite in this repo. Signup-flow UI changes are instead spot-checked on demand (before shipping a change to `/signup` or the player dashboard) by driving the real app in Chrome and walking the magic-last-name scenario matrix documented in `docs/fall-2026/signup-test-fixtures.md` (`TestNotFound` through `TestCleared`), at both desktop and mobile (375×812) viewport widths, with screenshots for visual comparison. This is intentionally not automated/CI-wired; ask for it explicitly when it matters.
 
 ## Pre-commit hook
 
