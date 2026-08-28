@@ -32,9 +32,14 @@ function FieldError({ message }: { message?: string }) {
   return <p className="text-xs" style={{ color: '#f87171' }}>{message}</p>
 }
 
+/** Required-field marker, colored to stand out from the label text instead of blending in. */
+function Req() {
+  return <span style={{ color: '#f87171' }}> *</span>
+}
+
 /** Sits between a label and its input, pulled up close to the label (round 4 feedback: too much air otherwise). */
 function HelperText({ children }: { children: React.ReactNode }) {
-  return <p className="text-xs -mt-1" style={{ color: 'var(--secondary-text)' }}>{children}</p>
+  return <p className="text-xs -mt-1.5" style={{ color: 'var(--secondary-text)' }}>{children}</p>
 }
 
 /** Seeded field hint (ADR 0002): "this is what we have; use it or enter something different." Unmasked. */
@@ -128,12 +133,12 @@ export function PlayerProfileForm({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label style={fieldLabelStyle}>Preferred first name *</Label>
+            <Label style={fieldLabelStyle}>Preferred first name<Req /></Label>
             <Input {...register('preferredFirstName')} />
             <FieldError message={errors.preferredFirstName?.message} />
           </div>
           <div className="space-y-2">
-            <Label style={fieldLabelStyle}>Last name *</Label>
+            <Label style={fieldLabelStyle}>Last name<Req /></Label>
             <Input {...register('lastName')} />
             <FieldError message={errors.lastName?.message} />
           </div>
@@ -141,12 +146,12 @@ export function PlayerProfileForm({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label style={fieldLabelStyle}>Date of birth *</Label>
+            <Label style={fieldLabelStyle}>Date of birth<Req /></Label>
             <Input type="date" {...register('dateOfBirth')} />
             <FieldError message={errors.dateOfBirth?.message} />
           </div>
           <div className="space-y-2">
-            <Label style={fieldLabelStyle}>Grade this fall *</Label>
+            <Label style={fieldLabelStyle}>Grade this fall<Req /></Label>
             <select {...register('grade')} className={selectClassName}>
               <option value="">Select...</option>
               {GRADE_OPTIONS.map(g => (
@@ -168,7 +173,7 @@ export function PlayerProfileForm({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label style={fieldLabelStyle}>Pronouns (select all that apply) *</Label>
+            <Label style={fieldLabelStyle}>Pronouns (select all that apply)<Req /></Label>
             <div className="space-y-1">
               {PRONOUN_OPTIONS.map(pronoun => (
                 <label key={pronoun} className="flex items-center gap-2 text-sm" style={fieldLabelStyle}>
@@ -180,7 +185,7 @@ export function PlayerProfileForm({
           </div>
           <div className="space-y-2">
             <Label style={fieldLabelStyle}>
-              Gender identification *
+              Gender identification<Req />
               <LearnMoreLink href="https://madisonultimate.notion.site/More-Season-Info-982c4da46f75826db2fd81b6a02568e1#4d6c4da46f7583d9a13a8176d948132c" />
             </Label>
             <div className="space-y-1">
@@ -200,7 +205,7 @@ export function PlayerProfileForm({
         </div>
 
         <div className="space-y-2">
-          <Label style={fieldLabelStyle}>Elementary school attended *</Label>
+          <Label style={fieldLabelStyle}>Elementary school attended<Req /></Label>
           <select
             className={selectClassName}
             value={showOtherSchool ? 'Other' : elementarySchool}
@@ -230,22 +235,7 @@ export function PlayerProfileForm({
         </div>
 
         <div className="space-y-2">
-          <Label style={fieldLabelStyle}>Allergies or medical info coaches should know *</Label>
-          <HelperText>If NONE, please list NONE.</HelperText>
-          <Textarea {...register('allergies')} />
-        </div>
-
-        <div className="space-y-2">
-          <Label style={fieldLabelStyle}>Other sports and activities this fall *</Label>
-          <HelperText>
-            It&apos;s totally fine if your athlete has competing priorities. We just want to get a sense of where
-            ultimate is in the scheduling mix for this season.
-          </HelperText>
-          <Textarea {...register('competingSports')} />
-        </div>
-
-        <div className="space-y-2">
-          <Label style={fieldLabelStyle}>Jersey / t-shirt size *</Label>
+          <Label style={fieldLabelStyle}>Jersey / t-shirt size<Req /></Label>
           <HelperText>What size jersey does the player normally wear? Y = youth, A = adult; these are unisex sizes.</HelperText>
           <select {...register('jerseySize')} className={selectClassName}>
             <option value="">Select...</option>
@@ -256,7 +246,22 @@ export function PlayerProfileForm({
         </div>
 
         <div className="space-y-2">
-          <Label style={fieldLabelStyle}>Ultimate playing experience *</Label>
+          <Label style={fieldLabelStyle}>Allergies or medical info coaches should know<Req /></Label>
+          <HelperText>If NONE, please list NONE.</HelperText>
+          <Textarea {...register('allergies')} />
+        </div>
+
+        <div className="space-y-2">
+          <Label style={fieldLabelStyle}>Other sports and activities this fall<Req /></Label>
+          <HelperText>
+            It&apos;s totally fine if your athlete has competing priorities. We just want to get a sense of where
+            ultimate is in the scheduling mix for this season.
+          </HelperText>
+          <Textarea {...register('competingSports')} />
+        </div>
+
+        <div className="space-y-2">
+          <Label style={fieldLabelStyle}>Ultimate playing experience<Req /></Label>
           <HelperText>
             For example, how many past seasons has your player played? Have they attended ultimate frisbee summer
             camps? Are there other sports the player has played competitively previously?
@@ -265,7 +270,7 @@ export function PlayerProfileForm({
         </div>
 
         <div className="space-y-2">
-          <Label style={fieldLabelStyle}>What does the player hope to get out of the season? *</Label>
+          <Label style={fieldLabelStyle}>What does the player hope to get out of the season?<Req /></Label>
           <HelperText>Is there a goal the player has for themself this season? Do they have a hope for the team this year?</HelperText>
           <Textarea {...register('hopes')} />
         </div>
@@ -281,7 +286,7 @@ export function PlayerProfileForm({
       </section>
 
       <section id="photo-upload" className="space-y-4 scroll-mt-4">
-        <h3 className="font-semibold text-lg" style={sectionHeadingStyle}>📷 Player Photo *</h3>
+        <h3 className="font-semibold text-lg" style={sectionHeadingStyle}>📷 Player Photo<Req /></h3>
         <PhotoUpload playerId={playerId} hasPhoto={hasPhoto} onUploaded={onPhotoUploaded} />
       </section>
 
@@ -314,13 +319,13 @@ export function PlayerProfileForm({
       <section id="caretaker-info" className="space-y-4 scroll-mt-4">
         <h3 className="font-semibold text-lg" style={sectionHeadingStyle}>👪 Caretakers</h3>
         <div className="space-y-2">
-          <Label style={fieldLabelStyle}>Caretaker 1 name *</Label>
+          <Label style={fieldLabelStyle}>Caretaker 1 name<Req /></Label>
           <Input {...register('caretaker1Name')} />
           <FieldError message={errors.caretaker1Name?.message} />
           <SeededHint value={seeded.caretaker1Name} onUse={() => setValue('caretaker1Name', seeded.caretaker1Name!)} />
         </div>
         <div className="space-y-2">
-          <Label style={fieldLabelStyle}>Caretaker 1 email *</Label>
+          <Label style={fieldLabelStyle}>Caretaker 1 email<Req /></Label>
           <Input type="email" {...register('caretaker1Email')} />
           <FieldError message={errors.caretaker1Email?.message} />
           <SeededHint value={seeded.caretaker1Email} onUse={() => setValue('caretaker1Email', seeded.caretaker1Email!)} />
@@ -375,7 +380,7 @@ export function PlayerProfileForm({
       <section id="coach-volunteering" className="space-y-4 scroll-mt-4">
         <h3 className="font-semibold text-lg" style={sectionHeadingStyle}>👊 Coach volunteering</h3>
         <div className="space-y-2">
-          <Label style={fieldLabelStyle}>Are you interested in helping coach? *</Label>
+          <Label style={fieldLabelStyle}>Are you interested in helping coach?<Req /></Label>
           <HelperText>
             All coaches work together to plan and execute practice and game strategies. New coaches will be
             supported by experienced staff/coaches and utilized in a way to help you and the program succeed. You
@@ -431,7 +436,7 @@ export function PlayerProfileForm({
       <section id="other-volunteering" className="space-y-4 scroll-mt-4">
         <h3 className="font-semibold text-lg" style={sectionHeadingStyle}>🙋 Other volunteering</h3>
         <div className="space-y-2">
-          <Label style={fieldLabelStyle}>Ways you might help this season (check any) *</Label>
+          <Label style={fieldLabelStyle}>Ways you might help this season (check any)<Req /></Label>
           <div className="space-y-1">
             {VOLUNTEER_ROLE_OPTIONS.map(role => (
               <div key={role}>
