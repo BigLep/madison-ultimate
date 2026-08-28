@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { HelpBubble, LearnMoreLink } from '@/components/HelpBubble'
+import { LearnMoreLink } from '@/components/HelpBubble'
 import { PhotoUpload } from '@/components/PhotoUpload'
 import { MailingStatusInline } from '@/components/MailingStatusInline'
 import {
@@ -32,8 +32,9 @@ function FieldError({ message }: { message?: string }) {
   return <p className="text-xs" style={{ color: '#f87171' }}>{message}</p>
 }
 
+/** Sits between a label and its input, pulled up close to the label (round 4 feedback: too much air otherwise). */
 function HelperText({ children }: { children: React.ReactNode }) {
-  return <p className="text-xs mb-1" style={{ color: 'var(--secondary-text)' }}>{children}</p>
+  return <p className="text-xs -mt-1" style={{ color: 'var(--secondary-text)' }}>{children}</p>
 }
 
 /** Seeded field hint (ADR 0002): "this is what we have; use it or enter something different." Unmasked. */
@@ -85,6 +86,7 @@ export function PlayerProfileForm({
   const volunteerRoles = watch('volunteerRoles') || []
   const pronouns = watch('pronouns') || []
   const elementarySchool = watch('elementarySchool') || ''
+  const coachVolunteeringInterest = watch('coachVolunteeringInterest')
 
   const isKnownSchool = (ELEMENTARY_SCHOOL_OPTIONS as readonly string[]).includes(elementarySchool)
   const [showOtherSchool, setShowOtherSchool] = useState(Boolean(elementarySchool) && !isKnownSchool)
@@ -126,12 +128,12 @@ export function PlayerProfileForm({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label style={fieldLabelStyle}>Preferred first name</Label>
+            <Label style={fieldLabelStyle}>Preferred first name *</Label>
             <Input {...register('preferredFirstName')} />
             <FieldError message={errors.preferredFirstName?.message} />
           </div>
           <div className="space-y-2">
-            <Label style={fieldLabelStyle}>Last name</Label>
+            <Label style={fieldLabelStyle}>Last name *</Label>
             <Input {...register('lastName')} />
             <FieldError message={errors.lastName?.message} />
           </div>
@@ -139,20 +141,10 @@ export function PlayerProfileForm({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label style={fieldLabelStyle}>Date of birth</Label>
+            <Label style={fieldLabelStyle}>Date of birth *</Label>
             <Input type="date" {...register('dateOfBirth')} />
             <FieldError message={errors.dateOfBirth?.message} />
           </div>
-          <div className="space-y-2">
-            <Label style={fieldLabelStyle}>
-              Legal first name (only if different)
-              <HelpBubble text="Needed to match your player's Final Forms record when last name and birthdate alone aren't enough (e.g. twins). Never shown publicly." />
-            </Label>
-            <Input {...register('legalFirstName')} />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label style={fieldLabelStyle}>Grade this fall *</Label>
             <select {...register('grade')} className={selectClassName}>
@@ -163,35 +155,15 @@ export function PlayerProfileForm({
             </select>
             <SeededHint value={seeded.grade} onUse={() => setValue('grade', seeded.grade!)} />
           </div>
-          <div className="space-y-2">
-            <Label style={fieldLabelStyle}>Elementary school attended *</Label>
-            <select
-              className={selectClassName}
-              value={showOtherSchool ? 'Other' : elementarySchool}
-              onChange={e => {
-                if (e.target.value === 'Other') {
-                  setShowOtherSchool(true)
-                  setValue('elementarySchool', '')
-                } else {
-                  setShowOtherSchool(false)
-                  setValue('elementarySchool', e.target.value)
-                }
-              }}
-            >
-              <option value="">Select...</option>
-              {ELEMENTARY_SCHOOL_OPTIONS.map(school => (
-                <option key={school} value={school}>{school}</option>
-              ))}
-              <option value="Other">Other</option>
-            </select>
-            {showOtherSchool && (
-              <Input
-                className="mt-2"
-                placeholder="School name"
-                {...register('elementarySchool')}
-              />
-            )}
-          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label style={fieldLabelStyle}>Legal first name</Label>
+          <HelperText>
+            Only if different from preferred. Needed to match your player&apos;s Final Forms record when last name
+            and birthdate alone aren&apos;t enough (e.g. twins). Never shown publicly.
+          </HelperText>
+          <Input {...register('legalFirstName')} />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -225,6 +197,36 @@ export function PlayerProfileForm({
               ))}
             </div>
           </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label style={fieldLabelStyle}>Elementary school attended *</Label>
+          <select
+            className={selectClassName}
+            value={showOtherSchool ? 'Other' : elementarySchool}
+            onChange={e => {
+              if (e.target.value === 'Other') {
+                setShowOtherSchool(true)
+                setValue('elementarySchool', '')
+              } else {
+                setShowOtherSchool(false)
+                setValue('elementarySchool', e.target.value)
+              }
+            }}
+          >
+            <option value="">Select...</option>
+            {ELEMENTARY_SCHOOL_OPTIONS.map(school => (
+              <option key={school} value={school}>{school}</option>
+            ))}
+            <option value="Other">Other</option>
+          </select>
+          {showOtherSchool && (
+            <Input
+              className="mt-2"
+              placeholder="School name"
+              {...register('elementarySchool')}
+            />
+          )}
         </div>
 
         <div className="space-y-2">
@@ -279,12 +281,16 @@ export function PlayerProfileForm({
       </section>
 
       <section id="photo-upload" className="space-y-4 scroll-mt-4">
-        <h3 className="font-semibold text-lg" style={sectionHeadingStyle}>📷 Photo *</h3>
+        <h3 className="font-semibold text-lg" style={sectionHeadingStyle}>📷 Player Photo *</h3>
         <PhotoUpload playerId={playerId} hasPhoto={hasPhoto} onUploaded={onPhotoUploaded} />
       </section>
 
       <section id="player-contact" className="space-y-4 scroll-mt-4">
-        <h3 className="font-semibold text-lg" style={sectionHeadingStyle}>📞 Player contact (all optional)</h3>
+        <h3 className="font-semibold text-lg" style={sectionHeadingStyle}>📞 Player contact</h3>
+        <HelperText>
+          Player contact information isn&apos;t essential. We&apos;ll communicate during practices, but they are
+          welcome to provide it and join team communication channels.
+        </HelperText>
         <div className="space-y-2">
           <Label style={fieldLabelStyle}>Player&apos;s personal email</Label>
           <Input type="email" {...register('studentPersonalEmail')} />
@@ -327,14 +333,9 @@ export function PlayerProfileForm({
         </div>
 
         {!showCaretaker2 && (
-          <button
-            type="button"
-            className="text-sm underline py-2 px-1 -mx-1"
-            style={{ color: 'var(--accent)' }}
-            onClick={() => setShowCaretaker2(true)}
-          >
+          <Button type="button" variant="outline" size="sm" onClick={() => setShowCaretaker2(true)}>
             + Add a second caretaker
-          </button>
+          </Button>
         )}
 
         {showCaretaker2 && (
@@ -374,16 +375,24 @@ export function PlayerProfileForm({
       <section id="coach-volunteering" className="space-y-4 scroll-mt-4">
         <h3 className="font-semibold text-lg" style={sectionHeadingStyle}>👊 Coach volunteering</h3>
         <div className="space-y-2">
-          <Label style={fieldLabelStyle}>
-            Are you interested in helping coach? *
-            <LearnMoreLink href="https://madisonultimate.notion.site/Volunteering-60ec4da46f7583df9a2d015cf5cb03b2" />
-          </Label>
+          <Label style={fieldLabelStyle}>Are you interested in helping coach? *</Label>
           <HelperText>
             All coaches work together to plan and execute practice and game strategies. New coaches will be
             supported by experienced staff/coaches and utilized in a way to help you and the program succeed. You
             aren&apos;t obligated if you do say yes. You don&apos;t have to be there all the time. Prior Ultimate
-            Frisbee coaching experience is not required.
+            Frisbee coaching experience is not required.{' '}
+            <LearnMoreLink href="https://madisonultimate.notion.site/Volunteering-60ec4da46f7583df9a2d015cf5cb03b2" />
           </HelperText>
+          <div
+            className="rounded-md p-3 text-sm flex items-start gap-2"
+            style={{ backgroundColor: 'rgba(96, 165, 250, 0.15)', border: '1px solid rgba(96, 165, 250, 0.4)', color: 'var(--primary-text)' }}
+          >
+            <span aria-hidden="true">🙋‍♀️</span>
+            <span>
+              We&apos;re especially hoping to hear from moms and other women interested in coaching; the team
+              benefits from more female leadership on the sideline.
+            </span>
+          </div>
           <div className="space-y-1">
             {COACH_VOLUNTEERING_OPTIONS.map(option => (
               <label key={option} className="flex items-center gap-2 text-sm" style={fieldLabelStyle}>
@@ -397,18 +406,14 @@ export function PlayerProfileForm({
               </label>
             ))}
           </div>
-          <div
-            className="rounded-md p-3 text-sm flex items-start gap-2 mt-2"
-            style={{ backgroundColor: 'rgba(96, 165, 250, 0.15)', border: '1px solid rgba(96, 165, 250, 0.4)', color: 'var(--primary-text)' }}
-          >
-            <span aria-hidden="true">🙋‍♀️</span>
-            <span>
-              We&apos;re especially hoping to hear from moms and other women interested in coaching; the team
-              benefits from more female leadership on the sideline.
-            </span>
-          </div>
-          <HelperText>Already talked to Coach Steve about coaching? No need to fill this out again.</HelperText>
         </div>
+
+        {coachVolunteeringInterest === 'Yes' && (
+          <HelperText>
+            If you already coached in the past or talked to Coach Steve about coaching this season, you don&apos;t
+            need to fill in the next two questions again.
+          </HelperText>
+        )}
 
         <div className="space-y-2">
           <Label style={fieldLabelStyle}>Have you played or coached Ultimate before? What&apos;s been your experience?</Label>
@@ -427,21 +432,24 @@ export function PlayerProfileForm({
         <h3 className="font-semibold text-lg" style={sectionHeadingStyle}>🙋 Other volunteering</h3>
         <div className="space-y-2">
           <Label style={fieldLabelStyle}>Ways you might help this season (check any) *</Label>
-          <HelperText>
-            Team admin - helps organize attendance and other admin duties. Snack organizing - helps organize
-            family volunteers for after game snacks. T-shirt ordering - helps collect info on who needs a jersey,
-            and what sizes we need. And other opportunities.
-          </HelperText>
           <div className="space-y-1">
             {VOLUNTEER_ROLE_OPTIONS.map(role => (
-              <label key={role} className="flex items-center gap-2 text-sm" style={fieldLabelStyle}>
-                <input
-                  type="checkbox"
-                  checked={volunteerRoles.includes(role)}
-                  onChange={() => toggleVolunteerRole(role)}
-                />
-                {role}
-              </label>
+              <div key={role}>
+                <label className="flex items-center gap-2 text-sm" style={fieldLabelStyle}>
+                  <input
+                    type="checkbox"
+                    checked={volunteerRoles.includes(role)}
+                    onChange={() => toggleVolunteerRole(role)}
+                  />
+                  {role}
+                </label>
+                {role === 'Team admin / communications' && (
+                  <p className="text-xs ml-6" style={{ color: 'var(--secondary-text)' }}>Helps organize attendance and other admin duties.</p>
+                )}
+                {role === 'Snacks / logistics' && (
+                  <p className="text-xs ml-6" style={{ color: 'var(--secondary-text)' }}>Helps organize family volunteers for after-game snacks.</p>
+                )}
+              </div>
             ))}
           </div>
         </div>
@@ -455,8 +463,11 @@ export function PlayerProfileForm({
         <h3 className="font-semibold text-lg" style={sectionHeadingStyle}>💬 Anything else</h3>
         <div className="space-y-2">
           <HelperText>
-            Feel free to pass along any other ideas, feedback, or suggestions. Alternatively feel free to email
-            madisonultimate@gmail.com anytime.
+            Feel free to pass along any other ideas, feedback, or suggestions. Alternatively feel free to email{' '}
+            <a href="mailto:madisonultimate@gmail.com" className="underline" style={{ color: 'var(--accent)' }}>
+              madisonultimate@gmail.com
+            </a>{' '}
+            anytime.
           </HelperText>
           <Textarea {...register('additionalFeedback')} />
         </div>

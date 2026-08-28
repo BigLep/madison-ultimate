@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { rememberPlayer } from '@/lib/player-switcher'
 import { DeadlineBanner } from '@/components/DeadlineBanner'
-import { HelpBubble } from '@/components/HelpBubble'
 
 export default function SignupPage() {
   const [preferredFirstName, setPreferredFirstName] = useState('')
@@ -130,9 +129,12 @@ export default function SignupPage() {
 
             <div className="space-y-2">
               <Label htmlFor="legalFirstName" style={{ color: 'var(--primary-text)' }}>
-                Legal first name (only if different)
-                <HelpBubble text="Needed to match your player's Final Forms record when last name and birthdate alone aren't enough (e.g. twins). Never shown publicly." />
+                Legal first name
               </Label>
+              <p className="text-xs -mt-1" style={{ color: 'var(--secondary-text)' }}>
+                Only if different from preferred. Needed to match your player&apos;s Final Forms record when last
+                name and birthdate alone aren&apos;t enough (e.g. twins). Never shown publicly.
+              </p>
               <Input
                 id="legalFirstName"
                 value={legalFirstName}

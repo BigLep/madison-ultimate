@@ -49,3 +49,6 @@ next-env.d.ts
 # cache
 /tmp.google-oauth.json
 /tmp/
+
+# Lavish Editor review snapshots (scratch, not application code)
+/.lavish/

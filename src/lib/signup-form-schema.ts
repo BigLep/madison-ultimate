@@ -42,12 +42,10 @@ export const NOT_THIS_SEASON = 'Not this season';
 export const COACH_VOLUNTEERING_OPTIONS = [
   'Yes',
   "Maybe (I'd like to talk more about the possibility)",
-  'No',
   NOT_THIS_SEASON,
 ] as const;
 
 export const VOLUNTEER_ROLE_OPTIONS = [
-  'Game-day help / field manager',
   'Team photographer',
   'Team admin / communications',
   'Snacks / logistics',

@@ -41,7 +41,7 @@ export function PhotoUpload({
 
   return (
     <div className="space-y-2">
-      <p style={{ color: 'var(--secondary-text)' }}>
+      <p className="text-xs" style={{ color: 'var(--secondary-text)' }}>
         Helps coaches learn names; used in the portal and by coaches only.
       </p>
       <div

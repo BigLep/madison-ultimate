@@ -88,18 +88,18 @@ export function FinalFormsRow({
           </li>
           <li>
             The name we have doesn&apos;t match school records; enter the last name and legal first name exactly
-            as they appear in Final Forms above. Preferred name is what we&apos;ll actually use with your player.
+            as they appear in Final Forms. Preferred name is what we&apos;ll actually use with your player.
           </li>
         </ol>
         <p>
-          If you are having trouble inside Final Forms itself (e.g., login, forms, clearance),{' '}
+          If you are having trouble inside Final Forms itself (e.g., login, forms, clearance), contact{' '}
           <a href="mailto:vamcdonald@seattleschools.org" className="underline" style={linkStyle}>
-            contact Madison&apos;s Athletic Director, Valerie McDonald 📧
+            Madison&apos;s Athletic Director, Valerie McDonald 📧
           </a>
           .
         </p>
         <p>
-          Anything else:{' '}
+          Other questions? Email{' '}
           <a href="mailto:madisonultimate@gmail.com" className="underline" style={linkStyle}>
             madisonultimate@gmail.com
           </a>

@@ -18,7 +18,7 @@ function ChecklistItem({ label, done, anchor }: { label: string; done: boolean; 
     <li>
       <a href={`#${anchor}`} className="flex items-center justify-between gap-2 py-1.5" style={{ color: 'var(--primary-text)' }}>
         <span className="flex items-center gap-2">
-          <span aria-hidden="true">{done ? '✅' : '⭕'}</span>
+          <span aria-hidden="true">{done ? '✅' : '❌'}</span>
           <span className="underline">{label}</span>
         </span>
         <span className="text-xs" style={{ color: 'var(--secondary-text)' }}>{done ? 'Done' : 'Not done'}</span>
