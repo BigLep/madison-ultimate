@@ -79,6 +79,24 @@ function bufferToStream(buffer: Buffer) {
 }
 
 /**
+ * Verifies the photo-upload OAuth identity can authenticate and see a given Drive folder.
+ * Read-only; used by /api/diagnostics to check GOOGLE_OAUTH_* + PHOTOS_FOLDER_ID together,
+ * since having all three env vars set doesn't guarantee the refresh token is still valid or
+ * that it actually has access to that specific folder.
+ */
+export async function getDriveFolderName(folderId: string): Promise<string | null> {
+  try {
+    const auth = getOAuthClient();
+    const drive = google.drive({ version: 'v3', auth });
+    const res = await drive.files.get({ fileId: folderId, fields: 'name' });
+    return res.data.name || null;
+  } catch (error) {
+    console.error(`Error checking Drive folder ${folderId}:`, error);
+    return null;
+  }
+}
+
+/**
  * Downloads a Drive file's bytes and mime type through the same OAuth identity photo uploads
  * use. Returns null (rather than throwing) when the file is missing or inaccessible, so callers
  * like Photo Carryover can treat that as "nothing to carry over" instead of a hard failure.

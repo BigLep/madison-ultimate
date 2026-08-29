@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import * as fs from 'fs';
 import * as path from 'path';
 import { getSheetData, getMostRecentFileInfoFromFolder } from '../../../lib/google-api';
+import { getDriveFolderName } from '../../../lib/google-oauth-drive';
+import { SHEET_CONFIG } from '../../../lib/sheet-config';
 
 interface DiagnosticResult {
   category: string;
@@ -46,6 +48,25 @@ export async function GET(request: NextRequest) {
       addResult('Environment', envVar, 'pass', `Set (${value.substring(0, 10)}...)`);
     } else {
       addResult('Environment', envVar, 'fail', 'Not set or empty');
+    }
+  });
+
+  // Photo upload/carryover vars are checked as warnings, not failures: unlike the vars above,
+  // the rest of the app works fine without them, only the player-photo feature degrades.
+  const photoEnvVars = [
+    'GOOGLE_OAUTH_CLIENT_ID',
+    'GOOGLE_OAUTH_CLIENT_SECRET',
+    'GOOGLE_OAUTH_REFRESH_TOKEN',
+    'PHOTOS_FOLDER_ID',
+    'FALL_2025_ROSTER_SHEET_ID',
+  ];
+
+  photoEnvVars.forEach(envVar => {
+    const value = process.env[envVar];
+    if (value) {
+      addResult('Environment', envVar, 'pass', `Set (${value.substring(0, 10)}...)`);
+    } else {
+      addResult('Environment', envVar, 'warning', 'Not set (player photo upload/carryover will not work)');
     }
   });
 
@@ -145,7 +166,59 @@ export async function GET(request: NextRequest) {
       `Error accessing Drive folders: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 
-  // 5. System Checks
+  // 5. Photo Upload (OAuth identity access, separate from the service account above)
+  try {
+    const hasOAuthCreds = Boolean(
+      process.env.GOOGLE_OAUTH_CLIENT_ID && process.env.GOOGLE_OAUTH_CLIENT_SECRET && process.env.GOOGLE_OAUTH_REFRESH_TOKEN
+    );
+    const photosFolderId = process.env.PHOTOS_FOLDER_ID;
+
+    if (!hasOAuthCreds) {
+      addResult('Photo Upload', 'OAuth Identity', 'warning',
+        'GOOGLE_OAUTH_CLIENT_ID/SECRET/REFRESH_TOKEN not fully set; photo upload is disabled');
+    } else if (!photosFolderId) {
+      addResult('Photo Upload', 'Photos Folder', 'warning', 'PHOTOS_FOLDER_ID not set');
+    } else {
+      const folderName = await getDriveFolderName(photosFolderId);
+      if (folderName) {
+        addResult('Photo Upload', 'Photos Folder', 'pass',
+          `OAuth identity can access the photos folder: "${folderName}"`);
+      } else {
+        addResult('Photo Upload', 'Photos Folder', 'fail',
+          'OAuth credentials are set but could not access PHOTOS_FOLDER_ID (invalid/expired refresh token, or the folder is not shared with this identity)');
+      }
+    }
+
+    // Photo Carryover reads the Fall 2025 roster via the service account (not OAuth), so this
+    // can fail independently of the OAuth identity check above.
+    const fall2025SheetId = SHEET_CONFIG.FALL_2025_ROSTER_SHEET_ID;
+    if (!fall2025SheetId) {
+      addResult('Photo Upload', 'Fall 2025 Roster (Carryover)', 'warning', 'FALL_2025_ROSTER_SHEET_ID not set');
+    } else {
+      const header = await getSheetData(fall2025SheetId, `'${SHEET_CONFIG.ROSTER_SHEET_NAME}'!A1:AQ1`);
+      const headerRow = (header[0] || []).map(String);
+      const hasStudentId = headerRow.includes('StudentID');
+      const hasPhotoColumn = headerRow.includes('Photo Download');
+      if (hasStudentId && hasPhotoColumn) {
+        addResult('Photo Upload', 'Fall 2025 Roster (Carryover)', 'pass',
+          'Service account can read the Fall 2025 roster; StudentID and Photo Download columns found');
+      } else if (headerRow.length === 0) {
+        addResult('Photo Upload', 'Fall 2025 Roster (Carryover)', 'fail',
+          'Could not read the Fall 2025 roster header row (sharing or sheet/tab name issue)');
+      } else {
+        addResult('Photo Upload', 'Fall 2025 Roster (Carryover)', 'fail',
+          `Fall 2025 roster readable, but missing expected column(s): ${[
+            !hasStudentId && 'StudentID',
+            !hasPhotoColumn && 'Photo Download',
+          ].filter(Boolean).join(', ')}`);
+      }
+    }
+  } catch (error) {
+    addResult('Photo Upload', 'Photo Upload Checks', 'fail',
+      `Error checking photo upload access: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+
+  // 6. System Checks
   try {
     // Check Node.js version
     const nodeVersion = process.version;
