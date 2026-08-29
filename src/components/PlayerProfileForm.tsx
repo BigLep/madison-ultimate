@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/components/ui/button'
@@ -56,13 +56,15 @@ export function PlayerProfileForm({
     handleSubmit,
     watch,
     setValue,
-    formState: { errors, isSubmitting },
+    reset,
+    formState: { errors, isSubmitting, isDirty },
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues,
   })
 
   const [saveError, setSaveError] = useState('')
+  const [justSaved, setJustSaved] = useState(false)
   const volunteerRoles = watch('volunteerRoles') || []
   const pronouns = watch('pronouns') || []
   const elementarySchool = watch('elementarySchool') || ''
@@ -73,36 +75,43 @@ export function PlayerProfileForm({
 
   const toggleVolunteerRole = (role: string) => {
     if (role === NOT_THIS_SEASON) {
-      setValue('volunteerRoles', volunteerRoles.includes(NOT_THIS_SEASON) ? [] : [NOT_THIS_SEASON])
+      setValue('volunteerRoles', volunteerRoles.includes(NOT_THIS_SEASON) ? [] : [NOT_THIS_SEASON], { shouldDirty: true })
       return
     }
     const withoutNotThisSeason = volunteerRoles.filter(r => r !== NOT_THIS_SEASON)
     if (withoutNotThisSeason.includes(role)) {
-      setValue('volunteerRoles', withoutNotThisSeason.filter(r => r !== role))
+      setValue('volunteerRoles', withoutNotThisSeason.filter(r => r !== role), { shouldDirty: true })
     } else {
-      setValue('volunteerRoles', [...withoutNotThisSeason, role])
+      setValue('volunteerRoles', [...withoutNotThisSeason, role], { shouldDirty: true })
     }
   }
 
   const togglePronoun = (pronoun: string) => {
     if (pronouns.includes(pronoun)) {
-      setValue('pronouns', pronouns.filter(p => p !== pronoun))
+      setValue('pronouns', pronouns.filter(p => p !== pronoun), { shouldDirty: true })
     } else {
-      setValue('pronouns', [...pronouns, pronoun])
+      setValue('pronouns', [...pronouns, pronoun], { shouldDirty: true })
     }
   }
 
   const submit = async (values: ProfileFormValues) => {
     setSaveError('')
+    setJustSaved(false)
     try {
       await onSave(values)
+      reset(values)
+      setJustSaved(true)
     } catch {
       setSaveError('Could not save. Please try again.')
     }
   }
 
+  useEffect(() => {
+    if (isDirty && justSaved) setJustSaved(false)
+  }, [isDirty, justSaved])
+
   return (
-    <form onSubmit={handleSubmit(submit)} className="space-y-8 pb-24">
+    <form onSubmit={handleSubmit(submit)} className={`space-y-8 ${justSaved || saveError ? 'pb-40' : 'pb-24'}`}>
       <section id="player-info" className="space-y-4 scroll-mt-4">
         <h3 className="font-semibold text-lg" style={sectionHeadingStyle}>🏃 Player</h3>
 
@@ -169,7 +178,7 @@ export function PlayerProfileForm({
                     type="radio"
                     value={option}
                     checked={watch('genderIdentification') === option}
-                    onChange={() => setValue('genderIdentification', option)}
+                    onChange={() => setValue('genderIdentification', option, { shouldDirty: true })}
                   />
                   {option}
                 </label>
@@ -186,10 +195,10 @@ export function PlayerProfileForm({
             onChange={e => {
               if (e.target.value === 'Other') {
                 setShowOtherSchool(true)
-                setValue('elementarySchool', '')
+                setValue('elementarySchool', '', { shouldDirty: true })
               } else {
                 setShowOtherSchool(false)
-                setValue('elementarySchool', e.target.value)
+                setValue('elementarySchool', e.target.value, { shouldDirty: true })
               }
             }}
           >
@@ -363,7 +372,7 @@ export function PlayerProfileForm({
                   type="radio"
                   value={option}
                   checked={watch('coachVolunteeringInterest') === option}
-                  onChange={() => setValue('coachVolunteeringInterest', option)}
+                  onChange={() => setValue('coachVolunteeringInterest', option, { shouldDirty: true })}
                 />
                 {option}
               </label>
@@ -482,25 +491,40 @@ export function PlayerProfileForm({
         </p>
       </div>
 
-      {saveError && (
-        <div className="border px-4 py-3 rounded font-medium" style={{ backgroundColor: '#fef2f2', borderColor: '#fecaca', color: '#dc2626' }}>
-          {saveError}
-        </div>
-      )}
-
-      {/* Sticky save bar: always visible while scrolling, so families don't have to hunt for Save. */}
+      {/* Sticky save bar: always visible while scrolling, so families don't have to hunt for Save.
+          Success and failure live here too — a banner up in the form is easy to miss. */}
       <div
         className="fixed bottom-0 left-0 right-0 border-t p-3 z-20"
         style={{ background: 'var(--card-bg)', borderColor: 'var(--border)' }}
       >
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl mx-auto space-y-2">
+          {justSaved && (
+            <div
+              role="status"
+              aria-live="polite"
+              className="border px-4 py-3 rounded font-medium"
+              style={{ backgroundColor: '#f0fdf4', borderColor: '#86efac', color: '#166534' }}
+            >
+              Saved. Your changes are on this player&apos;s page.
+            </div>
+          )}
+          {saveError && (
+            <div
+              role="alert"
+              aria-live="assertive"
+              className="border px-4 py-3 rounded font-medium"
+              style={{ backgroundColor: '#fef2f2', borderColor: '#fecaca', color: '#dc2626' }}
+            >
+              {saveError}
+            </div>
+          )}
           <Button
             type="submit"
             className="w-full text-white font-semibold"
-            style={{ background: 'var(--accent)' }}
+            style={{ background: justSaved ? '#166534' : 'var(--accent)' }}
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Saving...' : 'Save'}
+            {isSubmitting ? 'Saving...' : justSaved ? '✓ Saved' : 'Save'}
           </Button>
         </div>
       </div>
