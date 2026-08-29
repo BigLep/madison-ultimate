@@ -1,0 +1,7 @@
+# TODO
+
+- [ ] Update dependencies (check `package.json` for outdated packages, upgrade)
+- [ ] Review key frameworks (Next.js 15.5.9 and other core deps) for breaking changes, deprecations, or new conventions worth knowing about
+- [x] Add a real integration test that reads from and replaces files in a Google Drive folder, using a dedicated test Drive folder (never the real photos/roster folders) — `src/__tests__/integration/photo-drive.integration.test.ts`, against "Photos Test - Fall 2026" and "Photo Carryover Test - Fall 2026"
+- [x] Extend `/api/diagnostics` to also check the photo-upload OAuth identity (`GOOGLE_OAUTH_CLIENT_ID`/`SECRET`/`REFRESH_TOKEN`) and Drive/Sheets access for `PHOTOS_FOLDER_ID` and `FALL_2025_ROSTER_SHEET_ID` — it currently only checks the service account's Sheets/Drive access, not the separate OAuth identity the photo pipeline depends on
+- [x] Push the 5 new integration-test secrets to GitHub Actions so the new Drive/Photo Carryover CI job actually runs instead of skipping itself: `PHOTOS_FOLDER_ID_TEST`, `FALL_2025_ROSTER_SHEET_ID_TEST`, `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REFRESH_TOKEN` (values already in `.env.local`; the `gh secret set` commands are ready, just need your go-ahead since it's a permission-gated action)
