@@ -86,7 +86,11 @@ export async function GET(request: NextRequest) {
   try {
     // Check service account file
     if (serviceAccountKeyFile) {
-      const credentialsPath = path.join(process.cwd(), serviceAccountKeyFile);
+      // turbopackIgnore: this path is only ever a small, env-configured credentials file (e.g.
+      // "./.google-service-account.json"), never user input; without the ignore, Turbopack's
+      // static analysis traces the whole project as a dependency of this route (see Next 16
+      // build warning: "Dynamic filesystem access causes tracing of the whole project").
+      const credentialsPath = path.join(/* turbopackIgnore: true */ process.cwd(), serviceAccountKeyFile);
       if (fs.existsSync(credentialsPath)) {
         const credentials = JSON.parse(fs.readFileSync(credentialsPath, 'utf8'));
         addResult('Credentials', 'Service Account File', 'pass',
