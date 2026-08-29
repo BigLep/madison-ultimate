@@ -6,7 +6,7 @@ A web application to track signup progress for Madison Middle School Ultimate Fr
 
 ### Prerequisites
 
-- Node.js 18 or higher
+- Node.js 24 (Active LTS; see `.nvmrc`)
 - npm
 
 ### Local Development

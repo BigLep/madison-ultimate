@@ -223,10 +223,10 @@ export async function GET(request: NextRequest) {
     // Check Node.js version
     const nodeVersion = process.version;
     const majorVersion = parseInt(nodeVersion.substring(1).split('.')[0]);
-    if (majorVersion >= 18) {
-      addResult('System', 'Node.js Version', 'pass', `Version ${nodeVersion} (>= 18 required)`);
+    if (majorVersion >= 24) {
+      addResult('System', 'Node.js Version', 'pass', `Version ${nodeVersion} (24.x Active LTS required)`);
     } else {
-      addResult('System', 'Node.js Version', 'warning', `Version ${nodeVersion} (18+ recommended)`);
+      addResult('System', 'Node.js Version', 'warning', `Version ${nodeVersion} (24.x Active LTS required)`);
     }
 
     // Check timezone

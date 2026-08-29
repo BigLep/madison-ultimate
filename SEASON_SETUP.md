@@ -2,9 +2,28 @@
 
 Use this checklist at the start of each season so the portal and APIs point to the right data and show the right options.
 
+Do the **dependencies and runtime** pass first, before flipping sheets and env. Mid-season is a bad time for a Next or Node bump.
+
 ---
 
-## 1. Environment variables
+## 1. Dependencies and runtime
+
+Do this once at the start of the season, in a dedicated branch, and land it before families are using the new portal.
+
+- **npm packages:** `npm outdated` (or `npx npm-check-updates --format group`). Take in-major / security patches first (`next`, `eslint-config-next`, `vitest`, Google clients, Radix, Zod, etc.). Keep `next` and `eslint-config-next` in lockstep; do not pin them to an exact patch with no `^`, or security releases sit uninstalled.
+- **Majors later, one at a time:** Next, React, Tailwind, ESLint, and Vitest each get their own PR. Do not combine them with the season sheet/env flip.
+- **Node.js:** Align local, CI, Vercel, and `@types/node` on the current **Active LTS** (not Current, not an EOL line). Today that means **24.x**. Check:
+  - GitHub Actions `node-version` in `.github/workflows/test.yml`
+  - `engines.node` in `package.json` (Vercel reads this; without it the project setting can stay on an old major)
+  - `@types/node` major matching that runtime
+  - `.nvmrc` if you use one, so local matches CI
+- **Verify:** `npm run test:run`, `npx tsc --noEmit`, `npm run build`. Confirm a Vercel preview is on the intended Node version (`process.version` in `/api/diagnostics`).
+
+Node 20 reached end-of-life on 30 April 2026; Vercel disables it for new deployments on 1 October 2026. Do not stay on an EOL runtime into a new season.
+
+---
+
+## 2. Environment variables
 
 | What | Where | Notes |
 |------|--------|------|
@@ -17,7 +36,7 @@ After changing `ROSTER_SHEET_ID`, restart the dev/server process.
 
 ---
 
-## 2. Google Sheets access
+## 3. Google Sheets access
 
 - **Share the season roster spreadsheet** with the app’s service account so it can read (and optionally write) data.  
   In the sheet: **Share** → add the service account email (e.g. from `.google-service-account.json` → `client_email`) with at least **Viewer** (or **Editor** if the app writes availability).  
@@ -28,7 +47,7 @@ See [AUTHENTICATION_SETUP.md](AUTHENTICATION_SETUP.md) for service account detai
 
 ---
 
-## 3. Roster sheet layout (first data row)
+## 4. Roster sheet layout (first data row)
 
 If your roster sheet has a different layout than “row 1 = header, row 2 = first player,” update the constant so portal login and roster reads use the correct row.
 
@@ -38,7 +57,7 @@ If your roster sheet has a different layout than “row 1 = header, row 2 = firs
 
 ---
 
-## 4. Portal UI and links (player-facing)
+## 5. Portal UI and links (player-facing)
 
 All of these live in **`src/app/player-portal/[portalId]/page.tsx`**. Decide each season and update as needed.
 
@@ -59,14 +78,14 @@ All of these live in **`src/app/player-portal/[portalId]/page.tsx`**. Decide eac
 
 ---
 
-## 5. Team updates and newsletter (Buttondown)
+## 6. Team updates and newsletter (Buttondown)
 
 - **Recent Team Updates** on the portal home come from the **public Buttondown RSS** at `https://buttondown.com/madisonultimate/rss` (cached 5 minutes). No API key needed. Ensure web archives are enabled in Buttondown so the RSS feed is available.
 - **Mailing list status** on the player page (whether parent/student emails are subscribed) uses the Buttondown Subscribers API when `BUTTONDOWN_API_KEY` is set (cached 5 minutes). See [AUTHENTICATION_SETUP.md](AUTHENTICATION_SETUP.md#getting-a-buttondown-api-key) for how to get the key.
 
 ---
 
-## 6. Game and team setup
+## 7. Game and team setup
 
 In **`src/lib/game-config.ts`**:
 
@@ -76,7 +95,7 @@ Sheet structure (single team vs Blue/Gold, etc.) is configured in the codebase a
 
 ---
 
-## 7. Special portal behaviors (Bye, Cancelled, etc.)
+## 8. Special portal behaviors (Bye, Cancelled, etc.)
 
 These behaviors are driven by values in the **Practice Info** and **Game Info** sheets.
 
@@ -130,6 +149,9 @@ These behaviors are driven by values in the **Practice Info** and **Game Info** 
 
 ## Quick reference: files to touch each season
 
+- **`package.json` / `package-lock.json`** – npm updates; `engines.node` for the Active LTS (Vercel).
+- **`.github/workflows/test.yml`** – `node-version` matching that LTS; keep `actions/checkout` and `actions/setup-node` on versions that run on a supported Node action runtime.
+- **`@types/node`** – major matching the runtime, not Current.
 - **`.env.local`** – `ROSTER_SHEET_ID`, `SPS_FINAL_FORMS_FOLDER_ID`; optionally `TEAM_MAILING_LIST_FOLDER_ID`, `BUTTONDOWN_API_KEY`.
 - **Sheets integration test sheet** – `SIGNUPS_SHEET_ID_TEST` needs a new test spreadsheet each season once the real Signups sheet's schema is finalized; see "Recreating the test sheet" in [docs/TEST_DESIGN.md](docs/TEST_DESIGN.md).
 - **`src/lib/sheet-config.ts`** – `ROSTER_FIRST_DATA_ROW` if your roster has more than one header row (e.g. first data row is not row 2).
