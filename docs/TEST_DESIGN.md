@@ -7,7 +7,7 @@ This document describes how we test the Madison Ultimate app locally: which fram
 We use **Vitest** for unit tests.
 
 - **Why Vitest**: Fast, good ESM and TypeScript support, and works well with Next.js path aliases (`@/`). No Jest config or transform quirks. Same `describe`/`it`/`expect` style.
-- **Config**: [vitest.config.ts](../vitest.config.ts) at repo root. `environment: 'node'` (no DOM). `include`: `src/**/*.test.ts`, `src/**/*.spec.ts`. Path alias `@` → `./src` matches [tsconfig.json](../tsconfig.json).
+- **Config**: [vitest.config.mts](../vitest.config.mts) at repo root. `environment: 'node'` (no DOM). `include`: `src/**/*.test.ts`, `src/**/*.spec.ts`. Path alias `@` → `./src` matches [tsconfig.json](../tsconfig.json).
 - **Scripts**: `npm run test` (watch), `npm run test:run` (single run).
 
 ## Where we mock
@@ -120,7 +120,7 @@ npm run test:run          # single run (unit, mocked; e.g. for CI, and the pre-c
 npm run test:integration  # single run against the real Sheets integration test sheet
 ```
 
-Unit tests live under `src/` with names `*.test.ts` or `*.spec.ts`, excluding `src/__tests__/integration/`. The integration suite lives only under `src/__tests__/integration/` and uses its own [vitest.integration.config.ts](../vitest.integration.config.ts).
+Unit tests live under `src/` with names `*.test.ts` or `*.spec.ts`, excluding `src/__tests__/integration/`. The integration suite lives only under `src/__tests__/integration/` and uses its own [vitest.integration.config.mts](../vitest.integration.config.mts).
 
 ## Layer 2: Sheets integration tests
 
