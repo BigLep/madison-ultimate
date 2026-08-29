@@ -11,7 +11,10 @@ export function signupRecord(overrides: Partial<SignupRecord> = {}): SignupRecor
   for (const column of Object.values(SIGNUPS_COLUMNS)) {
     record[column] = '';
   }
-  return { ...record, ...overrides };
+  // Partial<SignupRecord> on a plain string-index type allows `undefined` per TS's handling of
+  // index signatures; callers only ever pass actual strings, so this is a typing artifact, not
+  // a real possibility.
+  return { ...record, ...overrides } as SignupRecord;
 }
 
 /** Player-section fields that isPlayerInfoComplete requires (everything except Other Info). */
