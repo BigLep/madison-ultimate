@@ -51,8 +51,12 @@ _Avoid_: prefill (ambiguous about ownership after the copy)
 ### Photos and media
 
 **Player Photo**:
-The identification photo a family uploads for a player, shown in the player's own portal page and used by coaches to learn names. Wanted for every player, regardless of media preference.
+The identification photo a family uploads for a player, shown in the player's own portal page and used by coaches to learn names. Wanted for every player, regardless of media preference. Stored and identified by PlayerID, never by the family's name for the player; a human-readable name is only ever generated at display time. Replacing it overwrites in place; there is no history of earlier photos.
 _Avoid_: headshot, media
+
+**Photo Carryover**:
+Copying a returning player's Player Photo from the prior season into the current season's signup row, the moment that row is matched to the prior season's roster by SPS Student ID, so returning families don't have to re-upload. Happens automatically, and never overwrites a Player Photo the family has already set for the current season.
+_Avoid_: photo migration, backfill
 
 **Media Opt-Out**:
 A family's declaration that photos of their player must not appear in team communications or be shared within the team. Does not affect the Player Photo. The team never posts to social media for anyone, opted out or not.

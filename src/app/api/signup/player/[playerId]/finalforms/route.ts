@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { findSignupByPlayerId, updateSignupRow } from '../../../../../../lib/signups-sheet';
 import { SIGNUPS_COLUMNS } from '../../../../../../lib/signups-config';
 import { findFinalFormsMatch, seededFieldsFromFinalForms } from '../../../../../../lib/final-forms';
+import { carryOverPhotoFromLastSeason } from '../../../../../../lib/photo-carryover';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ playerId: string }> }) {
   try {
@@ -18,8 +19,27 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     // spsStudentId is authoritative once set: write it back only the first time we join (never
     // overwrite), and never for a magic-name test fixture.
+    let photoCarriedOver = false;
     if (!match.isTest && !existing.record[SIGNUPS_COLUMNS.SPS_STUDENT_ID] && match.record.studentId) {
-      await updateSignupRow(playerId, { [SIGNUPS_COLUMNS.SPS_STUDENT_ID]: match.record.studentId });
+      const updates: Record<string, string> = { [SIGNUPS_COLUMNS.SPS_STUDENT_ID]: match.record.studentId };
+
+      // Photo Carryover (ADR 0003): a fresh match to a returning player is the one moment we
+      // know both their Fall 2025 identity and that this is a first-time join, so it's the
+      // natural hook for bringing their old photo forward. Never overwrites a photo the family
+      // already set this season; failures here must never break Final Forms status display.
+      if (!existing.record[SIGNUPS_COLUMNS.PHOTO_DRIVE_FILE_ID]) {
+        try {
+          const carriedPhotoFileId = await carryOverPhotoFromLastSeason(playerId, match.record.studentId);
+          if (carriedPhotoFileId) {
+            updates[SIGNUPS_COLUMNS.PHOTO_DRIVE_FILE_ID] = carriedPhotoFileId;
+            photoCarriedOver = true;
+          }
+        } catch (error) {
+          console.error('Error carrying over last season\'s photo:', error);
+        }
+      }
+
+      await updateSignupRow(playerId, updates);
     }
 
     // Seeded fields (spec: "use it or enter something different") are offered only while the
@@ -54,6 +74,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       physicalCleared: match.record.physicalCleared,
       physicalClearanceExpiration: match.record.physicalClearanceExpiration,
       seeded,
+      photoCarriedOver,
     });
   } catch (error) {
     console.error('Error fetching Final Forms status:', error);

@@ -20,6 +20,9 @@ export const SHEET_CONFIG = {
   SPS_FINAL_FORMS_FOLDER_ID: process.env.SPS_FINAL_FORMS_FOLDER_ID,
   TEAM_MAILING_LIST_FOLDER_ID: process.env.TEAM_MAILING_LIST_FOLDER_ID,
   ADDITIONAL_QUESTIONNAIRE_SHEET_ID: process.env.ADDITIONAL_QUESTIONNAIRE_SHEET_ID,
+  // Photo Carryover (docs/adr/0003): Fall 2025 coach sheet, read for its StudentID/Photo
+  // Download columns so a returning player's old photo can be copied forward.
+  FALL_2025_ROSTER_SHEET_ID: process.env.FALL_2025_ROSTER_SHEET_ID,
 } as const;
 
 // Helper function to get a metadata range for any sheet

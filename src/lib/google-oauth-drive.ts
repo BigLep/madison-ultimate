@@ -77,3 +77,24 @@ export async function uploadPlayerPhoto(
 function bufferToStream(buffer: Buffer) {
   return Readable.from(buffer);
 }
+
+/**
+ * Downloads a Drive file's bytes and mime type through the same OAuth identity photo uploads
+ * use. Returns null (rather than throwing) when the file is missing or inaccessible, so callers
+ * like Photo Carryover can treat that as "nothing to carry over" instead of a hard failure.
+ */
+export async function downloadDriveFile(fileId: string): Promise<{ buffer: Buffer; mimeType: string } | null> {
+  try {
+    const auth = getOAuthClient();
+    const drive = google.drive({ version: 'v3', auth });
+
+    const metadata = await drive.files.get({ fileId, fields: 'mimeType' });
+    const mimeType = metadata.data.mimeType || 'application/octet-stream';
+
+    const res = await drive.files.get({ fileId, alt: 'media' }, { responseType: 'arraybuffer' });
+    return { buffer: Buffer.from(res.data as ArrayBuffer), mimeType };
+  } catch (error) {
+    console.error(`Error downloading Drive file ${fileId}:`, error);
+    return null;
+  }
+}

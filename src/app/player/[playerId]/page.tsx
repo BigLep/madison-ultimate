@@ -41,7 +41,17 @@ export default function PlayerPage() {
       try {
         const ffRes = await fetch(`/api/signup/player/${playerId}/finalforms`)
         const ffData = await ffRes.json()
-        if (ffRes.ok && ffData.success && ffData.found) setSeeded(ffData.seeded || {})
+        if (ffRes.ok && ffData.success && ffData.found) {
+          setSeeded(ffData.seeded || {})
+
+          // A fresh Final Forms match can carry a returning player's photo forward (ADR 0003);
+          // re-fetch so the just-carried-over photo shows up without the family refreshing.
+          if (ffData.photoCarriedOver) {
+            const refreshed = await fetch(`/api/signup/player/${playerId}`)
+            const refreshedData = await refreshed.json()
+            if (refreshed.ok && refreshedData.success) setRecord(refreshedData.record)
+          }
+        }
       } catch {
         // Seeded fields are a convenience; the plain form still works without them.
       }
