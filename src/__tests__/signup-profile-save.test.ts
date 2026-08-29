@@ -11,15 +11,17 @@ vi.mock('@/lib/signups-sheet', () => ({
 
 vi.mock('@/lib/buttondown-api', () => ({
   subscribeEmail: vi.fn(),
+  subscribeUnlessUnsubscribed: vi.fn(),
 }));
 
 import { findSignupByPlayerId, updateSignupRow } from '@/lib/signups-sheet';
-import { subscribeEmail } from '@/lib/buttondown-api';
+import { subscribeEmail, subscribeUnlessUnsubscribed } from '@/lib/buttondown-api';
 import { PUT } from '@/app/api/signup/player/[playerId]/route';
 
 const findSignup = vi.mocked(findSignupByPlayerId);
 const updateRow = vi.mocked(updateSignupRow);
 const subscribe = vi.mocked(subscribeEmail);
+const subscribeUnlessUnsub = vi.mocked(subscribeUnlessUnsubscribed);
 
 const PLAYER_ID = 'testplayerid';
 const routeParams = { params: Promise.resolve({ playerId: PLAYER_ID }) };
@@ -39,10 +41,10 @@ describe('PUT /api/signup/player/[playerId]', () => {
       rowNumber: 2,
     });
     updateRow.mockImplementation(async (_id, fields) => signupRecord(fields));
-    subscribe.mockResolvedValue(true);
+    subscribeUnlessUnsub.mockResolvedValue(true);
   });
 
-  it('subscribes caretaker 1 and 2 emails on save, never the student emails', async () => {
+  it('subscribes caretaker and student personal emails on save, never SPS', async () => {
     const res = await PUT(
       putRequest(
         validProfile({
@@ -55,21 +57,22 @@ describe('PUT /api/signup/player/[playerId]', () => {
       routeParams
     );
     expect(res.status).toBe(200);
-    expect(subscribe).toHaveBeenCalledTimes(2);
-    expect(subscribe).toHaveBeenCalledWith('ct1@example.com');
-    expect(subscribe).toHaveBeenCalledWith('ct2@example.com');
-    expect(subscribe).not.toHaveBeenCalledWith('student@example.com');
-    expect(subscribe).not.toHaveBeenCalledWith('student@seattleschools.org');
-  });
-
-  it('does not call Buttondown when no caretaker emails are present', async () => {
-    const res = await PUT(putRequest(validProfile()), routeParams);
-    expect(res.status).toBe(200);
+    expect(subscribeUnlessUnsub).toHaveBeenCalledTimes(3);
+    expect(subscribeUnlessUnsub).toHaveBeenCalledWith('ct1@example.com');
+    expect(subscribeUnlessUnsub).toHaveBeenCalledWith('ct2@example.com');
+    expect(subscribeUnlessUnsub).toHaveBeenCalledWith('student@example.com');
+    expect(subscribeUnlessUnsub).not.toHaveBeenCalledWith('student@seattleschools.org');
     expect(subscribe).not.toHaveBeenCalled();
   });
 
+  it('does not call Buttondown when no eligible emails are present', async () => {
+    const res = await PUT(putRequest(validProfile()), routeParams);
+    expect(res.status).toBe(200);
+    expect(subscribeUnlessUnsub).not.toHaveBeenCalled();
+  });
+
   it('still saves the profile when subscribe returns false (Buttondown must not block save)', async () => {
-    subscribe.mockResolvedValue(false);
+    subscribeUnlessUnsub.mockResolvedValue(false);
     const res = await PUT(
       putRequest(validProfile({ caretaker1Email: 'ct1@example.com' })),
       routeParams

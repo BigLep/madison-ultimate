@@ -89,6 +89,46 @@ function invalidateSubscriberCache(): void {
   subscriberCache = null;
 }
 
+export type SubscriberStatus = 'subscribed' | 'unsubscribed' | 'absent';
+
+/**
+ * Look up one email on Buttondown, including people who have opted out.
+ * Returns null if the API key is missing or the request fails.
+ */
+export async function getSubscriberStatus(email: string): Promise<SubscriberStatus | null> {
+  const apiKey = process.env.BUTTONDOWN_API_KEY;
+  const trimmed = email?.trim();
+  if (!trimmed) return 'absent';
+  if (!apiKey) return null;
+
+  try {
+    const res = await fetch(`${API_BASE}/subscribers/${encodeURIComponent(trimmed)}`, {
+      headers: { Authorization: `Token ${apiKey}` },
+      next: { revalidate: 0 },
+    });
+    if (res.status === 404) return 'absent';
+    if (!res.ok) return null;
+
+    const data: { type?: string; subscriber_type?: string } = await res.json();
+    const type = data.type ?? data.subscriber_type;
+    return type === 'unsubscribed' ? 'unsubscribed' : 'subscribed';
+  } catch (error) {
+    console.error('Error looking up Buttondown subscriber:', error);
+    return null;
+  }
+}
+
+/**
+ * Subscribe an email unless it is already on the list or has opted out.
+ * Never re-subscribes an unsubscribed address. Never throws.
+ */
+export async function subscribeUnlessUnsubscribed(email: string): Promise<boolean> {
+  const status = await getSubscriberStatus(email);
+  if (status === 'unsubscribed' || status === 'subscribed') return true;
+  if (status === 'absent') return subscribeEmail(email);
+  return false;
+}
+
 /**
  * Subscribe an email as type "regular" (skips double opt-in/confirmation email), using the
  * collision-behavior header so re-saving an already-subscribed email never errors.

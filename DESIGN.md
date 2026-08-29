@@ -705,6 +705,22 @@ When updating the application's PWA (Progressive Web App) icons, the following f
 - **iOS-Specific**: Using only PWA manifest icons without separate Apple meta tags
 - **iOS-Specific**: Wrong apple-touch-icon sizes causing blurry icons on different iOS devices
 
+## Fall 2026 signup: Final Forms seeding
+
+Fall 2026 signup architecture lives in `docs/adr/` (0001 identity, 0002 Signups sheet as system of record, 0003 photo carryover, 0004 seeded-field copy) and the glossary in `CONTEXT.md`. This section records the seeding data-flow, which is easy to get wrong.
+
+**Rule.** On first Final Forms join only, `GET /api/signup/player/[playerId]/finalforms` writes every empty Seeded Field into the Signups sheet immediately. The family does not have to click Save. After `spsStudentId` is on the row, later visits never copy those fields again — an empty cell stays empty. Non-empty cells are never overwritten.
+
+**Why persist without Save.** Contact info we already have from Final Forms should be on the row even if the family never submits the profile form. Eligible emails (caretakers and student personal, never SPS) are auto-subscribed on that first join and again on Save, unless Buttondown already lists them as unsubscribed.
+
+**Newsletter.** Auto-subscribe never re-adds someone who left. The explicit Join button on the form is the only path that resubscribes. Family-facing copy: `Newsletter: subscribed|not subscribed` plus a Join or Leave button (`CONTEXT.md`).
+
+**Why not every visit.** Copy-if-empty on every GET would undo a family clearing a field. Copy-on-accept (“Use it” hints) left the row empty unless they clicked through.
+
+**Trade-off.** A family that clears a seeded value after join cannot get it back from Final Forms by reloading; they retype it, or a coach edits the sheet.
+
+See [docs/adr/0004-seeded-fields-copy-on-first-join.md](docs/adr/0004-seeded-fields-copy-on-first-join.md).
+
 ## Development Best Practices
 
 ### Sheet Data Column Mapping

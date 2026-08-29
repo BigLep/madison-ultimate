@@ -31,7 +31,7 @@ Signup routes go through `@/lib/signups-sheet`, `@/lib/buttondown-api`, and (for
 | Seam | Mocked in | Why |
 |---|---|---|
 | `@/lib/signups-sheet` (`findSignupByIdentity`, `findSignupByPlayerId`, `createSignupRow`, `updateSignupRow`) | lookup, mailing, profile-save, finalforms route | Avoids the real Signups spreadsheet. (Layer 2 integration covers the real sheet.) |
-| `@/lib/buttondown-api` (`isSubscriber`, `subscribeEmail`, `unsubscribeEmail`) | mailing, profile-save | Avoids the real newsletter API. |
+| `@/lib/buttondown-api` (`isSubscriber`, `subscribeEmail`, `unsubscribeEmail`, `subscribeUnlessUnsubscribed`) | mailing, profile-save, finalforms | Avoids the real newsletter API. |
 | `@/lib/google-api` (`getMostRecentFileInfoFromFolder`, `downloadCsvFromDrive`) plus `SHEET_CONFIG.SPS_FINAL_FORMS_FOLDER_ID` | Final Forms join | Feeds a canned CSV into `findFinalFormsMatch` without Drive. `google-api` must be mocked in any file that loads `final-forms.ts`, because that module initializes auth on import. |
 | `@/lib/signup-deadlines.getDeadlineState` | lookup route | Lets lookup tests pin open vs closed without depending on today's date. Deadlines themselves are tested by passing an explicit `Date` into `getDeadlineState`. |
 
@@ -72,7 +72,7 @@ Pure functions (`player-identity`, `signup-checklist`, `signup-deadlines`, `sign
 
 ## Signup domain states (layer 1)
 
-These are the family-facing states from ADRs 0001–0002 and `docs/fall-2026/signup-spec.md`. Add a unit test here when you add a new state, rather than relying only on a manual click-through.
+These are the family-facing states from ADRs 0001–0004 and `docs/fall-2026/signup-spec.md`. Add a unit test here when you add a new state, rather than relying only on a manual click-through.
 
 **Identity** ([src/__tests__/player-identity.test.ts](../src/__tests__/player-identity.test.ts), [src/__tests__/signup-lookup.test.ts](../src/__tests__/signup-lookup.test.ts))
 
@@ -87,7 +87,7 @@ These are the family-facing states from ADRs 0001–0002 and `docs/fall-2026/sig
 
 - Magic last names: `TestNotFound` plus the four found signature/clearance combos; case/spacing insensitive; Drive is not called; `isTest` is set.
 - Live join: unique last+DOB (including student-signed / caretaker-unsigned), twins by legal first name, preferred-name fallback, ambiguous twins return null, `spsStudentId` is authoritative, missing id / missing name → not found.
-- Route: first join writes `spsStudentId`; never overwrite; never write for a fixture; seeded fields offered only while the signup row field is empty.
+- Route: first join writes `spsStudentId`; never overwrite; never write `spsStudentId` for a fixture; empty seed fields are copied only on first join (fixtures: only while every seed column is still empty); never overwrite a saved seed value; never refill after the join is established.
 - Checklist: Final Forms is done only when found **and** all three flags are true.
 
 **Mailing list** ([src/__tests__/signup-mailing.test.ts](../src/__tests__/signup-mailing.test.ts), [src/__tests__/signup-profile-save.test.ts](../src/__tests__/signup-profile-save.test.ts))
@@ -95,7 +95,7 @@ These are the family-facing states from ADRs 0001–0002 and `docs/fall-2026/sig
 - Eligible emails: caretaker 1, caretaker 2, student personal. SPS email is never eligible. Blank emails are omitted.
 - GET mixed on/off status per email.
 - POST join and opt-out for caretaker and student personal; ineligible / SPS → 400; Buttondown failure → 502.
-- Profile save auto-subscribes caretaker 1 and 2, never student emails; a false subscribe result does not block the sheet write.
+- Auto-subscribe (first Final Forms join and profile save) covers caretaker 1/2 and student personal, never SPS; skips addresses already unsubscribed in Buttondown; a false subscribe result does not block the sheet write. Fixtures never hit the real list.
 
 **Caretakers / schema / checklist / deadlines**
 
@@ -156,7 +156,7 @@ A third suite, `src/__tests__/integration/photo-drive.integration.test.ts`, call
 
 ## Layer 3: browser/E2E scenarios (manual, ad hoc)
 
-There’s no Playwright or other headless-browser suite in this repo. Join logic, mailing eligibility, and lookup/save routes are covered in layer 1. Signup-flow **UI** changes (copy, layout, collapsed caretaker 2, mailing widget, photo upload) are instead spot-checked on demand by driving the real app in Chrome and walking the magic-last-name scenario matrix documented in `docs/fall-2026/signup-test-fixtures.md` (`TestNotFound` through `TestCleared`), at both desktop and mobile (375×812) viewport widths, with screenshots for visual comparison. This is intentionally not automated/CI-wired; ask for it explicitly when it matters.
+There’s no Playwright or other headless-browser suite in this repo. Join logic, mailing eligibility, and lookup/save routes are covered in layer 1. Signup-flow **UI** changes (copy, layout, caretaker 2 always visible, mailing widget, photo upload) are instead spot-checked on demand by driving the real app in Chrome and walking the magic-last-name scenario matrix documented in `docs/fall-2026/signup-test-fixtures.md` (`TestNotFound` through `TestCleared`), at both desktop and mobile (375×812) viewport widths, with screenshots for visual comparison. This is intentionally not automated/CI-wired; ask for it explicitly when it matters.
 
 ## Pre-commit hook
 

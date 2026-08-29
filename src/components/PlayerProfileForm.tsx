@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { LearnMoreLink } from '@/components/HelpBubble'
 import { PhotoUpload } from '@/components/PhotoUpload'
 import { MailingStatusInline } from '@/components/MailingStatusInline'
+import { APP_CONFIG } from '@/lib/app-config'
 import {
   profileFormSchema,
   ProfileFormValues,
@@ -42,23 +43,9 @@ function HelperText({ children }: { children: React.ReactNode }) {
   return <p className="text-xs" style={{ color: 'var(--secondary-text)' }}>{children}</p>
 }
 
-/** Seeded field hint (ADR 0002): "this is what we have; use it or enter something different." Unmasked. */
-function SeededHint({ value, onUse }: { value?: string; onUse: () => void }) {
-  if (!value) return null
-  return (
-    <p className="text-xs flex items-center gap-2 flex-wrap" style={{ color: 'var(--secondary-text)' }}>
-      <span>From Final Forms: {value}</span>
-      <button type="button" className="underline py-1 px-1" style={{ color: 'var(--accent)' }} onClick={onUse}>
-        Use it
-      </button>
-    </p>
-  )
-}
-
 export function PlayerProfileForm({
   playerId,
   defaultValues,
-  seeded = {},
   hasPhoto,
   onPhotoUploaded,
   refreshSignal,
@@ -66,7 +53,6 @@ export function PlayerProfileForm({
 }: {
   playerId: string
   defaultValues: ProfileFormValues
-  seeded?: Record<string, string>
   hasPhoto: boolean
   onPhotoUploaded: () => void
   /** Bumped after each save so mailing-status widgets re-fetch against the just-saved emails. */
@@ -84,9 +70,6 @@ export function PlayerProfileForm({
     defaultValues,
   })
 
-  const [showCaretaker2, setShowCaretaker2] = useState(
-    Boolean(defaultValues.caretaker2Name || defaultValues.caretaker2Email || seeded.caretaker2Name || seeded.caretaker2Email)
-  )
   const [saveError, setSaveError] = useState('')
   const volunteerRoles = watch('volunteerRoles') || []
   const pronouns = watch('pronouns') || []
@@ -167,7 +150,6 @@ export function PlayerProfileForm({
                 <option key={g} value={g}>{g}</option>
               ))}
             </select>
-            <SeededHint value={seeded.grade} onUse={() => setValue('grade', seeded.grade!)} />
           </div>
         </div>
 
@@ -300,19 +282,16 @@ export function PlayerProfileForm({
           <Label style={fieldLabelStyle}>Player&apos;s personal email</Label>
           <Input type="email" {...register('studentPersonalEmail')} />
           <FieldError message={errors.studentPersonalEmail?.message} />
-          <SeededHint value={seeded.studentPersonalEmail} onUse={() => setValue('studentPersonalEmail', seeded.studentPersonalEmail!)} />
           <MailingStatusInline playerId={playerId} matchLabel="Student personal email" refreshSignal={refreshSignal} />
         </div>
         <div className="space-y-2">
           <Label style={fieldLabelStyle}>Player&apos;s SPS email</Label>
           <Input type="email" {...register('studentSpsEmail')} />
           <FieldError message={errors.studentSpsEmail?.message} />
-          <SeededHint value={seeded.studentSpsEmail} onUse={() => setValue('studentSpsEmail', seeded.studentSpsEmail!)} />
         </div>
         <div className="space-y-2">
           <Label style={fieldLabelStyle}>Player&apos;s cell phone</Label>
           <Input type="tel" {...register('studentCellPhone')} />
-          <SeededHint value={seeded.studentCellPhone} onUse={() => setValue('studentCellPhone', seeded.studentCellPhone!)} />
         </div>
       </section>
 
@@ -322,48 +301,35 @@ export function PlayerProfileForm({
           <Label style={fieldLabelStyle}>Caretaker 1 name<Req /></Label>
           <Input {...register('caretaker1Name')} />
           <FieldError message={errors.caretaker1Name?.message} />
-          <SeededHint value={seeded.caretaker1Name} onUse={() => setValue('caretaker1Name', seeded.caretaker1Name!)} />
         </div>
         <div className="space-y-2">
           <Label style={fieldLabelStyle}>Caretaker 1 email<Req /></Label>
           <Input type="email" {...register('caretaker1Email')} />
           <FieldError message={errors.caretaker1Email?.message} />
-          <SeededHint value={seeded.caretaker1Email} onUse={() => setValue('caretaker1Email', seeded.caretaker1Email!)} />
           <MailingStatusInline playerId={playerId} matchLabel="Caretaker 1" refreshSignal={refreshSignal} />
         </div>
         <div className="space-y-2">
           <Label style={fieldLabelStyle}>Caretaker 1 phone (the number to contact in an emergency)</Label>
           <Input type="tel" {...register('caretaker1Phone')} />
-          <SeededHint value={seeded.caretaker1Phone} onUse={() => setValue('caretaker1Phone', seeded.caretaker1Phone!)} />
         </div>
 
-        {!showCaretaker2 && (
-          <Button type="button" variant="outline" size="sm" onClick={() => setShowCaretaker2(true)}>
-            + Add a second caretaker
-          </Button>
-        )}
-
-        {showCaretaker2 && (
-          <div className="space-y-4 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
-            <div className="space-y-2">
-              <Label style={fieldLabelStyle}>Caretaker 2 name</Label>
-              <Input {...register('caretaker2Name')} />
-              <SeededHint value={seeded.caretaker2Name} onUse={() => setValue('caretaker2Name', seeded.caretaker2Name!)} />
-            </div>
-            <div className="space-y-2">
-              <Label style={fieldLabelStyle}>Caretaker 2 email</Label>
-              <Input type="email" {...register('caretaker2Email')} />
-              <FieldError message={errors.caretaker2Email?.message} />
-              <SeededHint value={seeded.caretaker2Email} onUse={() => setValue('caretaker2Email', seeded.caretaker2Email!)} />
-              <MailingStatusInline playerId={playerId} matchLabel="Caretaker 2" refreshSignal={refreshSignal} />
-            </div>
-            <div className="space-y-2">
-              <Label style={fieldLabelStyle}>Caretaker 2 phone</Label>
-              <Input type="tel" {...register('caretaker2Phone')} />
-              <SeededHint value={seeded.caretaker2Phone} onUse={() => setValue('caretaker2Phone', seeded.caretaker2Phone!)} />
-            </div>
+        <div className="space-y-4 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
+          <HelperText>A second caretaker is optional.</HelperText>
+          <div className="space-y-2">
+            <Label style={fieldLabelStyle}>Caretaker 2 name</Label>
+            <Input {...register('caretaker2Name')} />
           </div>
-        )}
+          <div className="space-y-2">
+            <Label style={fieldLabelStyle}>Caretaker 2 email</Label>
+            <Input type="email" {...register('caretaker2Email')} />
+            <FieldError message={errors.caretaker2Email?.message} />
+            <MailingStatusInline playerId={playerId} matchLabel="Caretaker 2" refreshSignal={refreshSignal} />
+          </div>
+          <div className="space-y-2">
+            <Label style={fieldLabelStyle}>Caretaker 2 phone</Label>
+            <Input type="tel" {...register('caretaker2Phone')} />
+          </div>
+        </div>
       </section>
 
       <section id="media" className="space-y-4 scroll-mt-4">
@@ -482,18 +448,17 @@ export function PlayerProfileForm({
         className="text-sm border-t pt-4"
         style={{ borderColor: 'var(--border)', color: 'var(--secondary-text)' }}
       >
-        Saving subscribes the caretaker email(s) above to the Madison Ultimate newsletter, our main way of
-        reaching families. You can opt out at any point, right from this page or{' '}
+        Saving subscribes the caretaker and player personal emails above to the{' '}
         <a
-          href="https://buttondown.com/madisonultimate/"
+          href={APP_CONFIG.MAILING_LIST_JOIN_URL}
           target="_blank"
           rel="noopener noreferrer"
           className="underline"
           style={{ color: 'var(--accent)' }}
         >
-          here
-        </a>
-        .
+          Madison Ultimate newsletter
+        </a>, our main way of reaching families. Anyone who has already left stays unsubscribed. You
+        can leave at any point, right from this page.
       </div>
 
       {saveError && (

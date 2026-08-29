@@ -1,6 +1,7 @@
 // Mailing-list-eligible emails for a signup row, per docs/fall-2026/signup-plan.md section 7:
 // caretaker emails and the student's personal email. SPS student addresses are never offered
-// (external mail bounces) and students are never auto-subscribed.
+// (external mail bounces). Eligible emails are auto-subscribed on first Final Forms join and
+// on profile save, except addresses already marked unsubscribed in Buttondown.
 
 import { SIGNUPS_COLUMNS } from './signups-config';
 

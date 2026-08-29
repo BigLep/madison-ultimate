@@ -31,15 +31,21 @@ vi.mock('@/lib/photo-carryover', () => ({
   carryOverPhotoFromLastSeason: vi.fn(),
 }));
 
+vi.mock('@/lib/buttondown-api', () => ({
+  subscribeUnlessUnsubscribed: vi.fn(),
+}));
+
 import { findSignupByPlayerId, updateSignupRow } from '@/lib/signups-sheet';
 import { findFinalFormsMatch } from '@/lib/final-forms';
 import { carryOverPhotoFromLastSeason } from '@/lib/photo-carryover';
+import { subscribeUnlessUnsubscribed } from '@/lib/buttondown-api';
 import { GET } from '@/app/api/signup/player/[playerId]/finalforms/route';
 
 const findSignup = vi.mocked(findSignupByPlayerId);
 const updateRow = vi.mocked(updateSignupRow);
 const findMatch = vi.mocked(findFinalFormsMatch);
 const carryOverPhoto = vi.mocked(carryOverPhotoFromLastSeason);
+const subscribeUnlessUnsub = vi.mocked(subscribeUnlessUnsubscribed);
 
 const PLAYER_ID = 'testplayerid';
 const routeParams = { params: Promise.resolve({ playerId: PLAYER_ID }) };
@@ -55,6 +61,18 @@ const matchedRecord = finalFormsRecord({
   parent2Phone: '555-0102',
 });
 
+const MATCHED_SEED_UPDATES = {
+  [SIGNUPS_COLUMNS.GRADE]: '7',
+  [SIGNUPS_COLUMNS.STUDENT_PERSONAL_EMAIL]: 'player@example.com',
+  [SIGNUPS_COLUMNS.STUDENT_CELL_PHONE]: '555-0100',
+  [SIGNUPS_COLUMNS.CARETAKER_1_NAME]: 'Ct One',
+  [SIGNUPS_COLUMNS.CARETAKER_1_EMAIL]: 'ct1@example.com',
+  [SIGNUPS_COLUMNS.CARETAKER_1_PHONE]: '555-0101',
+  [SIGNUPS_COLUMNS.CARETAKER_2_NAME]: 'Ct Two',
+  [SIGNUPS_COLUMNS.CARETAKER_2_EMAIL]: 'ct2@example.com',
+  [SIGNUPS_COLUMNS.CARETAKER_2_PHONE]: '555-0102',
+};
+
 describe('GET /api/signup/player/[playerId]/finalforms', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -64,6 +82,7 @@ describe('GET /api/signup/player/[playerId]/finalforms', () => {
     });
     updateRow.mockImplementation(async (_id, fields) => signupRecord(fields));
     carryOverPhoto.mockResolvedValue(null);
+    subscribeUnlessUnsub.mockResolvedValue(true);
   });
 
   it('returns found: false when there is no join', async () => {
@@ -74,15 +93,29 @@ describe('GET /api/signup/player/[playerId]/finalforms', () => {
     expect(updateRow).not.toHaveBeenCalled();
   });
 
-  it('writes spsStudentId on the first real join and never for a magic-name fixture', async () => {
+  it('never writes spsStudentId for a magic-name fixture, but still copies empty seed fields', async () => {
     findMatch.mockResolvedValue({ record: matchedRecord, dataAsOf: '2026-08-28', isTest: true });
-    await GET(ffRequest(), routeParams);
-    expect(updateRow).not.toHaveBeenCalled();
+    const res = await GET(ffRequest(), routeParams);
+    expect(updateRow).toHaveBeenCalledWith(PLAYER_ID, MATCHED_SEED_UPDATES);
+    expect(updateRow.mock.calls[0][1][SIGNUPS_COLUMNS.SPS_STUDENT_ID]).toBeUndefined();
+    expect((await res.json()).fieldsCopied).toBe(true);
+    expect(subscribeUnlessUnsub).not.toHaveBeenCalled();
+  });
 
+  it('writes spsStudentId and empty seed fields on the first real join', async () => {
     findMatch.mockResolvedValue({ record: matchedRecord, dataAsOf: '2026-08-28' });
     const res = await GET(ffRequest(), routeParams);
-    expect(updateRow).toHaveBeenCalledWith(PLAYER_ID, { [SIGNUPS_COLUMNS.SPS_STUDENT_ID]: 'FF-001' });
-    expect((await res.json()).photoCarriedOver).toBe(false);
+    expect(updateRow).toHaveBeenCalledWith(PLAYER_ID, {
+      [SIGNUPS_COLUMNS.SPS_STUDENT_ID]: 'FF-001',
+      ...MATCHED_SEED_UPDATES,
+    });
+    const data = await res.json();
+    expect(data.photoCarriedOver).toBe(false);
+    expect(data.fieldsCopied).toBe(true);
+    expect(subscribeUnlessUnsub).toHaveBeenCalledTimes(3);
+    expect(subscribeUnlessUnsub).toHaveBeenCalledWith('player@example.com');
+    expect(subscribeUnlessUnsub).toHaveBeenCalledWith('ct1@example.com');
+    expect(subscribeUnlessUnsub).toHaveBeenCalledWith('ct2@example.com');
   });
 
   it('carries over last season\'s photo on the first real join and reports photoCarriedOver', async () => {
@@ -95,6 +128,7 @@ describe('GET /api/signup/player/[playerId]/finalforms', () => {
     expect(updateRow).toHaveBeenCalledWith(PLAYER_ID, {
       [SIGNUPS_COLUMNS.SPS_STUDENT_ID]: 'FF-001',
       [SIGNUPS_COLUMNS.PHOTO_DRIVE_FILE_ID]: 'carried-over-file-id',
+      ...MATCHED_SEED_UPDATES,
     });
     expect((await res.json()).photoCarriedOver).toBe(true);
   });
@@ -112,11 +146,14 @@ describe('GET /api/signup/player/[playerId]/finalforms', () => {
     const res = await GET(ffRequest(), routeParams);
 
     expect(carryOverPhoto).not.toHaveBeenCalled();
-    expect(updateRow).toHaveBeenCalledWith(PLAYER_ID, { [SIGNUPS_COLUMNS.SPS_STUDENT_ID]: 'FF-001' });
+    expect(updateRow).toHaveBeenCalledWith(PLAYER_ID, {
+      [SIGNUPS_COLUMNS.SPS_STUDENT_ID]: 'FF-001',
+      ...MATCHED_SEED_UPDATES,
+    });
     expect((await res.json()).photoCarriedOver).toBe(false);
   });
 
-  it('does not overwrite an existing spsStudentId', async () => {
+  it('does not copy seed fields again after the join is established', async () => {
     findSignup.mockResolvedValue({
       record: signupRecord({
         [SIGNUPS_COLUMNS.PLAYER_ID]: PLAYER_ID,
@@ -125,11 +162,13 @@ describe('GET /api/signup/player/[playerId]/finalforms', () => {
       rowNumber: 2,
     });
     findMatch.mockResolvedValue({ record: matchedRecord, dataAsOf: '2026-08-28' });
-    await GET(ffRequest(), routeParams);
+    const res = await GET(ffRequest(), routeParams);
     expect(updateRow).not.toHaveBeenCalled();
+    expect((await res.json()).fieldsCopied).toBe(false);
+    expect(subscribeUnlessUnsub).not.toHaveBeenCalled();
   });
 
-  it('offers seeded fields only while the signup row field is still empty', async () => {
+  it('on first real join copies empty seed fields and never overwrites a saved value', async () => {
     findSignup.mockResolvedValue({
       record: signupRecord({
         [SIGNUPS_COLUMNS.PLAYER_ID]: PLAYER_ID,
@@ -138,15 +177,60 @@ describe('GET /api/signup/player/[playerId]/finalforms', () => {
       }),
       rowNumber: 2,
     });
-    findMatch.mockResolvedValue({ record: matchedRecord, dataAsOf: '2026-08-28', isTest: true });
+    findMatch.mockResolvedValue({ record: matchedRecord, dataAsOf: '2026-08-28' });
 
     const res = await GET(ffRequest(), routeParams);
     const data = await res.json();
     expect(data.found).toBe(true);
-    expect(data.seeded.grade).toBeUndefined();
-    expect(data.seeded.caretaker1Name).toBe('Ct One');
-    expect(data.seeded.caretaker2Name).toBe('Ct Two');
+    expect(data.fieldsCopied).toBe(true);
     expect(data.parentSigned).toBe(true);
     expect(data.studentSigned).toBe(false);
+    const written = updateRow.mock.calls[0][1];
+    expect(written[SIGNUPS_COLUMNS.SPS_STUDENT_ID]).toBe('FF-001');
+    expect(written[SIGNUPS_COLUMNS.GRADE]).toBeUndefined();
+    expect(written).toEqual({
+      [SIGNUPS_COLUMNS.SPS_STUDENT_ID]: 'FF-001',
+      [SIGNUPS_COLUMNS.STUDENT_PERSONAL_EMAIL]: 'player@example.com',
+      [SIGNUPS_COLUMNS.STUDENT_CELL_PHONE]: '555-0100',
+      [SIGNUPS_COLUMNS.CARETAKER_1_NAME]: 'Ct One',
+      [SIGNUPS_COLUMNS.CARETAKER_1_EMAIL]: 'ct1@example.com',
+      [SIGNUPS_COLUMNS.CARETAKER_1_PHONE]: '555-0101',
+      [SIGNUPS_COLUMNS.CARETAKER_2_NAME]: 'Ct Two',
+      [SIGNUPS_COLUMNS.CARETAKER_2_EMAIL]: 'ct2@example.com',
+      [SIGNUPS_COLUMNS.CARETAKER_2_PHONE]: '555-0102',
+    });
+    expect(subscribeUnlessUnsub).toHaveBeenCalledWith('player@example.com');
+    expect(subscribeUnlessUnsub).toHaveBeenCalledWith('ct1@example.com');
+    expect(subscribeUnlessUnsub).toHaveBeenCalledWith('ct2@example.com');
+  });
+
+  it('does not copy remaining empty seed fields on a fixture after any seed value exists', async () => {
+    findSignup.mockResolvedValue({
+      record: signupRecord({
+        [SIGNUPS_COLUMNS.PLAYER_ID]: PLAYER_ID,
+        [SIGNUPS_COLUMNS.GRADE]: '8',
+      }),
+      rowNumber: 2,
+    });
+    findMatch.mockResolvedValue({ record: matchedRecord, dataAsOf: '2026-08-28', isTest: true });
+    const res = await GET(ffRequest(), routeParams);
+    expect(updateRow).not.toHaveBeenCalled();
+    expect((await res.json()).fieldsCopied).toBe(false);
+  });
+
+  it('does not write when every seed field is already filled', async () => {
+    findSignup.mockResolvedValue({
+      record: signupRecord({
+        [SIGNUPS_COLUMNS.PLAYER_ID]: PLAYER_ID,
+        [SIGNUPS_COLUMNS.SPS_STUDENT_ID]: 'FF-EXISTING',
+        ...MATCHED_SEED_UPDATES,
+      }),
+      rowNumber: 2,
+    });
+    findMatch.mockResolvedValue({ record: matchedRecord, dataAsOf: '2026-08-28' });
+    const res = await GET(ffRequest(), routeParams);
+    expect(updateRow).not.toHaveBeenCalled();
+    expect((await res.json()).fieldsCopied).toBe(false);
+    expect(subscribeUnlessUnsub).not.toHaveBeenCalled();
   });
 });

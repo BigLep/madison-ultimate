@@ -2,7 +2,7 @@
 
 Review artifact from the 2026-08-26 design grill (round 3), amended by round 2 of implementation feedback (2026-08-27, see `docs/fall-2026/signup-grill-round-2.md`). This is the one-pass guarantee: every question the form asks, in order, with its options, seed source, and sheet column, plus every piece of family-facing copy. Read top to bottom once and ask "is anything missing?". Comment inline; approval here means build starts against exactly this.
 
-Conventions: sheet columns live in the `Signups` tab of the "2026 Fall Signups" spreadsheet. "Seed" means shown from Final Forms as "this is what we have; use it or enter something different", copied once on accept, ours thereafter. All fields remain editable on return visits unless noted.
+Conventions: sheet columns live in the `Signups` tab of the "2026 Fall Signups" spreadsheet. "Seed" means copied from Final Forms into an empty signup-row cell on first join, then owned by our row. All fields remain editable on return visits unless noted.
 
 ## Step 0: identity (the lookup)
 
@@ -50,7 +50,7 @@ Elementary school options: Alki Elementary School; Arbor Heights Elementary Scho
 
 ### 👪 Caretakers
 
-Caretaker 2 group is identical to Caretaker 1 and collapsible ("add a second caretaker").
+Caretaker 2 group is identical to Caretaker 1, always visible, and optional.
 
 | # | Question label | Type | Required | Seed | Sheet column |
 |---|---|---|---|---|---|
@@ -97,13 +97,13 @@ Supporting copy: C14.
 
 ### Save
 
-Above the save button, copy block C2 (mailing-list consent notice). Saving: writes the row, subscribes Caretaker 1/2 emails (Buttondown `type: "regular"`, collision header), records Subscribed At, then shows the status dashboard.
+Above the save button, copy block C2 (mailing-list consent notice). Saving: writes the row, auto-subscribes caretaker and student personal emails unless they have already opted out of Buttondown (`type: "regular"`), never the SPS email, then shows the status dashboard.
 
 ## Status dashboard (on /player/$playerId)
 
 Revised round 2 (2026-08-27): the profile form's Save no longer requires completeness (grade, jersey size, and Caretaker 1 name/email stay visually marked required but don't block saving), and the page no longer switches between a "form" view and a "dashboard" view. Once a signup row exists, `/player/$playerId` always shows Final Forms status at the top and the full editable profile form below it, regardless of how much of the profile has been filled in. This exists specifically so a family can fix a typo'd identity field (e.g. birthdate) and immediately see an updated Final Forms status, without being forced to finish the rest of the profile first.
 
-Rows, in order: Final Forms (see states below, now shown unconditionally); Profile (Complete, or "Missing: Grade, Jersey Size, Caretaker info" — informational only, doesn't block anything); Photo (shown, or upload); Mailing list (live status next to each caretaker email and the optional player personal email, with one-click join / opt-out; SPS email never offered). Plus the device switcher ("not this player?").
+Rows, in order: Final Forms (see states below, now shown unconditionally); Profile (Complete, or "Missing: Grade, Jersey Size, Caretaker info" — informational only, doesn't block anything); Photo (shown, or upload); Newsletter (live `Newsletter: subscribed|not subscribed` plus join/leave next to each caretaker email and the optional player personal email; SPS email never offered). Plus the device switcher ("not this player?").
 
 Final Forms row states:
 
@@ -115,7 +115,7 @@ Final Forms row states:
 
 **C1, near-match warning (step 0):** "We may already have a signup for this player. Double-check the spelling of the name and birthdate. If this is a sibling or you are sure this is a new signup, continue."
 
-**C2, mailing-list consent (at save):** "Saving subscribes the caretaker email(s) above to the Madison Ultimate newsletter, our main way of reaching families. You can opt out at any point, right from this page or here." ("here" links to https://buttondown.com/madisonultimate/, which has a Manage Subscription button; decided round 2, 2026-08-27, over building a link to the dashboard's own opt-out.)
+**C2, mailing-list consent (at save):** "Saving subscribes the caretaker and player personal emails above to the Madison Ultimate newsletter, our main way of reaching families. Anyone who has already left stays unsubscribed. You can leave at any point, right from this page." ("Madison Ultimate newsletter" links to https://buttondown.com/madisonultimate/, which has a Manage Subscription button.)
 
 **C3, refresh prompt:** "Data last synchronized with Final Forms on [time]. If you have updated Final Forms since then, click here and we'll try again." ("click here" is the action. Omit the first sentence if there is no timestamp.)
 
@@ -145,4 +145,4 @@ Final Forms row states:
 
 ## Out of scope, confirmed
 
-No rate limiting or captcha at launch (honeypot + min-time only; Turnstile wired but off). No WhatsApp lookup (phone is emergency contact only). No tags in Buttondown. No masking anywhere. No student auto-subscribe. No home address, race, ImPACT, or payment data imported, ever.
+No rate limiting or captcha at launch (honeypot + min-time only; Turnstile wired but off). No WhatsApp lookup (phone is emergency contact only). No tags in Buttondown. No masking anywhere. SPS addresses are never offered subscription. No home address, race, ImPACT, or payment data imported, ever.

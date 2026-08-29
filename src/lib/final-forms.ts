@@ -1,7 +1,8 @@
 // Final Forms data for the signup dashboard: reads the newest export CSV from Drive
 // (SHEET_CONFIG.SPS_FINAL_FORMS_FOLDER_ID) and joins it to a signup row, per
 // docs/adr/0002-signups-sheet-as-season-intake.md. Final Forms Status is always read live
-// (never copied); Seeded Fields are offered once and then owned by the signup row.
+// (never copied); Seeded Fields are copied into empty signup-row cells on first join and then
+// owned by the signup row.
 //
 // Header names are matched by fuzzy substring (like parseQuestionnaireData in
 // data-processing.ts) rather than exact string or position, because the real "students
@@ -201,7 +202,7 @@ export async function findFinalFormsMatch(signup: SignupRecord): Promise<FinalFo
   return exact ? { record: exact, dataAsOf: snapshot.fileTimestamp } : null;
 }
 
-/** Seeded fields (grade, student email/phone, caretaker names/emails/phones) offered once per ADR 0002. */
+/** Seeded fields (grade, student email/phone, caretaker names/emails/phones) copied into empty signup-row cells on first join per ADR 0004. */
 export function seededFieldsFromFinalForms(finalForms: FinalFormsRecord) {
   const isSpsEmail = finalForms.studentEmail.toLowerCase().endsWith('@seattleschools.org');
   return {

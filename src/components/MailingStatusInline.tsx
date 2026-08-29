@@ -1,6 +1,8 @@
 "use client"
 
 import { useEffect, useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { APP_CONFIG } from '@/lib/app-config'
 
 interface MailingEntry {
   label: string
@@ -9,8 +11,8 @@ interface MailingEntry {
 }
 
 /**
- * Inline mailing-list status + join/opt-out action for a single email field (round 3: replaces
- * the old standalone Mailing List dashboard row/section; unenforced, purely informational).
+ * Inline newsletter status + Join/Leave for a single eligible email
+ * (caretaker or student personal; SPS addresses are never shown here).
  */
 export function MailingStatusInline({
   playerId,
@@ -64,10 +66,28 @@ export function MailingStatusInline({
 
   return (
     <p className="text-xs flex items-center gap-2 flex-wrap" style={{ color: 'var(--secondary-text)' }}>
-      <span>Mailing list: {entry.subscribed ? 'Subscribed' : 'Not subscribed'}</span>
-      <button type="button" className="underline py-1 px-1" style={{ color: 'var(--accent)' }} disabled={pending} onClick={toggle}>
-        {entry.subscribed ? 'Opt out' : 'Join'}
-      </button>
+      <span>
+        <a
+          href={APP_CONFIG.MAILING_LIST_JOIN_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline"
+          style={{ color: 'var(--accent)' }}
+        >
+          Newsletter
+        </a>: {entry.subscribed ? 'subscribed' : 'not subscribed'}
+      </span>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="h-7 px-2.5 text-xs"
+        style={{ borderColor: 'var(--accent)', color: 'var(--accent)', background: 'transparent' }}
+        disabled={pending}
+        onClick={toggle}
+      >
+        {entry.subscribed ? '📭 Leave' : '📬 Join'}
+      </Button>
     </p>
   )
 }

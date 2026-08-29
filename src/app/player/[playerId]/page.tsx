@@ -17,7 +17,6 @@ export default function PlayerPage() {
   const playerId = params.playerId
   const [status, setStatus] = useState<'loading' | 'not-found' | 'ready'>('loading')
   const [record, setRecord] = useState<SignupRecord | null>(null)
-  const [seeded, setSeeded] = useState<Record<string, string>>({})
   const [finalFormsRefreshSignal, setFinalFormsRefreshSignal] = useState(0)
 
   const load = useCallback(async () => {
@@ -30,31 +29,25 @@ export default function PlayerPage() {
         return
       }
 
-      const loaded: SignupRecord = data.record
-      setRecord(loaded)
-
-      const displayName = `${loaded[SIGNUPS_COLUMNS.PREFERRED_FIRST_NAME]} ${loaded[SIGNUPS_COLUMNS.LAST_NAME]}`.trim()
-      rememberPlayer({ playerId, displayName })
-
-      setStatus('ready')
+      let loaded: SignupRecord = data.record
 
       try {
         const ffRes = await fetch(`/api/signup/player/${playerId}/finalforms`)
         const ffData = await ffRes.json()
-        if (ffRes.ok && ffData.success && ffData.found) {
-          setSeeded(ffData.seeded || {})
-
-          // A fresh Final Forms match can carry a returning player's photo forward (ADR 0003);
-          // re-fetch so the just-carried-over photo shows up without the family refreshing.
-          if (ffData.photoCarriedOver) {
-            const refreshed = await fetch(`/api/signup/player/${playerId}`)
-            const refreshedData = await refreshed.json()
-            if (refreshed.ok && refreshedData.success) setRecord(refreshedData.record)
-          }
+        if (ffRes.ok && ffData.success && ffData.found && (ffData.fieldsCopied || ffData.photoCarriedOver)) {
+          const refreshed = await fetch(`/api/signup/player/${playerId}`)
+          const refreshedData = await refreshed.json()
+          if (refreshed.ok && refreshedData.success) loaded = refreshedData.record
         }
       } catch {
-        // Seeded fields are a convenience; the plain form still works without them.
+        // Final Forms is a convenience; the profile still works without it.
       }
+
+      const displayName = `${loaded[SIGNUPS_COLUMNS.PREFERRED_FIRST_NAME]} ${loaded[SIGNUPS_COLUMNS.LAST_NAME]}`.trim()
+      rememberPlayer({ playerId, displayName })
+
+      setRecord(loaded)
+      setStatus('ready')
     } catch {
       setStatus('not-found')
     }
@@ -115,7 +108,6 @@ export default function PlayerPage() {
                 <PlayerProfileForm
                   playerId={playerId}
                   defaultValues={recordToFormValues(record)}
-                  seeded={seeded}
                   hasPhoto={Boolean(record[SIGNUPS_COLUMNS.PHOTO_DRIVE_FILE_ID])}
                   onPhotoUploaded={load}
                   refreshSignal={finalFormsRefreshSignal}

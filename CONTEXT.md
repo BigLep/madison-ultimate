@@ -32,11 +32,16 @@ The district-wide student identifier from Final Forms (spsStudentId). Written on
 _Avoid_: StudentID (ambiguous about whose ID scheme)
 
 **Final Forms Join**:
-The one-time match from a signup row to its Final Forms record, on birthdate + last name, disambiguated by legal first name (twins). Succeeds once, then hands off to SPS Student ID.
+The one-time match from a signup row to its Final Forms record, on birthdate + last name, disambiguated by legal first name (twins). Succeeds once, then hands off to SPS Student ID. That first success is also the only moment Seeded Fields are copied onto the row (ADR 0004).
 
 **Caretaker**:
 An adult responsible for a player (parent, guardian, or otherwise). The signup collects up to two per player; their emails are the newsletter audience and their phone is the emergency contact.
 _Avoid_: parent, guardian (except when quoting Final Forms column names, which say Parent 1/2)
+
+**Newsletter**:
+The Madison Ultimate email newsletter (Buttondown), the main way we reach families. Family-facing copy always says Newsletter. Next to every eligible email (caretaker 1/2 and student personal, never SPS) the form shows `Newsletter: subscribed|not subscribed` plus a Join or Leave button.
+_Avoid_: mailing list (code, the retired Google Group, and coach-sheet columns may still say this)
+_Avoid_: mailing list (code, the retired Google Group, and coach-sheet columns may still say this)
 
 ### Final Forms data
 
@@ -45,7 +50,7 @@ The registration-progress facts (parent signed, student signed, cleared, physica
 _Avoid_: storing or caching these on the signup row
 
 **Seeded Field**:
-A profile or contact field (grade, student email/phone, parent names/emails/phones) copied from Final Forms into the signup row once, when the family accepts it, and owned by the signup row from then on. Never re-synced from Final Forms.
+A profile or contact field (grade, student email/phone, parent names/emails/phones) copied from Final Forms into an empty signup-row cell on first join, without waiting for Save, then owned by the signup row. Never overwrites a value the family already saved; never copied again after the join is established, even if the family later clears the field. See ADR 0004.
 _Avoid_: prefill (ambiguous about ownership after the copy)
 
 ### Photos and media

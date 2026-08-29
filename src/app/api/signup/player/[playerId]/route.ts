@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { findSignupByPlayerId, updateSignupRow } from '../../../../../lib/signups-sheet';
 import { profileFormSchema, formValuesToRecord } from '../../../../../lib/signup-form-schema';
-import { subscribeEmail } from '../../../../../lib/buttondown-api';
+import { eligibleMailingEmails } from '../../../../../lib/mailing-eligibility';
+import { subscribeUnlessUnsubscribed } from '../../../../../lib/buttondown-api';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ playerId: string }> }) {
   try {
@@ -41,13 +42,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     const fields = formValuesToRecord(parsed.data);
 
-    // Save-time consent (spec C2): subscribe caretaker emails. Students are never auto-subscribed.
-    const caretakerEmails = [parsed.data.caretaker1Email, parsed.data.caretaker2Email].filter(
-      (email): email is string => Boolean(email?.trim())
+    // Auto-subscribe eligible emails (caretakers + student personal, never SPS) unless the
+    // address has already opted out of Buttondown. Failure must not block the sheet write.
+    await Promise.all(
+      eligibleMailingEmails(fields).map(entry => subscribeUnlessUnsubscribed(entry.email))
     );
-    if (caretakerEmails.length > 0) {
-      await Promise.all(caretakerEmails.map(email => subscribeEmail(email)));
-    }
 
     const updated = await updateSignupRow(playerId, fields);
 

@@ -15,8 +15,8 @@
 //   TestAllSigned       -> found; caretaker + student signed, not yet cleared
 //   TestCleared         -> found; fully signed and physical cleared
 //
-// All of these also carry fake seeded fields (grade/contact/caretaker) so the profile form's
-// "use it or enter something different" hints can be exercised too.
+// All of these also carry fake seeded fields (grade/contact/caretaker) so a join
+// auto-fills the profile form the same way a real Final Forms match would.
 
 import { normalizeName } from './player-identity';
 import { FinalFormsRecord } from './final-forms';
