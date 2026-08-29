@@ -111,7 +111,7 @@ export function PlayerProfileForm({
   }, [isDirty, justSaved])
 
   return (
-    <form onSubmit={handleSubmit(submit)} className={`space-y-8 ${justSaved || saveError ? 'pb-40' : 'pb-24'}`}>
+    <form onSubmit={handleSubmit(submit)} className={`space-y-8 ${saveError ? 'pb-40' : 'pb-24'}`}>
       <section id="player-info" className="space-y-4 scroll-mt-4">
         <h3 className="font-semibold text-lg" style={sectionHeadingStyle}>🏃 Player</h3>
 
@@ -492,22 +492,12 @@ export function PlayerProfileForm({
       </div>
 
       {/* Sticky save bar: always visible while scrolling, so families don't have to hunt for Save.
-          Success and failure live here too — a banner up in the form is easy to miss. */}
+          Success is the button itself (✓ Saved); failure is a banner here so it isn't scrolled away. */}
       <div
         className="fixed bottom-0 left-0 right-0 border-t p-3 z-20"
         style={{ background: 'var(--card-bg)', borderColor: 'var(--border)' }}
       >
         <div className="max-w-2xl mx-auto space-y-2">
-          {justSaved && (
-            <div
-              role="status"
-              aria-live="polite"
-              className="border px-4 py-3 rounded font-medium"
-              style={{ backgroundColor: '#f0fdf4', borderColor: '#86efac', color: '#166534' }}
-            >
-              Saved. Your changes are on this player&apos;s page.
-            </div>
-          )}
           {saveError && (
             <div
               role="alert"
@@ -523,6 +513,7 @@ export function PlayerProfileForm({
             className="w-full text-white font-semibold"
             style={{ background: justSaved ? '#166534' : 'var(--accent)' }}
             disabled={isSubmitting}
+            aria-live="polite"
           >
             {isSubmitting ? 'Saving...' : justSaved ? '✓ Saved' : 'Save'}
           </Button>
