@@ -20,11 +20,12 @@ jobs:
       - run: npx tsc --noEmit
 
   integration:
-    name: Sheets integration tests
+    name: Sheets + Drive integration tests
     runs-on: ubuntu-latest
-    # Runs against a dedicated test spreadsheet only (never the real Signups sheet). See
-    # docs/TEST_DESIGN.md. Skips itself (via signups-sheet.integration.test.ts's skipIf) if
-    # the secrets below aren't configured, so this job never fails a fork PR that can't see them.
+    # Runs against dedicated test spreadsheets/Drive folders only (never the real Signups
+    # sheet, photos folder, or Fall 2025 roster). See docs/TEST_DESIGN.md. Each suite
+    # skips itself (via its own skipIf) if its secrets aren't configured, so this job never
+    # fails a fork PR that can't see them.
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -36,3 +37,8 @@ jobs:
         env:
           SIGNUPS_SHEET_ID_TEST: ${{ secrets.SIGNUPS_SHEET_ID_TEST }}
           GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+          PHOTOS_FOLDER_ID_TEST: ${{ secrets.PHOTOS_FOLDER_ID_TEST }}
+          FALL_2025_ROSTER_SHEET_ID_TEST: ${{ secrets.FALL_2025_ROSTER_SHEET_ID_TEST }}
+          GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
+          GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
+          GOOGLE_OAUTH_REFRESH_TOKEN: ${{ secrets.GOOGLE_OAUTH_REFRESH_TOKEN }}
