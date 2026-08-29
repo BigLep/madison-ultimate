@@ -85,19 +85,19 @@ Supporting copy: C12 (coaching description + learn-more link + female-leadership
 
 "Helping coach at practices" moved out of this list into its own Coach Volunteering question above (round 2). Supporting copy: C13.
 
-### 💬 Anything else
+### 💬 Communication
 
-New closing section, added back in round 2 from the old Google Form's general-feedback question (not about the player specifically).
+Closing section (`id="communication"`). Holds the general-feedback question (added back in round 2 from the old Google Form; not about the player specifically) plus the family communication invites.
 
 | # | Question label | Type | Required | Seed | Sheet column |
 |---|---|---|---|---|---|
 | 1.25 | Anything else you want to share? | textarea | no | no | Additional Feedback |
 
-Supporting copy: C14.
+Supporting copy in order: C14 (under the textarea), then C2b (WhatsApp), then C2 (newsletter consent).
 
 ### Save
 
-Above the save button, copy block C2 (mailing-list consent notice) and C2b (WhatsApp community invite). Saving: writes the row, auto-subscribes caretaker and student personal emails unless they have already opted out of Buttondown (`type: "regular"`), never the SPS email, then shows the status dashboard.
+Saving: writes the row, auto-subscribes caretaker and student personal emails unless they have already opted out of Buttondown (`type: "regular"`), never the SPS email, then shows the status dashboard. C2 / C2b live in the Communication section above, not as a separate block on the Save button.
 
 ## Status dashboard (on /player/$playerId)
 
@@ -117,9 +117,9 @@ Final Forms row states:
 
 **C1, near-match warning (step 0):** "We may already have a signup for this player. Double-check the spelling of the name and birthdate. If this is a sibling or you are sure this is a new signup, continue."
 
-**C2, mailing-list consent (at save):** "Saving subscribes the caretaker and player personal emails above to the Madison Ultimate newsletter, our main way of reaching families. Anyone who has already left stays unsubscribed. You can leave at any point, right from this page." ("Madison Ultimate newsletter" links to https://buttondown.com/madisonultimate/, which has a Manage Subscription button.)
+**C2, mailing-list consent (Communication section, after C2b):** "Saving subscribes the caretaker and player personal emails above to the Madison Ultimate newsletter, our main way of reaching families. Anyone who has already left stays unsubscribed. You can leave at any point, right from this page." ("Madison Ultimate newsletter" links to https://buttondown.com/madisonultimate/, which has a Manage Subscription button.)
 
-**C2b, WhatsApp community (at save, beside C2):** WhatsApp logo plus "Join our WhatsApp community to ask questions ❓, share photos 📸, arrange carpools 🚗, etc. (Learn more)." "WhatsApp community" links to `/whatsapp` (server redirect to the env invite; never the invite URL in client code). Shown only on signed-up player pages, not the public homepage. Learn more uses `WHATSAPP_LEARN_MORE_URL`.
+**C2b, WhatsApp community (Communication section, before C2):** WhatsApp logo plus "Join our WhatsApp community to ask questions ❓, share photos 📸, arrange carpools 🚗, etc. (Learn more)." "WhatsApp community" links to `/whatsapp` (server redirect to the env invite; never the invite URL in client code). Shown only on signed-up player pages, not the public homepage. Learn more uses `WHATSAPP_LEARN_MORE_URL`.
 
 **C3, refresh prompt:** "Data last synchronized with Final Forms on [time] ([relative]). If you have updated Final Forms since then, click here and we'll try again." ("click here" is the action. Omit the first sentence if there is no timestamp.) `[relative]` is a parenthetical relative-time hint (e.g. "2 days ago"), added 2026-08-29 via `formatRelativeHighestUnit`: proximity to now is exactly what a family needs to judge whether "since then" plausibly covers their own recent Final Forms edit, so it's worth showing alongside the absolute local timestamp rather than instead of it. Omit the parenthetical (not just the whole sentence) when `dataAsOf` is missing or unparseable, since `formatRelativeHighestUnit` returns `''` in that case; a future/skewed timestamp still renders "just now" rather than being hidden.
 
@@ -143,7 +143,7 @@ Final Forms row states:
 
 **C13, other volunteering supporting copy (added round 2):** "Team admin - helps organize attendance and other admin duties. Snack organizing - helps organize family volunteers for after game snacks. T-shirt ordering - helps collect info on who needs a jersey, and what sizes we need. And other opportunities."
 
-**C14, "Anything else" supporting copy (added round 2):** "Feel free to pass along any other ideas, feedback, or suggestions. Alternatively feel free to email madisonultimate@gmail.com anytime."
+**C14, Communication feedback supporting copy (added round 2 as "Anything else"):** "Feel free to pass along any other ideas, feedback, or suggestions. Alternatively feel free to email madisonultimate@gmail.com anytime."
 
 **C15, Final Forms explainer (under "SPS Final Forms Status", every state):** "Seattle Public Schools requires every player to complete SPS Final Forms. That's the school's athletics registration, separate from this signup. A sports physical within the last 2 years is also required." ("SPS Final Forms" links to https://seattleschools-wa.finalforms.com.) Followed by shared help: "If you are having trouble inside Final Forms itself (e.g., login, forms, clearance), contact Madison's Athletic Director, Valerie McDonald 📧. Other questions? Email madisonultimate@gmail.com."
 

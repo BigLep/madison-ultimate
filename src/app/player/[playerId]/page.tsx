@@ -72,7 +72,7 @@ export default function PlayerPage() {
   }
 
   return (
-    <div className="min-h-screen p-4" style={{ background: 'var(--primary-bg)' }}>
+    <div className="min-h-screen p-4 pb-20" style={{ background: 'var(--primary-bg)' }}>
       <div className="max-w-2xl mx-auto space-y-4">
         <DeadlineBanner />
 

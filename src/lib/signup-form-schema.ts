@@ -99,7 +99,7 @@ export const profileFormSchema = z.object({
   volunteerRoles: z.array(z.string()),
   volunteerNotes: z.string().trim().optional(),
 
-  // Anything else
+  // Communication (general feedback; WhatsApp/newsletter copy lives in the form, not the schema)
   additionalFeedback: z.string().trim().optional(),
 });
 

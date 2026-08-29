@@ -111,7 +111,7 @@ export function PlayerProfileForm({
   }, [isDirty, justSaved])
 
   return (
-    <form onSubmit={handleSubmit(submit)} className={`space-y-8 ${saveError ? 'pb-40' : 'pb-24'}`}>
+    <form onSubmit={handleSubmit(submit)} className={`space-y-8 ${saveError ? 'pb-24' : ''}`}>
       <section id="player-info" className="space-y-4 scroll-mt-4">
         <h3 className="font-semibold text-lg" style={sectionHeadingStyle}>🏃 Player</h3>
 
@@ -431,9 +431,10 @@ export function PlayerProfileForm({
         </div>
       </section>
 
-      <section id="anything-else" className="space-y-4 scroll-mt-4">
-        <h3 className="font-semibold text-lg" style={sectionHeadingStyle}>💬 Anything else</h3>
+      <section id="communication" className="space-y-4 scroll-mt-4 !mb-0">
+        <h3 className="font-semibold text-lg" style={sectionHeadingStyle}>💬 Communication</h3>
         <div className="space-y-2">
+          <Label style={fieldLabelStyle}>Anything else you want to share?</Label>
           <HelperText>
             Feel free to pass along any other ideas, feedback, or suggestions. Alternatively feel free to email{' '}
             <a href="mailto:madisonultimate@gmail.com" className="underline" style={{ color: 'var(--accent)' }}>
@@ -443,53 +444,52 @@ export function PlayerProfileForm({
           </HelperText>
           <Textarea {...register('additionalFeedback')} />
         </div>
+        <div
+          className="text-sm border-t pt-4 space-y-3"
+          style={{ borderColor: 'var(--border)', color: 'var(--secondary-text)' }}
+        >
+          <p className="flex items-start gap-2">
+            <WhatsAppIcon className="shrink-0 mt-0.5" />
+            <span>
+              Join our{' '}
+              <a
+                href={APP_CONFIG.WHATSAPP_JOIN_PATH}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline"
+                style={{ color: 'var(--accent)' }}
+              >
+                WhatsApp community
+              </a>
+              {' '}to ask questions ❓, share photos 📸, arrange carpools 🚗, etc.{' '}
+              (
+              <a
+                href={APP_CONFIG.WHATSAPP_LEARN_MORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline"
+                style={{ color: 'var(--accent)' }}
+              >
+                Learn more
+              </a>
+              )
+            </span>
+          </p>
+          <p>
+            Saving subscribes the caretaker and player personal emails above to the{' '}
+            <a
+              href={APP_CONFIG.MAILING_LIST_JOIN_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+              style={{ color: 'var(--accent)' }}
+            >
+              Madison Ultimate newsletter
+            </a>, our main way of reaching families. Anyone who has already left stays unsubscribed. You
+            can leave at any point, right from this page.
+          </p>
+        </div>
       </section>
-
-      <div
-        className="text-sm border-t pt-4 space-y-3"
-        style={{ borderColor: 'var(--border)', color: 'var(--secondary-text)' }}
-      >
-        <p>
-          Saving subscribes the caretaker and player personal emails above to the{' '}
-          <a
-            href={APP_CONFIG.MAILING_LIST_JOIN_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline"
-            style={{ color: 'var(--accent)' }}
-          >
-            Madison Ultimate newsletter
-          </a>, our main way of reaching families. Anyone who has already left stays unsubscribed. You
-          can leave at any point, right from this page.
-        </p>
-        <p className="flex items-start gap-2">
-          <WhatsAppIcon className="shrink-0 mt-0.5" />
-          <span>
-            Join our{' '}
-            <a
-              href={APP_CONFIG.WHATSAPP_JOIN_PATH}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline"
-              style={{ color: 'var(--accent)' }}
-            >
-              WhatsApp community
-            </a>
-            {' '}to ask questions ❓, share photos 📸, arrange carpools 🚗, etc.{' '}
-            (
-            <a
-              href={APP_CONFIG.WHATSAPP_LEARN_MORE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline"
-              style={{ color: 'var(--accent)' }}
-            >
-              Learn more
-            </a>
-            )
-          </span>
-        </p>
-      </div>
 
       {/* Sticky save bar: always visible while scrolling, so families don't have to hunt for Save.
           Success is the button itself (✓ Saved); failure is a banner here so it isn't scrolled away. */}
