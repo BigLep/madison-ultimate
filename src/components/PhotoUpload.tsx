@@ -163,11 +163,9 @@ export function PhotoUpload({
         />
       )}
       <div
-        className="border-2 border-dashed rounded-md p-6 text-center"
-        style={{
-          borderColor: isDragging ? 'var(--accent)' : 'var(--border)',
-          cursor: isUploading ? 'default' : 'pointer',
-        }}
+        className={`border-2 border-dashed rounded-md p-6 text-center ${
+          isDragging ? 'border-[var(--accent)]' : 'border-[var(--border)]'
+        } ${isUploading ? 'cursor-default' : 'cursor-pointer'}`}
         aria-busy={isUploading || undefined}
         onClick={() => {
           if (!isUploading) inputRef.current?.click()
@@ -196,7 +194,7 @@ export function PhotoUpload({
             if (file) upload(file)
           }}
         />
-        <p style={{ color: isDragging ? 'var(--accent)' : 'var(--secondary-text)' }}>{statusText}</p>
+        <p className={isDragging ? 'text-[var(--accent)]' : 'text-[var(--secondary-text)]'}>{statusText}</p>
         {isUploading && (
           <div
             className="mt-3 mx-auto max-w-xs h-1.5 rounded-full overflow-hidden"

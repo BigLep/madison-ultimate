@@ -15,9 +15,12 @@ import { getMostRecentFileInfoFromFolder, downloadCsvFromDrive } from './google-
 import { SHEET_CONFIG } from './sheet-config';
 import { parseCsvString } from './data-processing';
 import { normalizeName, normalizeDateOfBirth } from './player-identity';
-import { SignupRecord } from './signups-sheet';
+import { SignupRecord, updateSignupRow } from './signups-sheet';
 import { SIGNUPS_COLUMNS } from './signups-config';
 import { findTestFixture } from './final-forms-test-fixtures';
+import { carryOverPhotoFromLastSeason } from './photo-carryover';
+import { eligibleMailingEmails } from './mailing-eligibility';
+import { subscribeUnlessUnsubscribed } from './buttondown-api';
 
 export interface FinalFormsRecord {
   studentId: string;
@@ -217,4 +220,99 @@ export function seededFieldsFromFinalForms(finalForms: FinalFormsRecord) {
     caretaker2Email: finalForms.parent2Email || undefined,
     caretaker2Phone: finalForms.parent2Phone || undefined,
   };
+}
+
+/**
+ * Signup-row column each seededFieldsFromFinalForms() key copies into. Kept beside that
+ * function (rather than redeclared at each call site) so the field list only exists once;
+ * TypeScript's Record<keyof ..., string> still catches drift if a field is ever added to one
+ * without the other.
+ */
+export const SEEDABLE_FIELD_COLUMNS: Record<keyof ReturnType<typeof seededFieldsFromFinalForms>, string> = {
+  grade: SIGNUPS_COLUMNS.GRADE,
+  studentPersonalEmail: SIGNUPS_COLUMNS.STUDENT_PERSONAL_EMAIL,
+  studentSpsEmail: SIGNUPS_COLUMNS.STUDENT_SPS_EMAIL,
+  studentCellPhone: SIGNUPS_COLUMNS.STUDENT_CELL_PHONE,
+  caretaker1Name: SIGNUPS_COLUMNS.CARETAKER_1_NAME,
+  caretaker1Email: SIGNUPS_COLUMNS.CARETAKER_1_EMAIL,
+  caretaker1Phone: SIGNUPS_COLUMNS.CARETAKER_1_PHONE,
+  caretaker2Name: SIGNUPS_COLUMNS.CARETAKER_2_NAME,
+  caretaker2Email: SIGNUPS_COLUMNS.CARETAKER_2_EMAIL,
+  caretaker2Phone: SIGNUPS_COLUMNS.CARETAKER_2_PHONE,
+};
+
+export interface FirstJoinOutcome {
+  fieldsCopied: boolean;
+  photoCarriedOver: boolean;
+}
+
+/**
+ * Everything that happens exactly once, on the first successful Final Forms join for a signup
+ * row (ADR 0004: write spsStudentId, carry over last season's photo per ADR 0003, copy empty
+ * Seeded Fields, auto-subscribe eligible emails), all in the same write. Pulled out of the
+ * finalforms route so that one handler isn't the only place these four related concerns meet;
+ * the route just calls this and shapes the response.
+ */
+export async function applyFirstJoinSideEffects(
+  playerId: string,
+  existing: SignupRecord,
+  match: FinalFormsJoinResult
+): Promise<FirstJoinOutcome> {
+  const allSeeded = seededFieldsFromFinalForms(match.record);
+
+  // Real joins are marked by spsStudentId. Magic-name fixtures never write spsStudentId, so
+  // "no seed column has a value yet" stands in for "first join" in that case.
+  const isFirstRealJoin =
+    !match.isTest && !existing[SIGNUPS_COLUMNS.SPS_STUDENT_ID] && Boolean(match.record.studentId);
+  const isFirstFixtureJoin =
+    Boolean(match.isTest) && Object.values(SEEDABLE_FIELD_COLUMNS).every(column => !existing[column]);
+  const isFirstJoin = isFirstRealJoin || isFirstFixtureJoin;
+
+  let photoCarriedOver = false;
+  const updates: Record<string, string> = {};
+  if (isFirstRealJoin) {
+    updates[SIGNUPS_COLUMNS.SPS_STUDENT_ID] = match.record.studentId;
+
+    // Photo Carryover (ADR 0003): a fresh match to a returning player is the one moment we know
+    // both their Fall 2025 identity and that this is a first-time join, so it's the natural
+    // hook for bringing their old photo forward. Never overwrites a photo the family already
+    // set this season; failures here must never break Final Forms status display.
+    if (!existing[SIGNUPS_COLUMNS.PHOTO_DRIVE_FILE_ID]) {
+      try {
+        const carriedPhotoFileId = await carryOverPhotoFromLastSeason(playerId, match.record.studentId);
+        if (carriedPhotoFileId) {
+          updates[SIGNUPS_COLUMNS.PHOTO_DRIVE_FILE_ID] = carriedPhotoFileId;
+          photoCarriedOver = true;
+        }
+      } catch (error) {
+        console.error('Error carrying over last season\'s photo:', error);
+      }
+    }
+  }
+
+  let fieldsCopied = false;
+  if (isFirstJoin) {
+    for (const [field, value] of Object.entries(allSeeded)) {
+      const column = SEEDABLE_FIELD_COLUMNS[field as keyof typeof allSeeded];
+      if (value && !existing[column]) {
+        updates[column] = value;
+        fieldsCopied = true;
+      }
+    }
+  }
+
+  if (Object.keys(updates).length > 0) {
+    await updateSignupRow(playerId, updates);
+  }
+
+  // First real join also subscribes eligible emails now on the row (copied or already saved),
+  // unless they have opted out. Magic-name fixtures never hit the real list.
+  if (isFirstRealJoin) {
+    const merged = { ...existing, ...updates };
+    await Promise.all(
+      eligibleMailingEmails(merged).map(entry => subscribeUnlessUnsubscribed(entry.email))
+    );
+  }
+
+  return { fieldsCopied, photoCarriedOver };
 }

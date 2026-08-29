@@ -17,14 +17,14 @@ export interface FinalFormsStatus {
 
 function Check({ label, done, loading }: { label: string; done?: boolean; loading?: boolean }) {
   const mark = loading ? '…' : done ? '✓' : '❌'
-  const color = done && !loading ? '#4ade80' : 'var(--secondary-text)'
+  const markClassName = loading
+    ? 'animate-pulse text-[var(--secondary-text)]'
+    : done
+      ? 'text-green-400'
+      : 'text-[var(--secondary-text)]'
   return (
     <li className="flex items-center gap-2">
-      <span
-        aria-hidden="true"
-        className={loading ? 'animate-pulse' : undefined}
-        style={{ color }}
-      >
+      <span aria-hidden="true" className={markClassName}>
         {mark}
       </span>
       <span>{label}</span>
