@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { clearFinalFormsCache } from '@/lib/final-forms';
 
 // On-demand Final Forms refresh (spec C3/C4): triggers workflow_dispatch on the
 // finalforms-export workflow in madison-ultimate-admin, with a single-flight guard so
@@ -48,6 +49,10 @@ export async function POST() {
     if (runsRes.ok) {
       const runsData = await runsRes.json();
       if ((runsData.total_count || 0) > 0) {
+        // A sync landed some data since our last read; drop the stale snapshot so
+        // whenever the player reloads (manually, per the simplified refresh UX),
+        // the join re-reads Drive instead of waiting out the rest of the TTL.
+        clearFinalFormsCache();
         return NextResponse.json({
           success: true,
           status: 'already-running',
@@ -71,6 +76,7 @@ export async function POST() {
       return NextResponse.json({ success: false, error: 'Could not start a sync. Please try again.' }, { status: 502 });
     }
 
+    clearFinalFormsCache();
     return NextResponse.json({
       success: true,
       status: 'started',

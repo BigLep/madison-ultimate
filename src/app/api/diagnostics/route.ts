@@ -222,7 +222,93 @@ export async function GET(request: NextRequest) {
       `Error checking photo upload access: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 
-  // 6. System Checks
+  // 6. Final Forms Refresh (GitHub Actions trigger, separate from the Drive export credentials
+  // the workflow itself uses). Read-only: this only fetches workflow metadata, it never dispatches.
+  try {
+    const ghToken = process.env.FINALFORMS_GITHUB_TOKEN;
+    const ghRepo = process.env.FINALFORMS_GITHUB_REPO;
+    const ghWorkflowFile = process.env.FINALFORMS_GITHUB_WORKFLOW_FILE;
+
+    if (!ghToken || !ghRepo || !ghWorkflowFile) {
+      addResult('Final Forms Refresh', 'GitHub Actions Trigger', 'warning',
+        'FINALFORMS_GITHUB_TOKEN/REPO/WORKFLOW_FILE not fully set; the dashboard\'s manual refresh button is disabled (this is optional, everything else still works)');
+    } else {
+      const res = await fetch(
+        `https://api.github.com/repos/${ghRepo}/actions/workflows/${ghWorkflowFile}`,
+        {
+          headers: {
+            Authorization: `Bearer ${ghToken}`,
+            Accept: 'application/vnd.github+json',
+          },
+        }
+      );
+
+      const ghHeaders = {
+        Authorization: `Bearer ${ghToken}`,
+        Accept: 'application/vnd.github+json',
+      };
+
+      if (res.ok) {
+        const workflow = await res.json();
+        addResult('Final Forms Refresh', 'GitHub Actions Trigger', 'pass',
+          `Token can see "${workflow.name}" on ${ghRepo} (state: ${workflow.state})`);
+
+        // Read access alone doesn't prove workflow_dispatch will work (that needs Actions:
+        // write). Probe write permission without ever starting a real run: attempt to cancel
+        // an already-*completed* run. GitHub checks permission before run state, so a token
+        // without write access gets 403; one with write access gets 409 ("already completed")
+        // since there's nothing to cancel — either way, no run is affected.
+        try {
+          const runsRes = await fetch(
+            `https://api.github.com/repos/${ghRepo}/actions/workflows/${ghWorkflowFile}/runs?status=completed&per_page=1`,
+            { headers: ghHeaders }
+          );
+          const runsData = runsRes.ok ? await runsRes.json() : null;
+          const runId = runsData?.workflow_runs?.[0]?.id;
+
+          if (!runId) {
+            addResult('Final Forms Refresh', 'GitHub Actions Write Permission', 'warning',
+              'No completed workflow run found yet to probe write access against; this will self-resolve after the first run');
+          } else {
+            const cancelRes = await fetch(
+              `https://api.github.com/repos/${ghRepo}/actions/runs/${runId}/cancel`,
+              { method: 'POST', headers: ghHeaders }
+            );
+            if (cancelRes.status === 409) {
+              addResult('Final Forms Refresh', 'GitHub Actions Write Permission', 'pass',
+                'Token has Actions: write (probed via cancel on a completed run, which GitHub rejected as already-finished rather than as unauthorized)');
+            } else if (cancelRes.status === 403) {
+              addResult('Final Forms Refresh', 'GitHub Actions Write Permission', 'fail',
+                'FINALFORMS_GITHUB_TOKEN can read this workflow but lacks Actions: write, so the refresh button\'s workflow_dispatch call will fail. Check the fine-grained PAT\'s "Actions" permission is set to "Read and write"');
+            } else {
+              addResult('Final Forms Refresh', 'GitHub Actions Write Permission', 'warning',
+                `Unexpected response probing write access (HTTP ${cancelRes.status}); verify manually before relying on this result`);
+            }
+          }
+        } catch (error) {
+          addResult('Final Forms Refresh', 'GitHub Actions Write Permission', 'warning',
+            `Could not probe write access: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+      } else if (res.status === 401) {
+        addResult('Final Forms Refresh', 'GitHub Actions Trigger', 'fail',
+          'FINALFORMS_GITHUB_TOKEN was rejected (expired or revoked)');
+      } else if (res.status === 403) {
+        addResult('Final Forms Refresh', 'GitHub Actions Trigger', 'fail',
+          'FINALFORMS_GITHUB_TOKEN lacks Actions permission on this repo, or the token\'s account is not a collaborator');
+      } else if (res.status === 404) {
+        addResult('Final Forms Refresh', 'GitHub Actions Trigger', 'fail',
+          `Workflow not found: check FINALFORMS_GITHUB_REPO ("${ghRepo}") and FINALFORMS_GITHUB_WORKFLOW_FILE ("${ghWorkflowFile}")`);
+      } else {
+        addResult('Final Forms Refresh', 'GitHub Actions Trigger', 'fail',
+          `Unexpected GitHub API response: ${res.status} ${res.statusText}`);
+      }
+    }
+  } catch (error) {
+    addResult('Final Forms Refresh', 'GitHub Actions Trigger', 'fail',
+      `Error checking GitHub Actions access: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+
+  // 7. System Checks
   try {
     // Check Node.js version
     const nodeVersion = process.version;

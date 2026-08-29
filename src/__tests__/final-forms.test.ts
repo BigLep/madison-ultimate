@@ -191,4 +191,79 @@ describe('findFinalFormsMatch — live export join', () => {
     );
     expect(result).toBeNull();
   });
+
+  it('finds a match after the family corrects a wrong birthdate, without a new Drive fetch', async () => {
+    await stubSnapshot();
+    const notYetMatched = await findFinalFormsMatch(
+      signupRecord({
+        [SIGNUPS_COLUMNS.LAST_NAME]: 'Sololast',
+        [SIGNUPS_COLUMNS.DATE_OF_BIRTH]: '2013-05-02', // one day off from the export
+      })
+    );
+    expect(notYetMatched).toBeNull();
+
+    const corrected = await findFinalFormsMatch(
+      signupRecord({
+        [SIGNUPS_COLUMNS.LAST_NAME]: 'Sololast',
+        [SIGNUPS_COLUMNS.DATE_OF_BIRTH]: '2013-05-01',
+      })
+    );
+    expect(corrected?.record.studentId).toBe('FF-CASEY');
+    // Same cached snapshot served both calls; the rejoin didn't need a fresh Drive read.
+    expect(getFile).toHaveBeenCalledTimes(1);
+    expect(downloadCsv).toHaveBeenCalledTimes(1);
+  });
+
+  it('finds a match after the family corrects a wrong legal first name, without a new Drive fetch', async () => {
+    await stubSnapshot();
+    const notYetMatched = await findFinalFormsMatch(
+      signupRecord({
+        [SIGNUPS_COLUMNS.LAST_NAME]: 'Twinlast',
+        [SIGNUPS_COLUMNS.DATE_OF_BIRTH]: '2014-03-15',
+        [SIGNUPS_COLUMNS.LEGAL_FIRST_NAME]: 'Wrongname',
+      })
+    );
+    expect(notYetMatched).toBeNull();
+
+    const corrected = await findFinalFormsMatch(
+      signupRecord({
+        [SIGNUPS_COLUMNS.LAST_NAME]: 'Twinlast',
+        [SIGNUPS_COLUMNS.DATE_OF_BIRTH]: '2014-03-15',
+        [SIGNUPS_COLUMNS.LEGAL_FIRST_NAME]: 'Blake',
+      })
+    );
+    expect(corrected?.record.studentId).toBe('FF-BLAKE');
+    expect(downloadCsv).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('finalforms-refresh cache clearing', () => {
+  beforeEach(() => {
+    clearFinalFormsCache();
+    vi.clearAllMocks();
+  });
+
+  it('forces a fresh Drive read on the next join after clearFinalFormsCache', async () => {
+    await stubSnapshot();
+    const first = await findFinalFormsMatch(
+      signupRecord({
+        [SIGNUPS_COLUMNS.LAST_NAME]: 'Sololast',
+        [SIGNUPS_COLUMNS.DATE_OF_BIRTH]: '2013-05-01',
+      })
+    );
+    expect(first?.record.parentSigned).toBe(false);
+    expect(downloadCsv).toHaveBeenCalledTimes(1);
+
+    clearFinalFormsCache();
+    downloadCsv.mockResolvedValue(FINAL_FORMS_CSV.replace('Sololast,2013-05-01,8,false', 'Sololast,2013-05-01,8,true'));
+
+    const second = await findFinalFormsMatch(
+      signupRecord({
+        [SIGNUPS_COLUMNS.LAST_NAME]: 'Sololast',
+        [SIGNUPS_COLUMNS.DATE_OF_BIRTH]: '2013-05-01',
+      })
+    );
+    expect(second?.record.parentSigned).toBe(true);
+    expect(downloadCsv).toHaveBeenCalledTimes(2);
+  });
 });
