@@ -4,20 +4,8 @@ import {
   profileFormSchema,
   recordToFormValues,
   formValuesToRecord,
-  ProfileFormValues,
 } from '@/lib/signup-form-schema';
-
-function validProfile(overrides: Partial<ProfileFormValues> = {}): ProfileFormValues {
-  return {
-    preferredFirstName: 'Afirst',
-    lastName: 'Blast',
-    dateOfBirth: '2014-05-12',
-    pronouns: [],
-    volunteerRoles: [],
-    mediaOptOut: false,
-    ...overrides,
-  };
-}
+import { validProfile } from './fixtures/profile-form-values';
 
 describe('caretaker cap', () => {
   it('exposes exactly two caretaker column groups on the Signups sheet', () => {

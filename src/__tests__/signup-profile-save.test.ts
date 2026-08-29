@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { SIGNUPS_COLUMNS } from '@/lib/signups-config';
-import { ProfileFormValues } from '@/lib/signup-form-schema';
 import { signupRecord } from './fixtures/signup-record';
+import { validProfile } from './fixtures/profile-form-values';
 
 vi.mock('@/lib/signups-sheet', () => ({
   findSignupByPlayerId: vi.fn(),
@@ -23,18 +23,6 @@ const subscribe = vi.mocked(subscribeEmail);
 
 const PLAYER_ID = 'testplayerid';
 const routeParams = { params: Promise.resolve({ playerId: PLAYER_ID }) };
-
-function validProfile(overrides: Partial<ProfileFormValues> = {}): ProfileFormValues {
-  return {
-    preferredFirstName: 'Afirst',
-    lastName: 'Blast',
-    dateOfBirth: '2014-05-12',
-    pronouns: [],
-    volunteerRoles: [],
-    mediaOptOut: false,
-    ...overrides,
-  };
-}
 
 function putRequest(body: object): NextRequest {
   return new NextRequest(`http://localhost/api/signup/player/${PLAYER_ID}`, {

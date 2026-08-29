@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { SIGNUPS_COLUMNS } from '@/lib/signups-config';
 import { signupRecord } from './fixtures/signup-record';
+import { finalFormsRecord } from './fixtures/final-forms-record';
 
 vi.mock('@/lib/signups-sheet', () => ({
   findSignupByPlayerId: vi.fn(),
@@ -21,13 +22,24 @@ vi.mock('@/lib/final-forms', async (importOriginal) => {
   };
 });
 
+// carryOverPhotoFromLastSeason's own behavior (sheet lookup, Drive download/upload) is covered
+// by photo-carryover.test.ts; mocking it here at the route's boundary tests only how the route
+// orchestrates it, not its internals. Mocking one layer lower (google-api/google-oauth-drive)
+// previously left this mock missing getSheetDataWithHyperlinks, so the real carryover call threw
+// and got silently swallowed by the route's own try/catch, exercising no one's intended path.
+vi.mock('@/lib/photo-carryover', () => ({
+  carryOverPhotoFromLastSeason: vi.fn(),
+}));
+
 import { findSignupByPlayerId, updateSignupRow } from '@/lib/signups-sheet';
 import { findFinalFormsMatch } from '@/lib/final-forms';
+import { carryOverPhotoFromLastSeason } from '@/lib/photo-carryover';
 import { GET } from '@/app/api/signup/player/[playerId]/finalforms/route';
 
 const findSignup = vi.mocked(findSignupByPlayerId);
 const updateRow = vi.mocked(updateSignupRow);
 const findMatch = vi.mocked(findFinalFormsMatch);
+const carryOverPhoto = vi.mocked(carryOverPhotoFromLastSeason);
 
 const PLAYER_ID = 'testplayerid';
 const routeParams = { params: Promise.resolve({ playerId: PLAYER_ID }) };
@@ -36,26 +48,12 @@ function ffRequest(): NextRequest {
   return new NextRequest(`http://localhost/api/signup/player/${PLAYER_ID}/finalforms`);
 }
 
-const matchedRecord = {
+const matchedRecord = finalFormsRecord({
   studentId: 'FF-001',
-  firstName: 'Afirst',
-  lastName: 'Blast',
-  legalFirstName: 'Afirst',
-  dateOfBirth: '2014-05-12',
-  grade: '7',
-  parentSigned: true,
-  studentSigned: false,
-  physicalCleared: false,
-  physicalClearanceExpiration: '',
-  studentEmail: 'player@example.com',
-  studentCellPhone: '555-0100',
-  parent1Name: 'Ct One',
-  parent1Email: 'ct1@example.com',
-  parent1Phone: '555-0101',
   parent2Name: 'Ct Two',
   parent2Email: 'ct2@example.com',
   parent2Phone: '555-0102',
-};
+});
 
 describe('GET /api/signup/player/[playerId]/finalforms', () => {
   beforeEach(() => {
@@ -65,6 +63,7 @@ describe('GET /api/signup/player/[playerId]/finalforms', () => {
       rowNumber: 2,
     });
     updateRow.mockImplementation(async (_id, fields) => signupRecord(fields));
+    carryOverPhoto.mockResolvedValue(null);
   });
 
   it('returns found: false when there is no join', async () => {
@@ -81,8 +80,40 @@ describe('GET /api/signup/player/[playerId]/finalforms', () => {
     expect(updateRow).not.toHaveBeenCalled();
 
     findMatch.mockResolvedValue({ record: matchedRecord, dataAsOf: '2026-08-28' });
-    await GET(ffRequest(), routeParams);
+    const res = await GET(ffRequest(), routeParams);
     expect(updateRow).toHaveBeenCalledWith(PLAYER_ID, { [SIGNUPS_COLUMNS.SPS_STUDENT_ID]: 'FF-001' });
+    expect((await res.json()).photoCarriedOver).toBe(false);
+  });
+
+  it('carries over last season\'s photo on the first real join and reports photoCarriedOver', async () => {
+    findMatch.mockResolvedValue({ record: matchedRecord, dataAsOf: '2026-08-28' });
+    carryOverPhoto.mockResolvedValue('carried-over-file-id');
+
+    const res = await GET(ffRequest(), routeParams);
+
+    expect(carryOverPhoto).toHaveBeenCalledWith(PLAYER_ID, 'FF-001');
+    expect(updateRow).toHaveBeenCalledWith(PLAYER_ID, {
+      [SIGNUPS_COLUMNS.SPS_STUDENT_ID]: 'FF-001',
+      [SIGNUPS_COLUMNS.PHOTO_DRIVE_FILE_ID]: 'carried-over-file-id',
+    });
+    expect((await res.json()).photoCarriedOver).toBe(true);
+  });
+
+  it('never attempts carryover when the player already has a current-season photo', async () => {
+    findSignup.mockResolvedValue({
+      record: signupRecord({
+        [SIGNUPS_COLUMNS.PLAYER_ID]: PLAYER_ID,
+        [SIGNUPS_COLUMNS.PHOTO_DRIVE_FILE_ID]: 'already-has-a-photo',
+      }),
+      rowNumber: 2,
+    });
+    findMatch.mockResolvedValue({ record: matchedRecord, dataAsOf: '2026-08-28' });
+
+    const res = await GET(ffRequest(), routeParams);
+
+    expect(carryOverPhoto).not.toHaveBeenCalled();
+    expect(updateRow).toHaveBeenCalledWith(PLAYER_ID, { [SIGNUPS_COLUMNS.SPS_STUDENT_ID]: 'FF-001' });
+    expect((await res.json()).photoCarriedOver).toBe(false);
   });
 
   it('does not overwrite an existing spsStudentId', async () => {

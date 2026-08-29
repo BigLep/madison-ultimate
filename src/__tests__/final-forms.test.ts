@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { SIGNUPS_COLUMNS } from '@/lib/signups-config';
 import { signupRecord } from './fixtures/signup-record';
+import { finalFormsRecord } from './fixtures/final-forms-record';
 
 vi.mock('@/lib/google-api', () => ({
   getMostRecentFileInfoFromFolder: vi.fn(),
@@ -23,7 +24,6 @@ import {
   findFinalFormsMatch,
   seededFieldsFromFinalForms,
   clearFinalFormsCache,
-  FinalFormsRecord,
 } from '@/lib/final-forms';
 
 const getFile = vi.mocked(getMostRecentFileInfoFromFolder);
@@ -43,26 +43,7 @@ async function stubSnapshot(): Promise<void> {
 }
 
 describe('seededFieldsFromFinalForms', () => {
-  const base: FinalFormsRecord = {
-    studentId: 'FF-1',
-    firstName: 'Afirst',
-    lastName: 'Blast',
-    legalFirstName: 'Afirst',
-    dateOfBirth: '2014-05-12',
-    grade: '7',
-    parentSigned: true,
-    studentSigned: false,
-    physicalCleared: false,
-    physicalClearanceExpiration: '',
-    studentEmail: 'player@example.com',
-    studentCellPhone: '555-0100',
-    parent1Name: 'Ct One',
-    parent1Email: 'ct1@example.com',
-    parent1Phone: '555-0101',
-    parent2Name: '',
-    parent2Email: '',
-    parent2Phone: '',
-  };
+  const base = finalFormsRecord();
 
   it('routes a non-SPS student email to personal, not SPS', () => {
     const seeded = seededFieldsFromFinalForms(base);
