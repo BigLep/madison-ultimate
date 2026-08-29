@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { HelperText, Req } from '@/components/FormField'
 import { rememberPlayer } from '@/lib/player-switcher'
 import { DeadlineBanner } from '@/components/DeadlineBanner'
 
@@ -89,7 +90,7 @@ export default function SignupPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="preferredFirstName" style={{ color: 'var(--primary-text)' }}>
-                Player&apos;s preferred first name
+                Player&apos;s preferred first name<Req />
               </Label>
               <Input
                 id="preferredFirstName"
@@ -102,7 +103,7 @@ export default function SignupPage() {
 
             <div className="space-y-2">
               <Label htmlFor="lastName" style={{ color: 'var(--primary-text)' }}>
-                Player&apos;s last name
+                Player&apos;s last name<Req />
               </Label>
               <Input
                 id="lastName"
@@ -115,7 +116,7 @@ export default function SignupPage() {
 
             <div className="space-y-2">
               <Label htmlFor="dateOfBirth" style={{ color: 'var(--primary-text)' }}>
-                Player&apos;s date of birth
+                Player&apos;s date of birth<Req />
               </Label>
               <Input
                 id="dateOfBirth"
@@ -131,10 +132,10 @@ export default function SignupPage() {
               <Label htmlFor="legalFirstName" style={{ color: 'var(--primary-text)' }}>
                 Legal first name
               </Label>
-              <p className="text-xs -mt-1" style={{ color: 'var(--secondary-text)' }}>
+              <HelperText>
                 Only if different from preferred. Needed to match your player&apos;s Final Forms record when last
                 name and birthdate alone aren&apos;t enough (e.g. twins). Never shown publicly.
-              </p>
+              </HelperText>
               <Input
                 id="legalFirstName"
                 value={legalFirstName}

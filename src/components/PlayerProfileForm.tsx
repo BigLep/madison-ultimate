@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { HelperText, Req } from '@/components/FormField'
 import { LearnMoreLink } from '@/components/HelpBubble'
 import { PhotoUpload } from '@/components/PhotoUpload'
 import { MailingStatusInline } from '@/components/MailingStatusInline'
@@ -32,16 +33,6 @@ const selectClassName = 'flex h-9 w-full rounded-md border border-gray-300 bg-wh
 function FieldError({ message }: { message?: string }) {
   if (!message) return null
   return <p className="text-xs" style={{ color: '#f87171' }}>{message}</p>
-}
-
-/** Required-field marker, colored to stand out from the label text instead of blending in. */
-function Req() {
-  return <span style={{ color: '#f87171' }}> *</span>
-}
-
-/** Sits between a label and its input. */
-function HelperText({ children }: { children: React.ReactNode }) {
-  return <p className="text-xs" style={{ color: 'var(--secondary-text)' }}>{children}</p>
 }
 
 export function PlayerProfileForm({
