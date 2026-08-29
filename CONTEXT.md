@@ -41,7 +41,9 @@ _Avoid_: parent, guardian (except when quoting Final Forms column names, which s
 **Newsletter**:
 The Madison Ultimate email newsletter (Buttondown), the main way we reach families. Family-facing copy always says Newsletter. Next to every eligible email (caretaker 1/2 and student personal, never SPS) the form shows `Newsletter: subscribed|not subscribed` plus a Join or Leave button.
 _Avoid_: mailing list (code, the retired Google Group, and coach-sheet columns may still say this)
-_Avoid_: mailing list (code, the retired Google Group, and coach-sheet columns may still say this)
+
+**WhatsApp Community**:
+The family WhatsApp community for questions, photos, carpools, and similar. Join via `/whatsapp`, which the server redirects to the invite. Linked only from signed-up player pages (`/player/$id`) and the player portal — not the public homepage. The invite URL lives in `WHATSAPP_COMMUNITY_JOIN_URL` (env only, never client code or git).
 
 ### Final Forms data
 

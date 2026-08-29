@@ -3,6 +3,8 @@ const nextConfig = {
   // Fix workspace root warning
   outputFileTracingRoot: __dirname,
 
+  // /whatsapp is a Route Handler (src/app/whatsapp/route.ts), not a config redirect:
+  // the invite lives in WHATSAPP_COMMUNITY_JOIN_URL so it is never baked into git or the client bundle.
   async redirects() {
     return [
       {

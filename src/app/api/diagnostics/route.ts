@@ -70,6 +70,13 @@ export async function GET(request: NextRequest) {
     }
   });
 
+  // Invite URL must never appear in diagnostics output (or the client bundle).
+  if (process.env.WHATSAPP_COMMUNITY_JOIN_URL) {
+    addResult('Environment', 'WHATSAPP_COMMUNITY_JOIN_URL', 'pass', 'Set');
+  } else {
+    addResult('Environment', 'WHATSAPP_COMMUNITY_JOIN_URL', 'warning', 'Not set (/whatsapp will 404)');
+  }
+
   // Check service account credential configuration
   const serviceAccountKeyFile = process.env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE;
   const serviceAccountKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;

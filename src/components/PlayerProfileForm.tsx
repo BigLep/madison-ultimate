@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { LearnMoreLink } from '@/components/HelpBubble'
 import { PhotoUpload } from '@/components/PhotoUpload'
 import { MailingStatusInline } from '@/components/MailingStatusInline'
+import { WhatsAppIcon } from '@/components/WhatsAppIcon'
 import { APP_CONFIG } from '@/lib/app-config'
 import {
   profileFormSchema,
@@ -445,20 +446,49 @@ export function PlayerProfileForm({
       </section>
 
       <div
-        className="text-sm border-t pt-4"
+        className="text-sm border-t pt-4 space-y-3"
         style={{ borderColor: 'var(--border)', color: 'var(--secondary-text)' }}
       >
-        Saving subscribes the caretaker and player personal emails above to the{' '}
-        <a
-          href={APP_CONFIG.MAILING_LIST_JOIN_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline"
-          style={{ color: 'var(--accent)' }}
-        >
-          Madison Ultimate newsletter
-        </a>, our main way of reaching families. Anyone who has already left stays unsubscribed. You
-        can leave at any point, right from this page.
+        <p>
+          Saving subscribes the caretaker and player personal emails above to the{' '}
+          <a
+            href={APP_CONFIG.MAILING_LIST_JOIN_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+            style={{ color: 'var(--accent)' }}
+          >
+            Madison Ultimate newsletter
+          </a>, our main way of reaching families. Anyone who has already left stays unsubscribed. You
+          can leave at any point, right from this page.
+        </p>
+        <p className="flex items-start gap-2">
+          <WhatsAppIcon className="shrink-0 mt-0.5" />
+          <span>
+            Join our{' '}
+            <a
+              href={APP_CONFIG.WHATSAPP_JOIN_PATH}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+              style={{ color: 'var(--accent)' }}
+            >
+              WhatsApp community
+            </a>
+            {' '}to ask questions ❓, share photos 📸, arrange carpools 🚗, etc.{' '}
+            (
+            <a
+              href={APP_CONFIG.WHATSAPP_LEARN_MORE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+              style={{ color: 'var(--accent)' }}
+            >
+              Learn more
+            </a>
+            )
+          </span>
+        </p>
       </div>
 
       {saveError && (

@@ -97,7 +97,7 @@ Supporting copy: C14.
 
 ### Save
 
-Above the save button, copy block C2 (mailing-list consent notice). Saving: writes the row, auto-subscribes caretaker and student personal emails unless they have already opted out of Buttondown (`type: "regular"`), never the SPS email, then shows the status dashboard.
+Above the save button, copy block C2 (mailing-list consent notice) and C2b (WhatsApp community invite). Saving: writes the row, auto-subscribes caretaker and student personal emails unless they have already opted out of Buttondown (`type: "regular"`), never the SPS email, then shows the status dashboard.
 
 ## Status dashboard (on /player/$playerId)
 
@@ -116,6 +116,8 @@ Final Forms row states:
 **C1, near-match warning (step 0):** "We may already have a signup for this player. Double-check the spelling of the name and birthdate. If this is a sibling or you are sure this is a new signup, continue."
 
 **C2, mailing-list consent (at save):** "Saving subscribes the caretaker and player personal emails above to the Madison Ultimate newsletter, our main way of reaching families. Anyone who has already left stays unsubscribed. You can leave at any point, right from this page." ("Madison Ultimate newsletter" links to https://buttondown.com/madisonultimate/, which has a Manage Subscription button.)
+
+**C2b, WhatsApp community (at save, beside C2):** WhatsApp logo plus "Join our WhatsApp community to ask questions ❓, share photos 📸, arrange carpools 🚗, etc. (Learn more)." "WhatsApp community" links to `/whatsapp` (server redirect to the env invite; never the invite URL in client code). Shown only on signed-up player pages, not the public homepage. Learn more uses `WHATSAPP_LEARN_MORE_URL`.
 
 **C3, refresh prompt:** "Data last synchronized with Final Forms on [time]. If you have updated Final Forms since then, click here and we'll try again." ("click here" is the action. Omit the first sentence if there is no timestamp.)
 

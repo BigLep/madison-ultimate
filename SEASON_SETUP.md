@@ -69,13 +69,14 @@ All of these live in **`src/app/player-portal/[portalId]/page.tsx`**. Decide eac
 | **MAILING_LIST_INFO_URL** | Top of file: `const MAILING_LIST_INFO_URL = '…'` | Notion (or other) URL for mailing list / more info. |
 | **Show “Additional Info Form”** | Top of file: `const SHOW_ADDITIONAL_INFO_FORM = true \| false` | Whether to show the “Additional Info Form” link and questionnaire status in **Player Info**. Set to `false` to hide for seasons that don’t use it (e.g. Spring 2026). |
 
-**Join the Community** (WhatsApp and game snack links on the portal home) are in **`src/lib/app-config.ts`**:
+**Join the Community** (WhatsApp and game snack links on the portal home and the signed-up player profile):
 
-| Setting | What to decide |
-|--------|-----------------|
-| **WHATSAPP_COMMUNITY_JOIN_URL** | WhatsApp invite link for the team community. |
-| **WHATSAPP_LEARN_MORE_URL** | Notion (or other) "learn more" page for the WhatsApp community. |
-| **GAME_SNACK_SIGNUP_URL** | Notion (or other) page for game snack signup. |
+| Setting | Where | What to decide |
+|--------|-----------------|-----------------|
+| **WHATSAPP_COMMUNITY_JOIN_URL** | `.env.local` and Vercel Production env | WhatsApp invite (`https://chat.whatsapp.com/…`). Server-only: `GET /whatsapp` redirects here. Never put this in `app-config.ts`, `next.config.js`, or any client component — it would ship in git and the browser bundle. |
+| **WHATSAPP_JOIN_PATH** | `src/lib/app-config.ts` | Public path families click (`/whatsapp`). Linked only from `/player/$id` and the player portal, not the homepage. |
+| **WHATSAPP_LEARN_MORE_URL** | `src/lib/app-config.ts` | Notion (or other) "learn more" page for the WhatsApp community. |
+| **GAME_SNACK_SIGNUP_URL** | `src/lib/app-config.ts` | Notion (or other) page for game snack signup. |
 
 ---
 
@@ -153,11 +154,11 @@ These behaviors are driven by values in the **Practice Info** and **Game Info** 
 - **`package.json` / `package-lock.json`** – npm updates; `engines.node` for the Active LTS (Vercel).
 - **`.github/workflows/test.yml`** – `node-version` matching that LTS; keep `actions/checkout` and `actions/setup-node` on versions that run on a supported Node action runtime.
 - **`@types/node`** – major matching the runtime, not Current.
-- **`.env.local`** – `ROSTER_SHEET_ID`, `SPS_FINAL_FORMS_FOLDER_ID`; optionally `TEAM_MAILING_LIST_FOLDER_ID`, `BUTTONDOWN_API_KEY`.
+- **`.env.local`** – `ROSTER_SHEET_ID`, `SPS_FINAL_FORMS_FOLDER_ID`; optionally `TEAM_MAILING_LIST_FOLDER_ID`, `BUTTONDOWN_API_KEY`. Also `WHATSAPP_COMMUNITY_JOIN_URL` (and the same key on Vercel Production).
 - **Sheets integration test sheet** – `SIGNUPS_SHEET_ID_TEST` needs a new test spreadsheet each season once the real Signups sheet's schema is finalized; see "Recreating the test sheet" in [docs/TEST_DESIGN.md](docs/TEST_DESIGN.md).
 - **`src/lib/sheet-config.ts`** – `ROSTER_FIRST_DATA_ROW` if your roster has more than one header row (e.g. first data row is not row 2).
 - **`src/app/player-portal/[portalId]/page.tsx`** – Season label, `MAILING_LIST_INFO_URL`, `SHOW_ADDITIONAL_INFO_FORM`.
-- **`src/lib/app-config.ts`** – `SEASON_INFO_URL`; Join the Community: `WHATSAPP_COMMUNITY_JOIN_URL`, `WHATSAPP_LEARN_MORE_URL`, `GAME_SNACK_SIGNUP_URL`.
+- **`src/lib/app-config.ts`** – `SEASON_INFO_URL`; Join the Community: `WHATSAPP_LEARN_MORE_URL`, `GAME_SNACK_SIGNUP_URL` (invite is env, not this file).
 - **`src/lib/game-config.ts`** – `TEAM_DISPLAY_NAME` if you use a different default team name.
 - **Google Sheet** – Share with service account; update tabs and data.
 - **Buttondown** – RSS is public; set `BUTTONDOWN_API_KEY` if you want mailing list status on the player page.

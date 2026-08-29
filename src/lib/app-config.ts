@@ -12,9 +12,10 @@ export const APP_CONFIG = {
   /** Buttondown newsletter subscribe/archive page. */
   MAILING_LIST_JOIN_URL: 'https://buttondown.com/madisonultimate',
 
-  // Join the Community (player portal home) — update each new season; see SEASON_SETUP.md
-  /** WhatsApp community join link. */
-  WHATSAPP_COMMUNITY_JOIN_URL: 'https://chat.whatsapp.com/BOFsHNwVB2r4tUvE30Tn3B',
+  // Join the Community — linked from /player/$id and the portal home only (never the public homepage).
+  // The invite itself is WHATSAPP_COMMUNITY_JOIN_URL in env; see SEASON_SETUP.md.
+  /** Public path that redirects to the WhatsApp invite. */
+  WHATSAPP_JOIN_PATH: '/whatsapp',
   /** Notion (or other) URL to learn more about the WhatsApp community. */
   WHATSAPP_LEARN_MORE_URL: 'https://madisonultimate.notion.site/More-Season-Info-2ffc4da46f7581d0b8e8f16282d39117#31dc4da46f758071be66eae740ecda64',
   /** Notion (or other) URL for game snack signup. */
