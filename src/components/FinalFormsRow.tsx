@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, type ReactNode } from 'react'
-import { formatFullDateWithYear, formatLocalTimestamp } from '@/lib/date-formatters'
+import { formatFullDateWithYear, formatLocalTimestamp, formatRelativeHighestUnit } from '@/lib/date-formatters'
 
 const FINAL_FORMS_URL = 'https://seattleschools-wa.finalforms.com'
 const accentLink = { color: 'var(--accent)' }
@@ -15,12 +15,47 @@ export interface FinalFormsStatus {
   physicalClearanceExpiration?: string
 }
 
-function Check({ label, done }: { label: string; done?: boolean }) {
+function Check({ label, done, loading }: { label: string; done?: boolean; loading?: boolean }) {
+  const mark = loading ? '…' : done ? '✓' : '❌'
+  const color = done && !loading ? '#4ade80' : 'var(--secondary-text)'
   return (
     <li className="flex items-center gap-2">
-      <span style={{ color: done ? '#4ade80' : 'var(--secondary-text)' }}>{done ? '✓' : '○'}</span>
+      <span
+        aria-hidden="true"
+        className={loading ? 'animate-pulse' : undefined}
+        style={{ color }}
+      >
+        {mark}
+      </span>
       <span>{label}</span>
     </li>
+  )
+}
+
+const STATUS_ITEMS = [
+  { key: 'parentSigned', label: 'Caretaker signed' },
+  { key: 'studentSigned', label: 'Student signed' },
+  { key: 'physicalCleared', label: 'Physical cleared' },
+] as const
+
+function StatusChecks({
+  status,
+  loading,
+}: {
+  status?: FinalFormsStatus | null
+  loading?: boolean
+}) {
+  return (
+    <ul className="space-y-1" aria-busy={loading || undefined}>
+      {STATUS_ITEMS.map(item => (
+        <Check
+          key={item.key}
+          label={item.label}
+          loading={loading}
+          done={status?.[item.key]}
+        />
+      ))}
+    </ul>
   )
 }
 
@@ -35,7 +70,7 @@ function FinalFormsLink() {
 /** Shown in every Final Forms state: this is SPS's process, not ours. */
 function FinalFormsExplainer() {
   return (
-    <p>
+    <p className="text-xs" style={{ color: 'var(--secondary-text)' }}>
       Seattle Public Schools requires every player to complete{' '}
       <FinalFormsLink />
       . That&apos;s the school&apos;s athletics registration, separate from this signup. A sports
@@ -46,7 +81,7 @@ function FinalFormsExplainer() {
 
 function FinalFormsHelp() {
   return (
-    <>
+    <div className="text-xs space-y-3" style={{ color: 'var(--secondary-text)' }}>
       <p>
         If you are having trouble inside Final Forms itself (e.g., login, forms, clearance), contact{' '}
         <a href="mailto:vamcdonald@seattleschools.org" className="underline" style={accentLink}>
@@ -61,7 +96,7 @@ function FinalFormsHelp() {
         </a>
         .
       </p>
-    </>
+    </div>
   )
 }
 
@@ -122,10 +157,9 @@ export function FinalFormsRow({
 
   if (!status) {
     return (
-      <div className="space-y-3">
-        <FinalFormsExplainer />
-        <p style={{ color: 'var(--secondary-text)' }}>Loading...</p>
-      </div>
+      <FinalFormsSection>
+        <StatusChecks loading />
+      </FinalFormsSection>
     )
   }
 
@@ -152,25 +186,26 @@ export function FinalFormsRow({
     )
   }
 
+  const relative = status.dataAsOf ? formatRelativeHighestUnit(status.dataAsOf) : ''
+  const syncedAt = status.dataAsOf
+    ? `${formatLocalTimestamp(status.dataAsOf)}${relative ? ` (${relative})` : ''}`
+    : ''
+
   return (
     <FinalFormsSection>
-      <ul className="space-y-1">
-        <Check label="Caretaker signed" done={status.parentSigned} />
-        <Check label="Student signed" done={status.studentSigned} />
-        <Check label="Physical cleared" done={status.physicalCleared} />
-      </ul>
+      <StatusChecks status={status} />
       {status.physicalClearanceExpiration && (
-        <p style={{ color: 'var(--secondary-text)' }}>
+        <p className="text-xs" style={{ color: 'var(--secondary-text)' }}>
           Physical clearance expires {formatFullDateWithYear(status.physicalClearanceExpiration)}
         </p>
       )}
-      <p className="text-sm" style={{ color: 'var(--secondary-text)' }}>
-        {status.dataAsOf
-          ? `Data last synchronized with Final Forms on ${formatLocalTimestamp(status.dataAsOf)}. If you have updated Final Forms since then, `
+      <p className="text-xs" style={{ color: 'var(--secondary-text)' }}>
+        {syncedAt
+          ? `Data last synchronized with Final Forms on ${syncedAt}. If you have updated Final Forms since then, `
           : 'If you have updated Final Forms, '}
         <button
           type="button"
-          className="underline py-2"
+          className="underline"
           style={accentLink}
           disabled={isRefreshing}
           onClick={refresh}
@@ -180,7 +215,7 @@ export function FinalFormsRow({
         </button>
         {' '}and we&apos;ll try again.
       </p>
-      {refreshMessage && <p className="text-sm" style={{ color: 'var(--secondary-text)' }}>{refreshMessage}</p>}
+      {refreshMessage && <p className="text-xs" style={{ color: 'var(--secondary-text)' }}>{refreshMessage}</p>}
     </FinalFormsSection>
   )
 }

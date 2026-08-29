@@ -37,9 +37,9 @@ function Req() {
   return <span style={{ color: '#f87171' }}> *</span>
 }
 
-/** Sits between a label and its input, pulled up close to the label (round 4 feedback: too much air otherwise). */
+/** Sits between a label and its input. */
 function HelperText({ children }: { children: React.ReactNode }) {
-  return <p className="text-xs -mt-1.5" style={{ color: 'var(--secondary-text)' }}>{children}</p>
+  return <p className="text-xs" style={{ color: 'var(--secondary-text)' }}>{children}</p>
 }
 
 /** Seeded field hint (ADR 0002): "this is what we have; use it or enter something different." Unmasked. */
@@ -184,10 +184,10 @@ export function PlayerProfileForm({
             </div>
           </div>
           <div className="space-y-2">
-            <Label style={fieldLabelStyle}>
-              Gender identification<Req />
+            <Label style={fieldLabelStyle}>Gender identification<Req /></Label>
+            <HelperText>
               <LearnMoreLink href="https://madisonultimate.notion.site/More-Season-Info-982c4da46f75826db2fd81b6a02568e1#4d6c4da46f7583d9a13a8176d948132c" />
-            </Label>
+            </HelperText>
             <div className="space-y-1">
               {GENDER_IDENTIFICATION_OPTIONS.map(option => (
                 <label key={option} className="flex items-center gap-2 text-sm" style={fieldLabelStyle}>

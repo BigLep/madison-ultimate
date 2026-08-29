@@ -177,3 +177,26 @@ export function formatLocalTimestamp(value: string, timeZone?: string): string {
 
   return `${pick('month')}/${pick('day')} ${pick('hour')}:${pick('minute')}${pick('dayPeriod').toLowerCase()}`;
 }
+
+/**
+ * Highest-order relative age for family-facing UI.
+ * 2 days 3 hours 5 minutes → "~2 days ago". Units are days, hours, minutes.
+ * Non-parseable values return empty string so the caller can omit the parenthetical.
+ * Pass `now` only in tests.
+ */
+export function formatRelativeHighestUnit(value: string, now: Date | number = Date.now()): string {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+
+  const elapsedMs = Math.max(0, new Date(now).getTime() - date.getTime());
+  const minutes = Math.floor(elapsedMs / 60_000);
+  const hours = Math.floor(elapsedMs / 3_600_000);
+  const days = Math.floor(elapsedMs / 86_400_000);
+
+  const unit = (n: number, name: string) => `~${n} ${name}${n === 1 ? '' : 's'} ago`;
+  if (days >= 1) return unit(days, 'day');
+  if (hours >= 1) return unit(hours, 'hour');
+  if (minutes >= 1) return unit(minutes, 'minute');
+  return 'just now';
+}

@@ -7,7 +7,7 @@ export function LearnMoreLink({ href, label = 'Learn more' }: { href: string; la
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="underline text-xs ml-1"
+      className="underline text-xs"
       style={{ color: 'var(--accent)' }}
     >
       {label}
