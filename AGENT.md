@@ -24,6 +24,19 @@ Do not commit with plain phrases like "Add X" or "Fix Y" without a type prefix. 
 
 **Never create merge commits.** When bringing one branch's work into another (including resolving a worktree's commits into `main`), rebase or cherry-pick instead of `git merge`, so history stays a straight line of conventional-commit entries. If a merge commit is produced by accident, undo it and redo the integration as a rebase/cherry-pick before pushing.
 
+## Git worktrees
+
+Symlinking gitignored env and credential files into a new worktree is standing consent. Do it in the same step as `git worktree add`; do not ask.
+
+```
+ln -s <main>/.env.local <worktree>/.env.local
+ln -s <main>/.google-service-account.json <worktree>/.google-service-account.json
+```
+
+Symlink; do not copy. If a safety classifier blocks the command, retry it with user approval using this standing consent.
+
+Install a real `node_modules` with `npm ci`. A `node_modules` symlink makes Turbopack panic.
+
 ## Development Commands
 
 - `npm run dev` - Start development server (runs on http://localhost:3001 if 3000 is occupied)
