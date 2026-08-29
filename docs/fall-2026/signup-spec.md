@@ -105,6 +105,8 @@ Revised round 2 (2026-08-27): the profile form's Save no longer requires complet
 
 Rows, in order: Final Forms (see states below, now shown unconditionally); Profile (Complete, or "Missing: Grade, Jersey Size, Caretaker info" — informational only, doesn't block anything); Photo (shown, or upload); Newsletter (live `Newsletter: subscribed|not subscribed` plus join/leave next to each caretaker email and the optional player personal email; SPS email never offered). Plus the device switcher ("not this player?").
 
+**Newsletter row (revised 2026-08-29):** the "Newsletter" label itself links out to `APP_CONFIG.MAILING_LIST_JOIN_URL` (the Buttondown subscription-management page), so a family can inspect or manage their subscription beyond a simple toggle. The Join/Leave button carries a 📬/📭 icon (mailbox-up for Join, mailbox-down for Leave) so the two states are visually distinct at a glance, not just by label text. Both are deliberate polish on top of the plain `Newsletter: subscribed|not subscribed` + join/leave wording above, not a change to the underlying subscribe/unsubscribe behavior.
+
 Final Forms row states:
 
 - Found and not found both open with copy C15 (SPS-required, external, link to Final Forms) and close with the AD / coach contact lines from C5.
@@ -119,7 +121,7 @@ Final Forms row states:
 
 **C2b, WhatsApp community (at save, beside C2):** WhatsApp logo plus "Join our WhatsApp community to ask questions ❓, share photos 📸, arrange carpools 🚗, etc. (Learn more)." "WhatsApp community" links to `/whatsapp` (server redirect to the env invite; never the invite URL in client code). Shown only on signed-up player pages, not the public homepage. Learn more uses `WHATSAPP_LEARN_MORE_URL`.
 
-**C3, refresh prompt:** "Data last synchronized with Final Forms on [time]. If you have updated Final Forms since then, click here and we'll try again." ("click here" is the action. Omit the first sentence if there is no timestamp.)
+**C3, refresh prompt:** "Data last synchronized with Final Forms on [time] ([relative]). If you have updated Final Forms since then, click here and we'll try again." ("click here" is the action. Omit the first sentence if there is no timestamp.) `[relative]` is a parenthetical relative-time hint (e.g. "2 days ago"), added 2026-08-29 via `formatRelativeHighestUnit`: proximity to now is exactly what a family needs to judge whether "since then" plausibly covers their own recent Final Forms edit, so it's worth showing alongside the absolute local timestamp rather than instead of it. Omit the parenthetical (not just the whole sentence) when `dataAsOf` is missing or unparseable, since `formatRelativeHighestUnit` returns `''` in that case; a future/skewed timestamp still renders "just now" rather than being hidden.
 
 **C4, refresh responses:** started: "Great, we're syncing with Final Forms now. Check back and refresh in about 5 minutes." Already running: "A sync is already underway; refresh in a few minutes."
 
