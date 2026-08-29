@@ -20,9 +20,11 @@ This creates a real row in the "2026 Fall Signups" spreadsheet, exactly like any
 
 `spsStudentId` is never written back to the signup row for these fixture matches, so re-visiting a test player's dashboard always re-evaluates the fixture rather than getting stuck on a stale join.
 
+Join logic for these names (and the live-export path: twins, `spsStudentId` handoff, copy-once seeding) is covered by Vitest in `src/__tests__/final-forms.test.ts` and `src/__tests__/signup-finalforms-route.test.ts`. Use the table above for dashboard copy and layout, not for asserting the join itself. See `docs/TEST_DESIGN.md`.
+
 ## Adding a new fixture
 
-Add an entry to `FIXTURES_BY_NORMALIZED_LAST_NAME` in `src/lib/final-forms-test-fixtures.ts`, keyed by the normalized (lowercase, no spaces) last name. A `null` value means "not found"; anything else is a `FinalFormsRecord` to return.
+Add an entry to `FIXTURES_BY_NORMALIZED_LAST_NAME` in `src/lib/final-forms-test-fixtures.ts`, keyed by the normalized (lowercase, no spaces) last name. A `null` value means "not found"; anything else is a `FinalFormsRecord` to return. If it is a new join/dashboard state, also add a case in `src/__tests__/final-forms.test.ts` so layer 1 stays in sync with the table above.
 
 ## Why last name and not something else
 

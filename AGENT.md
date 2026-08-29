@@ -125,7 +125,7 @@ const availability = playerRow[3 + (i - 1) * 2]; // Breaks when columns change
 - Example: `puppeteer_screenshot({name: "test", width: 375, height: 812})`
 - This ensures screenshots reflect the actual mobile user experience
 
-**Signup Final Forms test fixtures**: to test `/signup` and the player dashboard in every Final Forms state (found/not-found, signed/cleared combinations) without a real registration, use one of the magic last names documented in `docs/fall-2026/signup-test-fixtures.md` (e.g. `TestCleared`).
+**Signup tests**: Vitest covers identity, Final Forms join (including magic last names and `spsStudentId` handoff), mailing on/off, caretaker cap/completeness, lookup, and profile-save — see `docs/TEST_DESIGN.md` (layer 1, “Signup domain states”). To visually exercise `/signup` and the player dashboard in every Final Forms state without a real registration, use one of the magic last names documented in `docs/fall-2026/signup-test-fixtures.md` (e.g. `TestCleared`).
 
 ## Styling Guidelines
 

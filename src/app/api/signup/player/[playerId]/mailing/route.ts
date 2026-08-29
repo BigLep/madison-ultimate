@@ -1,16 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { findSignupByPlayerId } from '../../../../../../lib/signups-sheet';
-import { SIGNUPS_COLUMNS } from '../../../../../../lib/signups-config';
+import { eligibleMailingEmails } from '../../../../../../lib/mailing-eligibility';
 import { isSubscriber, subscribeEmail, unsubscribeEmail } from '../../../../../../lib/buttondown-api';
-
-/** Mailing-list-eligible emails for a signup row: caretaker emails and the student's personal email. SPS email is never offered. */
-function eligibleEmails(record: Record<string, string>) {
-  return [
-    { label: 'Caretaker 1', email: record[SIGNUPS_COLUMNS.CARETAKER_1_EMAIL] },
-    { label: 'Caretaker 2', email: record[SIGNUPS_COLUMNS.CARETAKER_2_EMAIL] },
-    { label: 'Student personal email', email: record[SIGNUPS_COLUMNS.STUDENT_PERSONAL_EMAIL] },
-  ].filter(entry => Boolean(entry.email?.trim()));
-}
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ playerId: string }> }) {
   try {
@@ -20,7 +11,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ success: false, error: 'Player not found' }, { status: 404 });
     }
 
-    const entries = eligibleEmails(existing.record);
+    const entries = eligibleMailingEmails(existing.record);
     const statuses = await Promise.all(
       entries.map(async entry => ({ ...entry, subscribed: await isSubscriber(entry.email) }))
     );
@@ -44,7 +35,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     const { email, action } = await request.json();
-    const eligible = eligibleEmails(existing.record).map(e => e.email.toLowerCase());
+    const eligible = eligibleMailingEmails(existing.record).map(e => e.email.toLowerCase());
     if (!email || !eligible.includes(email.toLowerCase())) {
       return NextResponse.json({ success: false, error: 'Email is not eligible for this player' }, { status: 400 });
     }

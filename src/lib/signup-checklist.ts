@@ -2,7 +2,7 @@
 // Each check is deliberately narrow (one section, one question: "is this done?") so the
 // checklist and the section itself never disagree about what "done" means.
 
-import { SignupRecord } from './signups-sheet';
+import type { SignupRecord } from './signups-sheet';
 import { SIGNUPS_COLUMNS } from './signups-config';
 
 /** Player Info: every field in the Player section is required except Other Info (an open-ended catch-all). */
@@ -38,4 +38,19 @@ export function isOtherVolunteeringComplete(record: SignupRecord): boolean {
 /** Photo Upload: required as of round 3 (previously optional). */
 export function isPhotoComplete(record: SignupRecord): boolean {
   return Boolean(record[SIGNUPS_COLUMNS.PHOTO_DRIVE_FILE_ID]);
+}
+
+/** Final Forms checklist row: done only when found and all three status flags are true. */
+export function isFinalFormsComplete(status: {
+  found?: boolean;
+  parentSigned?: boolean;
+  studentSigned?: boolean;
+  physicalCleared?: boolean;
+} | null | undefined): boolean {
+  return Boolean(
+    status?.found &&
+    status.parentSigned &&
+    status.studentSigned &&
+    status.physicalCleared
+  );
 }

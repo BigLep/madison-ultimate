@@ -10,6 +10,7 @@ import {
   isCoachVolunteeringComplete,
   isOtherVolunteeringComplete,
   isPhotoComplete,
+  isFinalFormsComplete,
 } from '@/lib/signup-checklist'
 import { FinalFormsRow, FinalFormsStatus } from '@/components/FinalFormsRow'
 
@@ -40,12 +41,7 @@ export function PlayerDashboard({
   finalFormsRefreshSignal?: number
 }) {
   const [finalFormsStatus, setFinalFormsStatus] = useState<FinalFormsStatus | null>(null)
-  const finalFormsDone = Boolean(
-    finalFormsStatus?.found &&
-    finalFormsStatus.parentSigned &&
-    finalFormsStatus.studentSigned &&
-    finalFormsStatus.physicalCleared
-  )
+  const finalFormsDone = isFinalFormsComplete(finalFormsStatus)
 
   return (
     <Card style={{ background: 'var(--card-bg)', borderColor: 'var(--border)' }}>

@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 import { SIGNUPS_COLUMNS } from './signups-config';
-import { SignupRecord } from './signups-sheet';
+import type { SignupRecord } from './signups-sheet';
 
 export const GRADE_OPTIONS = ['6', '7', '8'] as const;
 export const JERSEY_SIZE_OPTIONS = ['YM', 'YL', 'AS', 'AM', 'AL', 'AXL'] as const;

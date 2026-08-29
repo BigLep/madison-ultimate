@@ -48,6 +48,11 @@ interface FinalFormsSnapshot {
 const CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes; short because the refresh button (C3/C4) expects near-live reads
 let cache: FinalFormsSnapshot | null = null;
 
+/** Drop the in-memory snapshot so the next join reloads from Drive (or a test mock). */
+export function clearFinalFormsCache(): void {
+  cache = null;
+}
+
 function findHeaderIndex(headers: string[], ...substrings: string[]): number {
   const lower = headers.map(h => h.toLowerCase());
   for (const substring of substrings) {
