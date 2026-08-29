@@ -1,5 +1,5 @@
 // Access layer for the "2026 Fall Signups" spreadsheet's `Signups` tab.
-// Per AGENT.md: never hardcode column positions; always discover headers dynamically.
+// Per AGENTS.md: never hardcode column positions; always discover headers dynamically.
 
 import { getSheetData, appendSheetData, updateSheetData } from './google-api';
 import { SIGNUPS_SHEET_CONFIG, SIGNUPS_COLUMNS } from './signups-config';

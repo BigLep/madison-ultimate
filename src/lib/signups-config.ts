@@ -1,6 +1,6 @@
 // Central configuration for the 2026 Fall Signups spreadsheet.
 // Column values below are header NAMES, never positions: signups-sheet.ts discovers
-// each column's index dynamically from the sheet's own header row (see AGENT.md).
+// each column's index dynamically from the sheet's own header row (see AGENTS.md).
 
 export const SIGNUPS_SHEET_CONFIG = {
   SIGNUPS_SHEET_ID: process.env.SIGNUPS_SHEET_ID || '',
