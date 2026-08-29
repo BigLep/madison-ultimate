@@ -4,6 +4,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clock, MapPin } from 'lucide-react';
 import { PRACTICE_CONFIG } from '@/lib/practice-config';
 
+const ACTIVATION_PILL_CLASSES: Record<'active' | 'inactive' | 'tbd', string> = {
+  active: 'bg-green-500/20 text-green-600',
+  inactive: 'bg-red-400/30 text-red-700',
+  tbd: 'bg-yellow-500/25 text-yellow-700',
+};
+
+function normalizeActivationStatus(status: string): 'active' | 'inactive' | 'tbd' {
+  if (/^active$/i.test(status)) return 'active';
+  if (/^inactive$/i.test(status)) return 'inactive';
+  return 'tbd';
+}
+
 export interface ExtraField {
   columnName: string;
   label: string;
@@ -221,17 +233,7 @@ export function AvailabilityCard({
                   Activation Status
                 </a>
                 <span
-                  className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase"
-                  style={{
-                    backgroundColor:
-                      /^active$/i.test(activationStatus) ? 'rgb(34 197 94 / 0.2)'  // green pill
-                      : /^inactive$/i.test(activationStatus) ? 'rgb(248 113 113 / 0.3)'  // light red
-                      : 'rgb(234 179 8 / 0.25)',  // TBD yellow
-                    color:
-                      /^active$/i.test(activationStatus) ? 'rgb(22 163 74)'
-                      : /^inactive$/i.test(activationStatus) ? 'rgb(185 28 28)'
-                      : 'rgb(161 98 7)'
-                  }}
+                  className={`inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase ${ACTIVATION_PILL_CLASSES[normalizeActivationStatus(activationStatus)]}`}
                 >
                   {((activationStatus || 'TBD').trim() || 'TBD').toUpperCase()}
                 </span>

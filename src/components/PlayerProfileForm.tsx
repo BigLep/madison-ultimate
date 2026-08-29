@@ -57,7 +57,7 @@ export function PlayerProfileForm({
     watch,
     setValue,
     reset,
-    formState: { errors, isSubmitting, isDirty },
+    formState: { errors, isSubmitting },
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues,
@@ -75,22 +75,22 @@ export function PlayerProfileForm({
 
   const toggleVolunteerRole = (role: string) => {
     if (role === NOT_THIS_SEASON) {
-      setValue('volunteerRoles', volunteerRoles.includes(NOT_THIS_SEASON) ? [] : [NOT_THIS_SEASON], { shouldDirty: true })
+      setValue('volunteerRoles', volunteerRoles.includes(NOT_THIS_SEASON) ? [] : [NOT_THIS_SEASON])
       return
     }
     const withoutNotThisSeason = volunteerRoles.filter(r => r !== NOT_THIS_SEASON)
     if (withoutNotThisSeason.includes(role)) {
-      setValue('volunteerRoles', withoutNotThisSeason.filter(r => r !== role), { shouldDirty: true })
+      setValue('volunteerRoles', withoutNotThisSeason.filter(r => r !== role))
     } else {
-      setValue('volunteerRoles', [...withoutNotThisSeason, role], { shouldDirty: true })
+      setValue('volunteerRoles', [...withoutNotThisSeason, role])
     }
   }
 
   const togglePronoun = (pronoun: string) => {
     if (pronouns.includes(pronoun)) {
-      setValue('pronouns', pronouns.filter(p => p !== pronoun), { shouldDirty: true })
+      setValue('pronouns', pronouns.filter(p => p !== pronoun))
     } else {
-      setValue('pronouns', [...pronouns, pronoun], { shouldDirty: true })
+      setValue('pronouns', [...pronouns, pronoun])
     }
   }
 
@@ -106,9 +106,19 @@ export function PlayerProfileForm({
     }
   }
 
+  // watch() fires on every real field edit regardless of how the value changed (register or
+  // setValue), unlike isDirty which only reflects register-bound fields unless every setValue
+  // call opts in with shouldDirty — using watch here means custom handlers (toggles, radios)
+  // don't each need to remember that flag. `type` is 'change' only for a genuine edit, not for
+  // the reset(values) call after a successful save.
   useEffect(() => {
-    if (isDirty && justSaved) setJustSaved(false)
-  }, [isDirty, justSaved])
+    const subscription = watch((_value, { type }) => {
+      if (type !== 'change') return
+      setJustSaved(false)
+      setSaveError('')
+    })
+    return () => subscription.unsubscribe()
+  }, [watch])
 
   return (
     <form onSubmit={handleSubmit(submit)} className={`space-y-8 ${saveError ? 'pb-24' : ''}`}>
@@ -178,7 +188,7 @@ export function PlayerProfileForm({
                     type="radio"
                     value={option}
                     checked={watch('genderIdentification') === option}
-                    onChange={() => setValue('genderIdentification', option, { shouldDirty: true })}
+                    onChange={() => setValue('genderIdentification', option)}
                   />
                   {option}
                 </label>
@@ -195,10 +205,10 @@ export function PlayerProfileForm({
             onChange={e => {
               if (e.target.value === 'Other') {
                 setShowOtherSchool(true)
-                setValue('elementarySchool', '', { shouldDirty: true })
+                setValue('elementarySchool', '')
               } else {
                 setShowOtherSchool(false)
-                setValue('elementarySchool', e.target.value, { shouldDirty: true })
+                setValue('elementarySchool', e.target.value)
               }
             }}
           >
@@ -372,7 +382,7 @@ export function PlayerProfileForm({
                   type="radio"
                   value={option}
                   checked={watch('coachVolunteeringInterest') === option}
-                  onChange={() => setValue('coachVolunteeringInterest', option, { shouldDirty: true })}
+                  onChange={() => setValue('coachVolunteeringInterest', option)}
                 />
                 {option}
               </label>
@@ -502,16 +512,14 @@ export function PlayerProfileForm({
             <div
               role="alert"
               aria-live="assertive"
-              className="border px-4 py-3 rounded font-medium"
-              style={{ backgroundColor: '#fef2f2', borderColor: '#fecaca', color: '#dc2626' }}
+              className="border px-4 py-3 rounded font-medium bg-red-50 border-red-200 text-red-600"
             >
               {saveError}
             </div>
           )}
           <Button
             type="submit"
-            className="w-full text-white font-semibold"
-            style={{ background: justSaved ? '#166534' : 'var(--accent)' }}
+            className={`w-full text-white font-semibold ${justSaved ? 'bg-green-800' : 'bg-[var(--accent)]'}`}
             disabled={isSubmitting}
             aria-live="polite"
           >

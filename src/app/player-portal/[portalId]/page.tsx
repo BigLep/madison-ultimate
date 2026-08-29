@@ -381,11 +381,9 @@ export default function PlayerPortal({ params }: { params: Promise<{ portalId: s
                   type="button"
                   key={item.id}
                   onClick={() => changeScreen(item.id)}
-                  className="flex-1 py-2 px-1 text-center transition-colors"
-                  style={{
-                    color: isActive ? 'var(--page-title)' : 'var(--secondary-text)',
-                    backgroundColor: isActive ? 'var(--primary-bg)' : 'transparent'
-                  }}
+                  className={`flex-1 py-2 px-1 text-center transition-colors ${
+                    isActive ? 'text-[var(--page-title)] bg-[var(--primary-bg)]' : 'text-[var(--secondary-text)] bg-transparent'
+                  }`}
                 >
                   <Icon className="w-5 h-5 mx-auto mb-1" />
                   <span className="text-xs font-medium leading-tight">{item.label}</span>

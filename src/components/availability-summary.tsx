@@ -50,14 +50,21 @@ export function AvailabilitySummary({
             {/* Upcoming items stats */}
             {upcomingItemsForStats.length > 0 && (
               <>
-                <tr style={{borderBottom: upcomingNoResponse > 0 ? 'none' : '1px solid var(--border)'}}>
+                <tr
+                  className={upcomingNoResponse > 0 ? '' : 'border-b'}
+                  style={{ borderColor: 'var(--border)' }}
+                >
                   <td className="py-2 px-3" style={{color: 'var(--primary-text)'}}>
                     <div className="flex items-center gap-2">
                       <span>❗</span>
                       <span>Haven't entered availability</span>
                     </div>
                   </td>
-                  <td className="text-right py-2 px-3 font-semibold" style={{color: upcomingNoResponse > 0 ? '#dc2626' : 'var(--primary-text)'}}>{upcomingNoResponse}</td>
+                  <td
+                    className={`text-right py-2 px-3 font-semibold ${upcomingNoResponse > 0 ? 'text-red-600' : 'text-[var(--primary-text)]'}`}
+                  >
+                    {upcomingNoResponse}
+                  </td>
                 </tr>
                 {upcomingNoResponse > 0 && (
                   <tr style={{borderBottom: '1px solid var(--border)'}}>
