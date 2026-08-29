@@ -167,7 +167,7 @@ export interface FinalFormsJoinResult {
 export async function findFinalFormsMatch(signup: SignupRecord): Promise<FinalFormsJoinResult | null> {
   const fixture = findTestFixture(signup[SIGNUPS_COLUMNS.LAST_NAME]);
   if (fixture !== undefined) {
-    return fixture ? { record: fixture, dataAsOf: 'test data', isTest: true } : null;
+    return fixture ? { record: fixture, dataAsOf: '2026-08-28T05:15:11Z', isTest: true } : null;
   }
 
   const snapshot = await loadSnapshot();

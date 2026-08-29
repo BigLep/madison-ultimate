@@ -107,8 +107,9 @@ Rows, in order: Final Forms (see states below, now shown unconditionally); Profi
 
 Final Forms row states:
 
-- Found: parent signed / student signed / physical cleared, each as a distinct check; physical clearance/expiration date; "data as of [time]"; refresh button (copy C3/C4).
-- Not found: copy block C5.
+- Found and not found both open with copy C15 (SPS-required, external, link to Final Forms) and close with the AD / coach contact lines from C5.
+- Found: parent signed / student signed / physical cleared, each as a distinct check; physical clearance/expiration date; last-synced timestamp plus inline refresh (copy C3/C4).
+- Not found: copy block C5 (couldn't-find + two reasons; physical requirement and contacts now live in C15 / shared help).
 
 ## Copy pack (drafts for review)
 
@@ -116,11 +117,11 @@ Final Forms row states:
 
 **C2, mailing-list consent (at save):** "Saving subscribes the caretaker email(s) above to the Madison Ultimate newsletter, our main way of reaching families. You can opt out at any point, right from this page or here." ("here" links to https://buttondown.com/madisonultimate/, which has a Manage Subscription button; decided round 2, 2026-08-27, over building a link to the dashboard's own opt-out.)
 
-**C3, refresh button label:** "I believe I've completed Final Forms; check again."
+**C3, refresh prompt:** "Data last synchronized with Final Forms on [time]. If you have updated Final Forms since then, click here and we'll try again." ("click here" is the action. Omit the first sentence if there is no timestamp.)
 
 **C4, refresh responses:** started: "Great, we're syncing with Final Forms now. Check back and refresh in about 5 minutes." Already running: "A sync is already underway; refresh in a few minutes."
 
-**C5, Final Forms not found:** "We couldn't find [preferred name] in the school's Final Forms registration yet. Two common reasons: (1) You haven't registered in Final Forms; start at seattleschools-wa.finalforms.com (a sports physical within the last 2 years is also required). (2) The name we have doesn't match school records; enter the last name and legal first name exactly as they appear in Final Forms above. Preferred name is what we'll actually use with your player. Having trouble inside Final Forms itself (login, forms, clearance)? Contact Madison's Athletic Director, Valerie McDonald, at vamcdonald@seattleschools.org. Anything else: madisonultimate@gmail.com."
+**C5, Final Forms not found:** Shown after C15. "We couldn't find [preferred name] in the school's Final Forms registration yet. Two common reasons: (1) You haven't registered in SPS Final Forms yet. (2) The name we have doesn't match school records; enter the last name and legal first name exactly as they appear in Final Forms above. Preferred name is what we'll actually use with your player." AD and coach contacts follow as shared help (same as the found state).
 
 **C6, deadline banner (until Sept 9):** "Complete signup and Final Forms by end of day Wednesday, September 9, and sooner is better: the school needs time to process clearance. SPS rules: players who aren't fully cleared in Final Forms can't set foot on the field at tryouts (Sept 10-11)."
 
@@ -139,6 +140,8 @@ Final Forms row states:
 **C13, other volunteering supporting copy (added round 2):** "Team admin - helps organize attendance and other admin duties. Snack organizing - helps organize family volunteers for after game snacks. T-shirt ordering - helps collect info on who needs a jersey, and what sizes we need. And other opportunities."
 
 **C14, "Anything else" supporting copy (added round 2):** "Feel free to pass along any other ideas, feedback, or suggestions. Alternatively feel free to email madisonultimate@gmail.com anytime."
+
+**C15, Final Forms explainer (under "SPS Final Forms Status", every state):** "Seattle Public Schools requires every player to complete SPS Final Forms. That's the school's athletics registration, separate from this signup. A sports physical within the last 2 years is also required." ("SPS Final Forms" links to https://seattleschools-wa.finalforms.com.) Followed by shared help: "If you are having trouble inside Final Forms itself (e.g., login, forms, clearance), contact Madison's Athletic Director, Valerie McDonald 📧. Other questions? Email madisonultimate@gmail.com."
 
 ## Out of scope, confirmed
 

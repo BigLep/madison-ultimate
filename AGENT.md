@@ -208,29 +208,42 @@ This ensures consistency across the application and makes it easy to update conf
 
 ## Date Formatting Convention
 
-**CRITICAL**: Always use full date formats including day of the week to avoid confusion:
+**CRITICAL**: Family-facing dates are for a parent or student, not a computer. Never show ISO-8601 strings like `"2026-08-28T05:15:11Z"` in the UI. Use the centralized formatters in `/src/lib/date-formatters.ts`.
 
-### Standard Date Display
+### Standard Date Display (practices, games, expirations)
 - **NEVER** use short formats like `"September 23"` or `"9/23"`
 - **ALWAYS** include day of the week: `"Tuesday, September 23"`
 - **USE** centralized date formatters from `/src/lib/date-formatters.ts`
+
+### Point-in-time timestamps (data as of, last updated)
+- **NEVER** show ISO-8601 or other machine timestamps
+- **ALWAYS** use the viewer's local timezone, with am/pm and no seconds: `"8/28 10:34pm"`
+- **USE** `formatLocalTimestamp` from `/src/lib/date-formatters.ts`
 
 ### Available Formatters
 - `formatFullDate(dateString)` - **Default**: `"Tuesday, September 23"`
 - `formatShortDate(dateString)` - **Space-limited**: `"Tue, Sep 23"`
 - `formatFullDateWithYear(dateString, year?)` - **With year**: `"Tuesday, September 23, 2024"`
+- `formatLocalTimestamp(iso)` - **Timestamps**: `"8/28 10:34pm"` (local timezone)
 
 ### Examples
 ```typescript
+import { formatFullDate, formatLocalTimestamp } from '@/lib/date-formatters';
+
 // ❌ Avoid - unclear what day this falls on
 const badDate = "September 23";
 
 // ✅ Good - clear day of the week included
-import { formatFullDate } from '@/lib/date-formatters';
 const goodDate = formatFullDate("9/23"); // "Tuesday, September 23"
+
+// ❌ Avoid - ISO-8601 in the UI
+const badStamp = "2026-08-28T05:15:11Z";
+
+// ✅ Good - local time with am/pm
+const goodStamp = formatLocalTimestamp(iso); // "8/28 10:34pm"
 ```
 
-This convention eliminates ambiguity about which day of the week events occur.
+This convention eliminates ambiguity about which day of the week events occur, and keeps "how recent is this data" readable on a phone.
 
 ## Data Privacy Guidelines
 

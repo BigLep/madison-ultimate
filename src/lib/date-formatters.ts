@@ -150,3 +150,30 @@ export function toCanonicalDateKey(dateInput: string | number): string {
   const { month, day } = parsed;
   return `${month}/${day}`;
 }
+
+/**
+ * Point-in-time timestamp for family-facing UI, in the viewer's local timezone.
+ * Example: "2026-08-28T05:15:11Z" → "8/27 10:15pm" (Pacific Daylight Time).
+ * Non-parseable values (e.g. "test data") pass through unchanged.
+ * Pass `timeZone` only in tests; production omits it so Intl uses the device timezone.
+ */
+export function formatLocalTimestamp(value: string, timeZone?: string): string {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    ...(timeZone ? { timeZone } : {}),
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+
+  const parts = formatter.formatToParts(date);
+  const pick = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find(p => p.type === type)?.value || '';
+
+  return `${pick('month')}/${pick('day')} ${pick('hour')}:${pick('minute')}${pick('dayPeriod').toLowerCase()}`;
+}

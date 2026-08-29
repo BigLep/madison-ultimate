@@ -602,27 +602,37 @@ The application uses a consistent date formatting approach to eliminate user con
 - **Solution**: Always display as "Tuesday, September 23" format
 - **Implementation**: Centralized utilities in `/src/lib/date-formatters.ts`
 
+#### Design Decision: Never Show ISO-8601 in the UI
+- **Problem**: Machine timestamps like `2026-08-28T05:15:11Z` are unreadable for a parent or student
+- **Solution**: Point-in-time values (data as of, last updated) display in the viewer's local timezone with am/pm, no seconds: `"8/28 10:34pm"`
+- **Implementation**: `formatLocalTimestamp()` in `/src/lib/date-formatters.ts`. ISO strings stay in APIs and logs.
+
 #### Available Formatters
 - `formatFullDate()` - **Primary**: "Tuesday, September 23"
 - `formatShortDate()` - **Mobile/limited space**: "Tue, Sep 23"
 - `formatFullDateWithYear()` - **Cross-year events**: "Tuesday, September 23, 2024"
+- `formatLocalTimestamp()` - **Timestamps**: "8/28 10:34pm" (local timezone)
 
 #### Usage Pattern
 ```typescript
-import { formatFullDate } from '@/lib/date-formatters';
+import { formatFullDate, formatLocalTimestamp } from '@/lib/date-formatters';
 
 // Practice dates
 const practiceDate = formatFullDate("9/23"); // "Tuesday, September 23"
 
 // Game dates (upcoming)
 const gameDate = formatFullDate("10/5"); // "Saturday, October 5"
+
+// Data-as-of / last-updated
+const syncedAt = formatLocalTimestamp(iso); // "8/28 10:34pm"
 ```
 
 #### Benefits
 1. **User Clarity**: Parents/players immediately know which day events occur
-2. **Consistency**: Same format across practices, games, and all features
-3. **Maintainability**: Single source of truth for date formatting logic
-4. **Mobile-Friendly**: Short format available when space is constrained
+2. **Readable timestamps**: "how recent is this" is local time, not ISO-8601
+3. **Consistency**: Same formatters across practices, games, and status lines
+4. **Maintainability**: Single source of truth for date formatting logic
+5. **Mobile-Friendly**: Short format available when space is constrained
 
 This standardization is especially important for sports scheduling where day-of-week matters significantly for planning attendance.
 

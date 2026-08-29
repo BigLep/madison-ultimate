@@ -1,6 +1,10 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
+import { formatFullDateWithYear, formatLocalTimestamp } from '@/lib/date-formatters'
+
+const FINAL_FORMS_URL = 'https://seattleschools-wa.finalforms.com'
+const accentLink = { color: 'var(--accent)' }
 
 export interface FinalFormsStatus {
   found: boolean
@@ -17,6 +21,57 @@ function Check({ label, done }: { label: string; done?: boolean }) {
       <span style={{ color: done ? '#4ade80' : 'var(--secondary-text)' }}>{done ? '✓' : '○'}</span>
       <span>{label}</span>
     </li>
+  )
+}
+
+function FinalFormsLink() {
+  return (
+    <a href={FINAL_FORMS_URL} target="_blank" rel="noopener noreferrer" className="underline" style={accentLink}>
+      SPS Final Forms
+    </a>
+  )
+}
+
+/** Shown in every Final Forms state: this is SPS's process, not ours. */
+function FinalFormsExplainer() {
+  return (
+    <p>
+      Seattle Public Schools requires every player to complete{' '}
+      <FinalFormsLink />
+      . That&apos;s the school&apos;s athletics registration, separate from this signup. A sports
+      physical within the last 2 years is also required.
+    </p>
+  )
+}
+
+function FinalFormsHelp() {
+  return (
+    <>
+      <p>
+        If you are having trouble inside Final Forms itself (e.g., login, forms, clearance), contact{' '}
+        <a href="mailto:vamcdonald@seattleschools.org" className="underline" style={accentLink}>
+          Madison&apos;s Athletic Director, Valerie McDonald 📧
+        </a>
+        .
+      </p>
+      <p>
+        Other questions? Email{' '}
+        <a href="mailto:madisonultimate@gmail.com" className="underline" style={accentLink}>
+          madisonultimate@gmail.com
+        </a>
+        .
+      </p>
+    </>
+  )
+}
+
+function FinalFormsSection({ children }: { children: ReactNode }) {
+  return (
+    <div className="space-y-3">
+      <FinalFormsExplainer />
+      {children}
+      <FinalFormsHelp />
+    </div>
   )
 }
 
@@ -65,12 +120,18 @@ export function FinalFormsRow({
     }
   }
 
-  if (!status) return <p style={{ color: 'var(--secondary-text)' }}>Loading...</p>
-
-  if (!status.found) {
-    const linkStyle = { color: 'var(--accent)' }
+  if (!status) {
     return (
       <div className="space-y-3">
+        <FinalFormsExplainer />
+        <p style={{ color: 'var(--secondary-text)' }}>Loading...</p>
+      </div>
+    )
+  }
+
+  if (!status.found) {
+    return (
+      <FinalFormsSection>
         <p className="flex items-start gap-2">
           <span aria-hidden="true">⚠️</span>
           <span>
@@ -80,58 +141,46 @@ export function FinalFormsRow({
         </p>
         <ol className="list-decimal ml-9 space-y-1">
           <li>
-            You haven&apos;t registered in{' '}
-            <a href="https://seattleschools-wa.finalforms.com" target="_blank" rel="noopener noreferrer" className="underline" style={linkStyle}>
-              SPS Final Forms
-            </a>{' '}
-            (a sports physical within the last 2 years is also required).
+            You haven&apos;t registered in <FinalFormsLink /> yet.
           </li>
           <li>
             The name we have doesn&apos;t match school records; enter the last name and legal first name exactly
             as they appear in Final Forms. Preferred name is what we&apos;ll actually use with your player.
           </li>
         </ol>
-        <p>
-          If you are having trouble inside Final Forms itself (e.g., login, forms, clearance), contact{' '}
-          <a href="mailto:vamcdonald@seattleschools.org" className="underline" style={linkStyle}>
-            Madison&apos;s Athletic Director, Valerie McDonald 📧
-          </a>
-          .
-        </p>
-        <p>
-          Other questions? Email{' '}
-          <a href="mailto:madisonultimate@gmail.com" className="underline" style={linkStyle}>
-            madisonultimate@gmail.com
-          </a>
-          .
-        </p>
-      </div>
+      </FinalFormsSection>
     )
   }
 
   return (
-    <div className="space-y-3">
+    <FinalFormsSection>
       <ul className="space-y-1">
         <Check label="Caretaker signed" done={status.parentSigned} />
         <Check label="Student signed" done={status.studentSigned} />
         <Check label="Physical cleared" done={status.physicalCleared} />
       </ul>
       {status.physicalClearanceExpiration && (
-        <p style={{ color: 'var(--secondary-text)' }}>Physical clearance expires {status.physicalClearanceExpiration}</p>
+        <p style={{ color: 'var(--secondary-text)' }}>
+          Physical clearance expires {formatFullDateWithYear(status.physicalClearanceExpiration)}
+        </p>
       )}
-      {status.dataAsOf && (
-        <p className="text-xs" style={{ color: 'var(--secondary-text)' }}>Data as of {status.dataAsOf}</p>
-      )}
-      <button
-        type="button"
-        className="underline text-sm py-2 px-1 -mx-1 text-left"
-        style={{ color: 'var(--accent)' }}
-        disabled={isRefreshing}
-        onClick={refresh}
-      >
-        I believe I&apos;ve completed Final Forms; check again.
-      </button>
+      <p className="text-sm" style={{ color: 'var(--secondary-text)' }}>
+        {status.dataAsOf
+          ? `Data last synchronized with Final Forms on ${formatLocalTimestamp(status.dataAsOf)}. If you have updated Final Forms since then, `
+          : 'If you have updated Final Forms, '}
+        <button
+          type="button"
+          className="underline py-2"
+          style={accentLink}
+          disabled={isRefreshing}
+          onClick={refresh}
+          aria-label="Check Final Forms again"
+        >
+          click here
+        </button>
+        {' '}and we&apos;ll try again.
+      </p>
       {refreshMessage && <p className="text-sm" style={{ color: 'var(--secondary-text)' }}>{refreshMessage}</p>}
-    </div>
+    </FinalFormsSection>
   )
 }
