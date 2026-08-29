@@ -64,9 +64,9 @@ madison-ultimate/
 
 ## Tech Stack
 
-- **Framework**: Next.js 15 with App Router
+- **Framework**: Next.js 16 with App Router (React 19)
 - **Language**: TypeScript
-- **Styling**: Tailwind CSS
+- **Styling**: Tailwind CSS 4
 - **Deployment**: Vercel (https://madison-ultimate.vercel.app)
 - **Data Sources**: Google Sheets API, Google Drive API, Buttondown (RSS for team updates; optional API for mailing list status)
 

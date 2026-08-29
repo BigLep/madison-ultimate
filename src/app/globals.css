@@ -1,6 +1,9 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-background: var(--primary-bg);
+  --color-foreground: var(--primary-text);
+}
 
 /* Madison Ultimate - Dark Mode Only */
 :root {
