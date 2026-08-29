@@ -144,6 +144,15 @@ export function PlayerProfileForm({
           </div>
         </div>
 
+        <div className="space-y-2">
+          <Label style={fieldLabelStyle}>Legal first name</Label>
+          <HelperText>
+            Only if different from preferred. Needed to match your player&apos;s Final Forms record when last name
+            and birthdate alone aren&apos;t enough (e.g. twins). Never shown publicly.
+          </HelperText>
+          <Input {...register('legalFirstName')} />
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label style={fieldLabelStyle}>Date of birth<Req /></Label>
@@ -160,15 +169,6 @@ export function PlayerProfileForm({
             </select>
             <SeededHint value={seeded.grade} onUse={() => setValue('grade', seeded.grade!)} />
           </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label style={fieldLabelStyle}>Legal first name</Label>
-          <HelperText>
-            Only if different from preferred. Needed to match your player&apos;s Final Forms record when last name
-            and birthdate alone aren&apos;t enough (e.g. twins). Never shown publicly.
-          </HelperText>
-          <Input {...register('legalFirstName')} />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
