@@ -11,10 +11,11 @@ vi.mock('@/lib/google-oauth-drive', () => ({
   uploadPlayerPhoto: vi.fn(async () => 'fileId'),
 }));
 
-import { GET } from '@/app/api/signup/player/[playerId]/photo/route';
+import { GET, POST } from '@/app/api/signup/player/[playerId]/photo/route';
 import { findSignupByPlayerId } from '@/lib/signups-sheet';
-import { downloadDriveFile } from '@/lib/google-oauth-drive';
+import { downloadDriveFile, uploadPlayerPhoto } from '@/lib/google-oauth-drive';
 import { SIGNUPS_COLUMNS } from '@/lib/signups-config';
+import { PHOTO_MAX_BYTES } from '@/lib/photo-limits';
 
 function makeRequest() {
   return new NextRequest('http://localhost/api/signup/player/P047/photo');
@@ -56,7 +57,11 @@ describe('GET /api/signup/player/[playerId]/photo', () => {
 
   it('streams the photo bytes with the right content type when found', async () => {
     vi.mocked(findSignupByPlayerId).mockResolvedValue({
-      record: { [SIGNUPS_COLUMNS.PHOTO_DRIVE_FILE_ID]: 'driveFileId' },
+      record: {
+        [SIGNUPS_COLUMNS.PHOTO_DRIVE_FILE_ID]: 'driveFileId',
+        [SIGNUPS_COLUMNS.PREFERRED_FIRST_NAME]: 'TestFirst',
+        [SIGNUPS_COLUMNS.LAST_NAME]: 'TestLast',
+      },
     } as any);
     vi.mocked(downloadDriveFile).mockResolvedValue({ buffer: Buffer.from('fake-bytes'), mimeType: 'image/jpeg' });
 
@@ -64,7 +69,52 @@ describe('GET /api/signup/player/[playerId]/photo', () => {
 
     expect(res.status).toBe(200);
     expect(res.headers.get('Content-Type')).toBe('image/jpeg');
+    expect(res.headers.get('Content-Disposition')).toContain('TestFirstTestLast.jpg');
     const body = Buffer.from(await res.arrayBuffer());
     expect(body.toString()).toBe('fake-bytes');
+  });
+
+  it('downloads HEIF as firstNameLastName.heic', async () => {
+    vi.mocked(findSignupByPlayerId).mockResolvedValue({
+      record: {
+        [SIGNUPS_COLUMNS.PHOTO_DRIVE_FILE_ID]: 'driveFileId',
+        [SIGNUPS_COLUMNS.PREFERRED_FIRST_NAME]: 'TestFirst',
+        [SIGNUPS_COLUMNS.LAST_NAME]: 'TestLast',
+      },
+    } as any);
+    vi.mocked(downloadDriveFile).mockResolvedValue({ buffer: Buffer.from('heif-bytes'), mimeType: 'image/heif' });
+
+    const res = await GET(makeRequest(), { params: Promise.resolve({ playerId: 'P047' }) });
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toBe('image/heic');
+    expect(res.headers.get('Content-Disposition')).toBe(
+      'inline; filename="TestFirstTestLast.heic"; filename*=UTF-8\'\'TestFirstTestLast.heic'
+    );
+  });
+});
+
+describe('POST /api/signup/player/[playerId]/photo', () => {
+  beforeEach(() => {
+    vi.mocked(findSignupByPlayerId).mockReset();
+    vi.mocked(uploadPlayerPhoto).mockReset();
+  });
+
+  function makePost(file: File) {
+    const form = new FormData();
+    form.append('photo', file);
+    return new NextRequest('http://localhost/api/signup/player/P047/photo', { method: 'POST', body: form });
+  }
+
+  it('rejects photos larger than 5 MB before talking to Drive', async () => {
+    vi.mocked(findSignupByPlayerId).mockResolvedValue({ record: {} } as any);
+    const file = new File([new Uint8Array(PHOTO_MAX_BYTES + 1)], 'big.jpg', { type: 'image/jpeg' });
+
+    const res = await POST(makePost(file), { params: Promise.resolve({ playerId: 'P047' }) });
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toMatch(/5 MB or smaller/);
+    expect(uploadPlayerPhoto).not.toHaveBeenCalled();
   });
 });

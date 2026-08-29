@@ -8,6 +8,7 @@
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
 import { Readable } from 'stream';
+import { photoExtension } from './photo-limits';
 
 function getOAuthClient(): OAuth2Client {
   const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
@@ -53,12 +54,13 @@ export async function uploadPlayerPhoto(
   if (existingFileId) {
     const res = await drive.files.update({
       fileId: existingFileId,
+      requestBody: { mimeType },
       media,
     });
     return res.data.id || existingFileId;
   }
 
-  const extension = mimeType.split('/')[1] || 'jpg';
+  const extension = photoExtension(mimeType);
   const res = await drive.files.create({
     requestBody: {
       name: `${playerId}.${extension}`,

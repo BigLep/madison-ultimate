@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { findSignupByPlayerId, updateSignupRow } from '../../../../../../lib/signups-sheet';
 import { SIGNUPS_COLUMNS } from '../../../../../../lib/signups-config';
 import { downloadDriveFile, uploadPlayerPhoto } from '../../../../../../lib/google-oauth-drive';
-
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
-const MAX_BYTES = 15 * 1024 * 1024; // 15MB
+import { PHOTO_ALLOWED_TYPES, PHOTO_MAX_BYTES, photoContentDisposition, photoContentType, photoDownloadFilename, photoTooLargeMessage } from '../../../../../../lib/photo-limits';
 
 // Serves the player's photo bytes directly (rather than a Drive link), since families viewing
 // /player/$playerId have no Google sign-in and Drive's own links (thumbnailLink, webContentLink)
@@ -28,12 +26,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ success: false, error: 'Photo not found in Drive' }, { status: 404 });
     }
 
+    const filename = photoDownloadFilename(
+      existing.record[SIGNUPS_COLUMNS.PREFERRED_FIRST_NAME] || '',
+      existing.record[SIGNUPS_COLUMNS.LAST_NAME] || '',
+      file.mimeType,
+    )
+
     return new NextResponse(new Uint8Array(file.buffer), {
       status: 200,
       headers: {
-        'Content-Type': file.mimeType,
-        'Content-Disposition': 'inline',
-        'Cache-Control': 'private, max-age=60',
+        'Content-Type': photoContentType(file.mimeType),
+        'Content-Disposition': photoContentDisposition(filename),
+        'Cache-Control': 'private, no-cache, must-revalidate',
       },
     });
   } catch (error) {
@@ -59,11 +63,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ success: false, error: 'No photo provided' }, { status: 400 });
     }
 
-    if (!ALLOWED_TYPES.includes(file.type)) {
+    if (!(PHOTO_ALLOWED_TYPES as readonly string[]).includes(file.type)) {
       return NextResponse.json({ success: false, error: 'Unsupported file type' }, { status: 400 });
     }
-    if (file.size > MAX_BYTES) {
-      return NextResponse.json({ success: false, error: 'File too large' }, { status: 400 });
+    if (file.size > PHOTO_MAX_BYTES) {
+      return NextResponse.json({ success: false, error: photoTooLargeMessage(file.size) }, { status: 400 });
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
