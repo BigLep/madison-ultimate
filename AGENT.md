@@ -20,6 +20,10 @@ This applies to all files in the repo, including docs and plan files. Verify bef
 
 Do not commit with plain phrases like "Add X" or "Fix Y" without a type prefix. This is required for history clarity and tooling (changelogs, semver).
 
+## Hard requirement: clean, linear history
+
+**Never create merge commits.** When bringing one branch's work into another (including resolving a worktree's commits into `main`), rebase or cherry-pick instead of `git merge`, so history stays a straight line of conventional-commit entries. If a merge commit is produced by accident, undo it and redo the integration as a rebase/cherry-pick before pushing.
+
 ## Development Commands
 
 - `npm run dev` - Start development server (runs on http://localhost:3001 if 3000 is occupied)
