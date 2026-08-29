@@ -3,11 +3,19 @@ import { clearFinalFormsCache } from '@/lib/final-forms';
 
 // On-demand Final Forms refresh (spec C3/C4): triggers workflow_dispatch on the
 // finalforms-export workflow in madison-ultimate-admin, with a single-flight guard so
-// concurrent clicks don't queue duplicate runs. Needs a GitHub token with `workflow` scope
-// and a concurrency group added to that workflow file (tracked in
-// docs/fall-2026/signup-plan.md section 10) — both from Steve. Until then this route
-// reports itself as not configured rather than erroring, so the dashboard can skip the
-// refresh button gracefully.
+// concurrent clicks don't queue duplicate runs (the workflow file also has a concurrency
+// group as a second guard against the check-then-dispatch race).
+//
+// FINALFORMS_GITHUB_TOKEN is a classic PAT (public_repo scope only; `workflow` scope is NOT
+// needed since we only dispatch/list/cancel runs, never edit workflow files) owned by a
+// GitHub account dedicated to Madison Ultimate automation (not Steve's personal account),
+// added as a collaborator on BigLep/madison-ultimate-admin. See docs/fall-2026/signup-plan.md
+// section 6 for setup details and rotation date. /api/diagnostics verifies both read access
+// and actual write permission (via a safe cancel-on-a-completed-run probe) without ever
+// triggering a real sync, so check there first if this route starts reporting failures.
+//
+// If the env vars below are unset, this route reports itself as not configured rather than
+// erroring, so the dashboard can skip the refresh button gracefully.
 
 const GITHUB_API = 'https://api.github.com';
 
