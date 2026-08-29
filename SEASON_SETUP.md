@@ -17,6 +17,7 @@ Do this once at the start of the season, in a dedicated branch, and land it befo
   - `engines.node` in `package.json` (Vercel reads this; without it the project setting can stay on an old major)
   - `@types/node` major matching that runtime
   - `.nvmrc` if you use one, so local matches CI
+- **TypeScript:** Stay on **5.x** (`^5`, currently 5.9.3) through this season. Do not bump to 6 or 7 mid-signup. Next season, try **6.x** first (`typescript-eslint` allows `<6.1.0`, so 6.0.x works with Next’s ESLint config). Skip **7.x** until typescript-eslint can load it: TypeScript 7 is the native Go compiler and has no JS compiler API, so the official path is a 6+7 side-by-side install that this app does not need. Typecheck here is already a few seconds; the 7.x speed win is not worth the dual toolchain.
 - **Verify:** `npm run test:run`, `npx tsc --noEmit`, `npm run build`. Confirm a Vercel preview is on the intended Node version (`process.version` in `/api/diagnostics`).
 
 Node 20 reached end-of-life on 30 April 2026; Vercel disables it for new deployments on 1 October 2026. Do not stay on an EOL runtime into a new season.
