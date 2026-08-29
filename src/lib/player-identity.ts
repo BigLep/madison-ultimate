@@ -6,8 +6,12 @@ import { randomBytes } from 'crypto';
 
 const SLUG_ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789'; // no 0/1/i/l/o to avoid confusion
 
+// 31-char alphabet ^ 5 ≈ 28.6M IDs. Birthday-paradox collision chance at a ~100-player
+// season cap is ~0.017%. Existing longer IDs stay valid; we never remint.
+export const PLAYER_ID_LENGTH = 5;
+
 /** Mint a short random opaque PlayerID. Never derive this from name or birthdate. */
-export function mintPlayerId(length = 10): string {
+export function mintPlayerId(length = PLAYER_ID_LENGTH): string {
   const bytes = randomBytes(length);
   let out = '';
   for (let i = 0; i < length; i++) {

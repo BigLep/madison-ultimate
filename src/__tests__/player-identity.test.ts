@@ -65,10 +65,14 @@ describe('normalizeDateOfBirth', () => {
 });
 
 describe('mintPlayerId', () => {
-  it('returns an opaque slug of the requested length from the safe alphabet', () => {
+  it('returns an opaque slug of the default length from the safe alphabet', () => {
     const id = mintPlayerId();
-    expect(id).toHaveLength(10);
+    expect(id).toHaveLength(5);
     expect(id).toMatch(/^[abcdefghjkmnpqrstuvwxyz23456789]+$/);
+  });
+
+  it('honors an explicit length', () => {
+    expect(mintPlayerId(8)).toHaveLength(8);
   });
 
   it('is not derived from name or birthdate', () => {
