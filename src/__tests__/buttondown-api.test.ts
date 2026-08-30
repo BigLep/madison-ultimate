@@ -51,12 +51,11 @@ describe('subscribeUnlessUnsubscribed', () => {
     const fetchMock = vi.mocked(fetch);
     fetchMock
       .mockResolvedValueOnce(new Response(null, { status: 404 }))
-      .mockResolvedValueOnce(new Response(null, { status: 404 }))
       .mockResolvedValueOnce(jsonResponse({ type: 'regular' }, 201));
 
     expect(await subscribeUnlessUnsubscribed(EMAIL)).toBe(true);
-    expect(fetchMock).toHaveBeenCalledTimes(3);
-    expect((fetchMock.mock.calls[2][1] as RequestInit).method).toBe('POST');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect((fetchMock.mock.calls[1][1] as RequestInit).method).toBe('POST');
   });
 });
 
@@ -118,6 +117,7 @@ describe('probeButtondownPermissions', () => {
     delete process.env.BUTTONDOWN_API_KEY;
     expect(await probeButtondownPermissions()).toEqual({
       configured: false,
+      status: 'not-configured',
       message: 'BUTTONDOWN_API_KEY is not set',
     });
     expect(fetch).not.toHaveBeenCalled();

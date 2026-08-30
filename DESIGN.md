@@ -721,6 +721,16 @@ Fall 2026 signup architecture lives in `docs/adr/` (0001 identity, 0002 Signups 
 
 See [docs/adr/0004-seeded-fields-copy-on-first-join.md](docs/adr/0004-seeded-fields-copy-on-first-join.md).
 
+## Buttondown newsletter write API
+
+**Problem.** Leave marks an address `unsubscribed` in Buttondown, a sticky type. A POST with `X-Buttondown-Collision-Behavior: overwrite` cannot flip that type back; Buttondown returns 400 `subscriber_suppressed`. Before this was understood, clicking Join after Leave looked like a no-op, and the same failure was indistinguishable from a listing-only (read-but-not-write) API key silently doing nothing.
+
+**Write path, by known status.** `getSubscriberStatus` looks an address up first, then `subscribeEmail`/`subscribeUnlessUnsubscribed` branch on the result: `unsubscribed` → `PATCH /subscribers/{email}` with `{type: "regular"}` (the only operation that can undo the sticky type); `absent` → `POST /subscribers` with collision behavior `add` (never `overwrite`, so a fresh signup never silently mutates an existing record it didn't just look up). Both callers share one `performSubscribe` write step so the branch and its two fetches are defined once, not duplicated per caller.
+
+**Diagnosing key permissions.** `probeButtondownPermissions` (`src/lib/buttondown-api.ts`) answers "can this key write?" without ever creating a real subscriber: it lists subscribers (read check), then PATCHes a reserved, obviously-fake address (`BUTTONDOWN_WRITE_PROBE_EMAIL = 'madison-ultimate-diagnostics-probe@invalid'`) that should never exist. A 404 or 200 means the key was allowed to attempt the write (pass); a 403 means the key can read but not write. This is not an environment variable — it is a hardcoded constant chosen specifically to be inert. `/api/diagnostics` surfaces the result as a "Subscriber Write" row so a read-only key fails loudly there instead of making Join/Leave look broken.
+
+**Why not just try the real write and see.** Probing against a real family's email would risk actually subscribing or unsubscribing them as a side effect of running diagnostics. Probing against a guaranteed-nonexistent address makes every diagnostics run a no-op against real data.
+
 ## Development Best Practices
 
 ### Sheet Data Column Mapping

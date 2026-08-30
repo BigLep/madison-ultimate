@@ -329,17 +329,22 @@ export async function GET(request: NextRequest) {
   // PATCHes a reserved address that should not exist: 404 = can write, 403 = read-only.
   try {
     const probe = await probeButtondownPermissions();
-    if (!probe.configured) {
-      addResult('Buttondown', 'API Key', 'warning',
-        'BUTTONDOWN_API_KEY not set; newsletter Join / Leave and auto-subscribe are disabled (RSS team updates still work)');
-    } else if (probe.read && probe.write) {
-      addResult('Buttondown', 'Subscriber Read', 'pass', 'Key can list subscribers');
-      addResult('Buttondown', 'Subscriber Write', 'pass', probe.message);
-    } else if (probe.read && !probe.write) {
-      addResult('Buttondown', 'Subscriber Read', 'pass', 'Key can list subscribers');
-      addResult('Buttondown', 'Subscriber Write', 'fail', probe.message);
-    } else {
-      addResult('Buttondown', 'API Key', 'fail', probe.message);
+    switch (probe.status) {
+      case 'not-configured':
+        addResult('Buttondown', 'API Key', 'warning',
+          'BUTTONDOWN_API_KEY not set; newsletter Join / Leave and auto-subscribe are disabled (RSS team updates still work)');
+        break;
+      case 'no-access':
+        addResult('Buttondown', 'API Key', 'fail', probe.message);
+        break;
+      case 'read-only':
+        addResult('Buttondown', 'Subscriber Read', 'pass', 'Key can list subscribers');
+        addResult('Buttondown', 'Subscriber Write', 'fail', probe.message);
+        break;
+      case 'full-access':
+        addResult('Buttondown', 'Subscriber Read', 'pass', 'Key can list subscribers');
+        addResult('Buttondown', 'Subscriber Write', 'pass', probe.message);
+        break;
     }
   } catch (error) {
     addResult('Buttondown', 'API Key', 'fail',

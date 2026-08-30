@@ -135,9 +135,14 @@ export async function getSubscriberStatus(email: string): Promise<SubscriberStat
  * Never re-subscribes an unsubscribed address. Never throws.
  */
 export async function subscribeUnlessUnsubscribed(email: string): Promise<boolean> {
+  const apiKey = process.env.BUTTONDOWN_API_KEY;
+  const trimmed = email?.trim();
   const status = await getSubscriberStatus(email);
   if (status === 'unsubscribed' || status === 'subscribed') return true;
-  if (status === 'absent') return subscribeEmail(email);
+  if (status === 'absent') {
+    if (!apiKey || !trimmed) return false;
+    return performSubscribe(trimmed, apiKey, 'absent');
+  }
   return false;
 }
 
@@ -157,6 +162,15 @@ export async function subscribeEmail(email: string): Promise<boolean> {
   if (status === 'subscribed') return true;
   if (status === null) return false;
 
+  return performSubscribe(trimmed, apiKey, status);
+}
+
+/** Shared PATCH/POST write for subscribeEmail and subscribeUnlessUnsubscribed, given an already-known status. */
+async function performSubscribe(
+  trimmed: string,
+  apiKey: string,
+  status: 'unsubscribed' | 'absent'
+): Promise<boolean> {
   try {
     const res =
       status === 'unsubscribed'
@@ -201,9 +215,17 @@ export async function subscribeEmail(email: string): Promise<boolean> {
  */
 export const BUTTONDOWN_WRITE_PROBE_EMAIL = 'madison-ultimate-diagnostics-probe@invalid';
 
+/**
+ * `status` is the single source of truth for what happened; `read`/`write` are
+ * derived from it and kept only so existing callers/tests can match on them
+ * without a switch of their own (see /api/diagnostics, which switches on
+ * `status` alone rather than re-deriving these four cases from the booleans).
+ */
+export type ButtondownProbeStatus = 'not-configured' | 'no-access' | 'read-only' | 'full-access';
+
 export type ButtondownPermissionProbe =
-  | { configured: false; message: string }
-  | { configured: true; read: boolean; write: boolean; message: string };
+  | { configured: false; status: 'not-configured'; message: string }
+  | { configured: true; status: ButtondownProbeStatus; read: boolean; write: boolean; message: string };
 
 /**
  * Read + write check for BUTTONDOWN_API_KEY. Never creates a subscriber.
@@ -213,7 +235,7 @@ export type ButtondownPermissionProbe =
 export async function probeButtondownPermissions(): Promise<ButtondownPermissionProbe> {
   const apiKey = process.env.BUTTONDOWN_API_KEY;
   if (!apiKey) {
-    return { configured: false, message: 'BUTTONDOWN_API_KEY is not set' };
+    return { configured: false, status: 'not-configured', message: 'BUTTONDOWN_API_KEY is not set' };
   }
 
   const headers = { Authorization: `Token ${apiKey}` };
@@ -226,6 +248,7 @@ export async function probeButtondownPermissions(): Promise<ButtondownPermission
     if (listRes.status === 401) {
       return {
         configured: true,
+        status: 'no-access',
         read: false,
         write: false,
         message: 'BUTTONDOWN_API_KEY was rejected (invalid or revoked)',
@@ -234,6 +257,7 @@ export async function probeButtondownPermissions(): Promise<ButtondownPermission
     if (!listRes.ok) {
       return {
         configured: true,
+        status: 'no-access',
         read: false,
         write: false,
         message: `Could not list subscribers (HTTP ${listRes.status})`,
@@ -255,6 +279,7 @@ export async function probeButtondownPermissions(): Promise<ButtondownPermission
     if (writeRes.status === 404 || writeRes.status === 200) {
       return {
         configured: true,
+        status: 'full-access',
         read: true,
         write: true,
         message:
@@ -264,6 +289,7 @@ export async function probeButtondownPermissions(): Promise<ButtondownPermission
     if (writeRes.status === 403) {
       return {
         configured: true,
+        status: 'read-only',
         read: true,
         write: false,
         message:
@@ -272,6 +298,7 @@ export async function probeButtondownPermissions(): Promise<ButtondownPermission
     }
     return {
       configured: true,
+      status: 'read-only',
       read: true,
       write: false,
       message: `Unexpected response probing subscriber write (HTTP ${writeRes.status})`,
@@ -279,6 +306,7 @@ export async function probeButtondownPermissions(): Promise<ButtondownPermission
   } catch (error) {
     return {
       configured: true,
+      status: 'no-access',
       read: false,
       write: false,
       message: error instanceof Error ? error.message : 'Unknown error probing Buttondown',
