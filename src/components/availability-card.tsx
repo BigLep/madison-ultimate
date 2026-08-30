@@ -3,6 +3,7 @@ import { useDebounce } from 'use-debounce';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clock, MapPin } from 'lucide-react';
 import { PRACTICE_CONFIG } from '@/lib/practice-config';
+import { APP_CONFIG } from '@/lib/app-config';
 
 const ACTIVATION_PILL_CLASSES: Record<'active' | 'inactive' | 'tbd', string> = {
   active: 'bg-green-500/20 text-green-600',
@@ -223,15 +224,21 @@ export function AvailabilityCard({
           <>
             {activationStatus != null && (
               <div className="mb-3">
-                <a
-                  href="https://madisonultimate.notion.site/More-Season-Info-2ffc4da46f7581d0b8e8f16282d39117#2ffc4da46f75814fa548e677b4176285"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs font-medium mb-1.5 block hyperlink"
-                  style={{color: 'var(--secondary-text)'}}
-                >
-                  Activation Status
-                </a>
+                {APP_CONFIG.ACTIVATION_STATUS_INFO_URL ? (
+                  <a
+                    href={APP_CONFIG.ACTIVATION_STATUS_INFO_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-medium mb-1.5 block hyperlink"
+                    style={{color: 'var(--secondary-text)'}}
+                  >
+                    Activation Status
+                  </a>
+                ) : (
+                  <p className="text-xs font-medium mb-1.5" style={{color: 'var(--secondary-text)'}}>
+                    Activation Status
+                  </p>
+                )}
                 <span
                   className={`inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase ${ACTIVATION_PILL_CLASSES[normalizeActivationStatus(activationStatus)]}`}
                 >

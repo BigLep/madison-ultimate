@@ -17,9 +17,14 @@ export const APP_CONFIG = {
   /** Public path that redirects to the WhatsApp invite. */
   WHATSAPP_JOIN_PATH: '/whatsapp',
   /** Notion (or other) URL to learn more about the WhatsApp community. */
-  WHATSAPP_LEARN_MORE_URL: 'https://madisonultimate.notion.site/More-Season-Info-2ffc4da46f7581d0b8e8f16282d39117#31dc4da46f758071be66eae740ecda64',
+  WHATSAPP_LEARN_MORE_URL: 'https://madisonultimate.notion.site/More-Season-Info-982c4da46f75826db2fd81b6a02568e1#76fc4da46f7582c9899b01109ade6891',
   /** Notion (or other) URL for game snack signup. */
-  GAME_SNACK_SIGNUP_URL: 'https://madisonultimate.notion.site/More-Season-Info-2ffc4da46f7581d0b8e8f16282d39117#31dc4da46f7580bdaa3dcc3b396901d9',
+  GAME_SNACK_SIGNUP_URL: 'https://madisonultimate.notion.site/More-Season-Info-982c4da46f75826db2fd81b6a02568e1#c13c4da46f758327ad9c01ee675abb68',
+  /**
+   * Notion (or other) URL explaining Activation Status on practice/game cards.
+   * Empty string = label only, no link. Set when this season has a heading for it.
+   */
+  ACTIVATION_STATUS_INFO_URL: '',
 
   // App Information
   APP_NAME: 'Madison Ultimate Player Portal',

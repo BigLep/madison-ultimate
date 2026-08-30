@@ -9,7 +9,7 @@ This document explains how the portal authenticates with external services.
 For each new season you will need to:
 
 1. **Google Sheets**: Set `ROSTER_SHEET_ID` in `.env.local` and **share that spreadsheet** with the service account (see "Grant Permissions" below).
-2. **Portal and links**: Update season label, `SEASON_INFO_URL`, `MAILING_LIST_INFO_URL`, and `SHOW_ADDITIONAL_INFO_FORM` in the player portal — see [SEASON_SETUP.md](SEASON_SETUP.md).
+2. **Portal and links**: Update season label, `SEASON_INFO_URL`, `MAILING_LIST_INFO_URL`, `WHATSAPP_LEARN_MORE_URL` (season-specific Notion deep link — do not leave last season's More Season Info URL), and `SHOW_ADDITIONAL_INFO_FORM` — see [SEASON_SETUP.md](SEASON_SETUP.md).
 3. **Buttondown** (optional): Set `BUTTONDOWN_API_KEY` in `.env.local` if you want the player page to show whether contact emails are on the newsletter. See **Getting a Buttondown API key** below. Team updates (Recent Team Updates) use the public Buttondown RSS and do not require an API key.
 
 ## Overview

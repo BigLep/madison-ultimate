@@ -66,7 +66,7 @@ All of these live in **`src/app/player-portal/[portalId]/page.tsx`**. Decide eac
 |--------|----------------|-----------------|
 | **Season label** | `HomeScreen`: `<CardDescription>… Season</CardDescription>` (e.g. “Spring 2026 Season”) | Exact label shown on the portal home. |
 | **SEASON_INFO_URL** | `HomeScreen`: `const SEASON_INFO_URL = '…'` | Notion (or other) URL for “team site” / season info. |
-| **MAILING_LIST_INFO_URL** | Top of file: `const MAILING_LIST_INFO_URL = '…'` | Notion (or other) URL for mailing list / more info. |
+| **MAILING_LIST_INFO_URL** | Top of `player-portal/[portalId]/page.tsx` | Notion deep link next to newsletter / mailing-list status. Replace last season's heading when this season has one; until then it is OK to keep last season's URL (Fall 2026 still does). |
 | **Show “Additional Info Form”** | Top of file: `const SHOW_ADDITIONAL_INFO_FORM = true \| false` | Whether to show the “Additional Info Form” link and questionnaire status in **Player Info**. Set to `false` to hide for seasons that don’t use it (e.g. Spring 2026). |
 
 **Join the Community** (WhatsApp and game snack links on the portal home and the signed-up player profile):
@@ -75,8 +75,9 @@ All of these live in **`src/app/player-portal/[portalId]/page.tsx`**. Decide eac
 |--------|-----------------|-----------------|
 | **WHATSAPP_COMMUNITY_JOIN_URL** | `.env.local` and Vercel Production env | WhatsApp invite (`https://chat.whatsapp.com/…`). Server-only: `GET /whatsapp` redirects here. Never put this in `app-config.ts`, `next.config.js`, or any client component — it would ship in git and the browser bundle. |
 | **WHATSAPP_JOIN_PATH** | `src/lib/app-config.ts` | Public path families click (`/whatsapp`). Linked only from `/player/$id` and the player portal, not the homepage. |
-| **WHATSAPP_LEARN_MORE_URL** | `src/lib/app-config.ts` | Notion (or other) "learn more" page for the WhatsApp community. |
-| **GAME_SNACK_SIGNUP_URL** | `src/lib/app-config.ts` | Notion (or other) page for game snack signup. |
+| **WHATSAPP_LEARN_MORE_URL** | `src/lib/app-config.ts` | Notion "Learn more" deep link for the WhatsApp community (signup Communication section and portal home). **Must be updated every season** — this is a season-specific Notion page + heading anchor, not a stable URL. Leaving last season's link is a real failure mode (Fall 2026 launched still pointing at Spring 2026's More Season Info). Open the new season's More Season Info page, copy the WhatsApp section's heading link, and replace this value. |
+| **GAME_SNACK_SIGNUP_URL** | `src/lib/app-config.ts` | Notion deep link for game snack signup. **Must be updated every season** — same failure mode as WhatsApp Learn more. |
+| **ACTIVATION_STATUS_INFO_URL** | `src/lib/app-config.ts` | Notion deep link on the "Activation Status" label on practice/game cards. **Empty string is allowed** when this season has no heading yet (label stays visible, just not a link). Do not leave last season's URL as a stand-in. |
 
 ---
 
@@ -158,7 +159,7 @@ These behaviors are driven by values in the **Practice Info** and **Game Info** 
 - **Sheets integration test sheet** – `SIGNUPS_SHEET_ID_TEST` needs a new test spreadsheet each season once the real Signups sheet's schema is finalized; see "Recreating the test sheet" in [docs/TEST_DESIGN.md](docs/TEST_DESIGN.md).
 - **`src/lib/sheet-config.ts`** – `ROSTER_FIRST_DATA_ROW` if your roster has more than one header row (e.g. first data row is not row 2).
 - **`src/app/player-portal/[portalId]/page.tsx`** – Season label, `MAILING_LIST_INFO_URL`, `SHOW_ADDITIONAL_INFO_FORM`.
-- **`src/lib/app-config.ts`** – `SEASON_INFO_URL`; Join the Community: `WHATSAPP_LEARN_MORE_URL`, `GAME_SNACK_SIGNUP_URL` (invite is env, not this file).
+- **`src/lib/app-config.ts`** – `SEASON_INFO_URL`; Join the Community: **`WHATSAPP_LEARN_MORE_URL` and `GAME_SNACK_SIGNUP_URL` (required each season)**; `ACTIVATION_STATUS_INFO_URL` (empty until this season has a heading). Invite is env, not this file.
 - **`src/lib/game-config.ts`** – `TEAM_DISPLAY_NAME` if you use a different default team name.
 - **Google Sheet** – Share with service account; update tabs and data.
 - **Buttondown** – RSS is public; set `BUTTONDOWN_API_KEY` if you want mailing list status on the player page.

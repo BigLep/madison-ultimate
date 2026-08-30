@@ -16,6 +16,7 @@ import { WhatsAppIcon } from '../../../components/WhatsAppIcon'
 const ADDITIONAL_INFO_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfOO0ybkvfs0GTBvP6tC95HT3JlGVWkSzlYghDITpw_38_hPA/viewform?usp=dialog';
 // Per-season: show "Additional Info Form" in Player Info? See SEASON_SETUP.md.
 const SHOW_ADDITIONAL_INFO_FORM = false;
+// Fall 2026 still uses last season's mailing-list heading until this season publishes one.
 const MAILING_LIST_INFO_URL = 'https://madisonultimate.notion.site/More-Season-Info-2ffc4da46f7581d0b8e8f16282d39117#2ffc4da46f75811a8f53eabe24678d75';
 
 interface PlayerData {
