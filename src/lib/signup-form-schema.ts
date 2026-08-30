@@ -49,6 +49,7 @@ export const VOLUNTEER_ROLE_OPTIONS = [
   'Team photographer',
   'Team admin / communications',
   'Snacks / logistics',
+  'Tent setup',
   'Not sure yet, tell me more',
   'Other',
   NOT_THIS_SEASON,

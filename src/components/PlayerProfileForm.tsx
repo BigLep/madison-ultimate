@@ -437,6 +437,9 @@ export function PlayerProfileForm({
                 {role === 'Snacks / logistics' && (
                   <p className="text-xs ml-6" style={{ color: 'var(--secondary-text)' }}>Helps organize family volunteers for after-game snacks.</p>
                 )}
+                {role === 'Tent setup' && (
+                  <p className="text-xs ml-6" style={{ color: 'var(--secondary-text)' }}>Nice to have on rainy or very sunny days. Bring, set up, and secure your own tent; league rules require tents to be anchored against wind gusts.</p>
+                )}
               </div>
             ))}
           </div>

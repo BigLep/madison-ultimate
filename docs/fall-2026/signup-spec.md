@@ -80,7 +80,7 @@ Supporting copy: C12 (coaching description + learn-more link + female-leadership
 
 | # | Question label | Type | Required | Seed | Sheet column |
 |---|---|---|---|---|---|
-| 1.23 | Ways you might help this season (check any) | multi-select: game-day help / field manager; team photographer; team admin / communications; snacks / logistics; not sure yet, tell me more; other | no | no | Volunteer Roles |
+| 1.23 | Ways you might help this season (check any) | multi-select: game-day help / field manager; team photographer; team admin / communications; snacks / logistics; tent setup; not sure yet, tell me more; other | no | no | Volunteer Roles |
 | 1.24 | Anything more about how you'd like to help? | text | no | no | Volunteer Notes |
 
 "Helping coach at practices" moved out of this list into its own Coach Volunteering question above (round 2). Supporting copy: C13.
@@ -141,7 +141,7 @@ Final Forms row states:
 
 **C12, coach volunteering supporting copy (added round 2):** "All coaches work together to plan and execute practice and game strategies. New coaches will be supported by experienced staff/coaches and utilized in a way to help you and the program succeed. You aren't obligated if you do say yes. You don't have to be there all the time. Prior Ultimate Frisbee coaching experience is not required." Plus a learn-more link to https://madisonultimate.notion.site/Volunteering-60ec4da46f7583df9a2d015cf5cb03b2. Plus a plug: "We're especially hoping to hear from moms and other women interested in coaching; the team benefits from more female leadership on the sideline." Plus a note: "Already talked to Coach Steve about coaching? No need to fill this out again."
 
-**C13, other volunteering supporting copy (added round 2):** "Team admin - helps organize attendance and other admin duties. Snack organizing - helps organize family volunteers for after game snacks. T-shirt ordering - helps collect info on who needs a jersey, and what sizes we need. And other opportunities."
+**C13, other volunteering supporting copy (added round 2):** "Team admin - helps organize attendance and other admin duties. Snack organizing - helps organize family volunteers for after game snacks. T-shirt ordering - helps collect info on who needs a jersey, and what sizes we need. Tent setup - nice to have on rainy or very sunny days; bring, set up, and secure your own tent, since league rules require tents to be anchored against wind gusts. And other opportunities." (Tent setup option added 2026-08-30, per the Notion Volunteering page's tent-setup entry.)
 
 **C14, Communication feedback supporting copy (added round 2 as "Anything else"):** "Feel free to pass along any other ideas, feedback, or suggestions. Alternatively feel free to email madisonultimate@gmail.com anytime."
 
