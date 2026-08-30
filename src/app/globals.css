@@ -110,6 +110,18 @@ body {
 }
 
 
+/* iOS Safari's native date input ignores width:100% from its container and
+   renders wider than sibling text inputs unless its native appearance is
+   reset. */
+input[type='date'] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 /* Consistent Hyperlink Styling */
 .hyperlink {
   color: var(--accent);
