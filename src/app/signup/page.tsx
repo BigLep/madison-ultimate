@@ -10,16 +10,12 @@ import { HelperText, Req } from '@/components/FormField'
 import { rememberPlayer } from '@/lib/player-switcher'
 import { DeadlineBanner } from '@/components/DeadlineBanner'
 import { PlayerSwitcher } from '@/components/PlayerSwitcher'
-import {
-  PLAYER_BIRTHDATE_MAX,
-  PLAYER_BIRTHDATE_MIN,
-  PLAYER_BIRTHDATE_PICKER_DEFAULT,
-} from '@/lib/player-birthdates'
+import { PLAYER_BIRTHDATE_MAX, PLAYER_BIRTHDATE_MIN } from '@/lib/player-birthdates'
 
 export default function SignupPage() {
   const [preferredFirstName, setPreferredFirstName] = useState('')
   const [lastName, setLastName] = useState('')
-  const [dateOfBirth, setDateOfBirth] = useState(PLAYER_BIRTHDATE_PICKER_DEFAULT)
+  const [dateOfBirth, setDateOfBirth] = useState('')
   const [legalFirstName, setLegalFirstName] = useState('')
   const [honeypot, setHoneypot] = useState('')
   const [nearMatchWarning, setNearMatchWarning] = useState(false)
@@ -38,12 +34,7 @@ export default function SignupPage() {
 
   // Two-path chooser (docs/fall-2026/player-switcher-grill.md Q8/Q9): typing into the
   // lookup/signup form de-emphasizes the "Your players" list; clearing the form reverses it.
-  const formEngaged = Boolean(
-    preferredFirstName ||
-    lastName ||
-    legalFirstName ||
-    (dateOfBirth && dateOfBirth !== PLAYER_BIRTHDATE_PICKER_DEFAULT)
-  )
+  const formEngaged = Boolean(preferredFirstName || lastName || dateOfBirth || legalFirstName)
 
   const submit = async (confirmNearMatch: boolean) => {
     setError('')

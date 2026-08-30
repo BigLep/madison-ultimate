@@ -7,5 +7,3 @@
  */
 export const PLAYER_BIRTHDATE_MIN = '2011-01-01'
 export const PLAYER_BIRTHDATE_MAX = '2015-12-31'
-/** Opens the date picker on this day so the year spinner starts in-range. */
-export const PLAYER_BIRTHDATE_PICKER_DEFAULT = PLAYER_BIRTHDATE_MIN
