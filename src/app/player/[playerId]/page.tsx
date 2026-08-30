@@ -72,53 +72,54 @@ export default function PlayerPage() {
   }
 
   return (
-    <div className="min-h-screen p-4 pb-20" style={{ background: 'var(--primary-bg)' }}>
-      <div className="max-w-2xl mx-auto space-y-4">
-        <DeadlineBanner />
+    <div className="min-h-screen" style={{ background: 'var(--primary-bg)' }}>
+      <PlayerSwitcher variant="header" currentPlayerId={playerId} refreshKey={status} />
+      <div className="p-4 pb-20">
+        <div className="max-w-2xl mx-auto space-y-4">
+          <DeadlineBanner />
 
-        {status === 'loading' && (
-          <Card style={{ background: 'var(--card-bg)', borderColor: 'var(--border)' }}>
-            <CardContent className="pt-6" style={{ color: 'var(--primary-text)' }}>
-              Loading...
-            </CardContent>
-          </Card>
-        )}
-
-        {status === 'not-found' && (
-          <Card style={{ background: 'var(--card-bg)', borderColor: 'var(--border)' }}>
-            <CardHeader>
-              <CardTitle style={{ color: 'var(--page-title)' }}>Madison Ultimate</CardTitle>
-            </CardHeader>
-            <CardContent style={{ color: 'var(--primary-text)' }}>
-              We couldn&apos;t find this player.{' '}
-              <a href="/signup" className="underline" style={{ color: 'var(--accent)' }}>Start over</a>.
-            </CardContent>
-          </Card>
-        )}
-
-        {status === 'ready' && record && (
-          <>
-            <PlayerDashboard record={record} finalFormsRefreshSignal={finalFormsRefreshSignal} />
-
+          {status === 'loading' && (
             <Card style={{ background: 'var(--card-bg)', borderColor: 'var(--border)' }}>
-              <CardHeader>
-                <CardTitle style={{ color: 'var(--page-title)' }}>Player profile</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <PlayerProfileForm
-                  playerId={playerId}
-                  defaultValues={recordToFormValues(record)}
-                  hasPhoto={Boolean(record[SIGNUPS_COLUMNS.PHOTO_DRIVE_FILE_ID])}
-                  onPhotoUploaded={load}
-                  refreshSignal={finalFormsRefreshSignal}
-                  onSave={handleSave}
-                />
+              <CardContent className="pt-6" style={{ color: 'var(--primary-text)' }}>
+                Loading...
               </CardContent>
             </Card>
+          )}
 
-            <PlayerSwitcher currentPlayerId={playerId} />
-          </>
-        )}
+          {status === 'not-found' && (
+            <Card style={{ background: 'var(--card-bg)', borderColor: 'var(--border)' }}>
+              <CardHeader>
+                <CardTitle style={{ color: 'var(--page-title)' }}>Madison Ultimate</CardTitle>
+              </CardHeader>
+              <CardContent style={{ color: 'var(--primary-text)' }}>
+                We couldn&apos;t find this player.{' '}
+                <a href="/signup" className="underline" style={{ color: 'var(--accent)' }}>Start over</a>.
+              </CardContent>
+            </Card>
+          )}
+
+          {status === 'ready' && record && (
+            <>
+              <PlayerDashboard record={record} finalFormsRefreshSignal={finalFormsRefreshSignal} />
+
+              <Card style={{ background: 'var(--card-bg)', borderColor: 'var(--border)' }}>
+                <CardHeader>
+                  <CardTitle style={{ color: 'var(--page-title)' }}>Player profile</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <PlayerProfileForm
+                    playerId={playerId}
+                    defaultValues={recordToFormValues(record)}
+                    hasPhoto={Boolean(record[SIGNUPS_COLUMNS.PHOTO_DRIVE_FILE_ID])}
+                    onPhotoUploaded={load}
+                    refreshSignal={finalFormsRefreshSignal}
+                    onSave={handleSave}
+                  />
+                </CardContent>
+              </Card>
+            </>
+          )}
+        </div>
       </div>
     </div>
   )

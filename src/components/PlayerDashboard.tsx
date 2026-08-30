@@ -46,9 +46,7 @@ export function PlayerDashboard({
   return (
     <Card style={{ background: 'var(--card-bg)', borderColor: 'var(--border)' }}>
       <CardHeader>
-        <CardTitle style={{ color: 'var(--page-title)' }}>
-          {record[SIGNUPS_COLUMNS.PREFERRED_FIRST_NAME]} {record[SIGNUPS_COLUMNS.LAST_NAME]}
-        </CardTitle>
+        <CardTitle style={{ color: 'var(--page-title)' }}>Signup Status</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <ul className="space-y-0.5">

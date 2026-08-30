@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { HelperText, Req } from '@/components/FormField'
 import { rememberPlayer } from '@/lib/player-switcher'
 import { DeadlineBanner } from '@/components/DeadlineBanner'
+import { PlayerSwitcher } from '@/components/PlayerSwitcher'
 
 export default function SignupPage() {
   const [preferredFirstName, setPreferredFirstName] = useState('')
@@ -21,6 +22,10 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false)
   const formRenderedAt = useRef(Date.now())
   const router = useRouter()
+
+  // Two-path chooser (docs/fall-2026/player-switcher-grill.md Q8/Q9): typing into the
+  // lookup/signup form de-emphasizes the "Your players" list; clearing the form reverses it.
+  const formEngaged = Boolean(preferredFirstName || lastName || dateOfBirth || legalFirstName)
 
   const submit = async (confirmNearMatch: boolean) => {
     setError('')
@@ -67,8 +72,9 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-4" style={{ background: 'var(--primary-bg)' }}>
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-md space-y-4">
         <DeadlineBanner />
+        <PlayerSwitcher variant="chooser" dimmed={formEngaged} />
       </div>
       <Card className="w-full max-w-md shadow-lg" style={{ background: 'var(--card-bg)', borderColor: 'var(--border)' }}>
         <CardHeader className="text-center space-y-4">
