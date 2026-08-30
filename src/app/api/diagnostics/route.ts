@@ -41,6 +41,7 @@ export async function GET(request: NextRequest) {
     'SPS_FINAL_FORMS_FOLDER_ID',
     'TEAM_MAILING_LIST_FOLDER_ID',
     'ADDITIONAL_QUESTIONNAIRE_SHEET_ID',
+    'SIGNUPS_SHEET_ID',
   ];
 
   requiredEnvVars.forEach(envVar => {
@@ -147,6 +148,20 @@ export async function GET(request: NextRequest) {
       } else {
         addResult('Sheets Access', 'Questionnaire Sheet', 'warning',
           'Sheet accessible but no data found');
+      }
+    }
+
+    // Test signups sheet access. Every /signup submission depends on this, so verify
+    // it beyond the env-var-is-set check above.
+    const signupsSheetId = process.env.SIGNUPS_SHEET_ID;
+    if (signupsSheetId) {
+      const signupsData = await getSheetData(signupsSheetId, 'A1:D2');
+      if (signupsData && signupsData.length > 0) {
+        addResult('Sheets Access', 'Signups Sheet', 'pass',
+          `Successfully accessed sheet. Found ${signupsData.length} rows.`);
+      } else {
+        addResult('Sheets Access', 'Signups Sheet', 'warning',
+          'Sheet accessible but no data found in A1:D2 range');
       }
     }
   } catch (error) {
