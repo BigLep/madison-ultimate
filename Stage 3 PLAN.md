@@ -1,5 +1,7 @@
 # Stage 3: Player Portal Implementation Plan
 
+> **⚠️ SUPERSEDED**: The identity/login model this plan describes (last name + birth month/year → "Player Portal Lookup Key" → "Player Portal ID", `/player-portal` routes) was replaced by the PlayerID model in [`docs/adr/0001-player-identity-model.md`](docs/adr/0001-player-identity-model.md): a random opaque PlayerID minted at signup, looked up via [`CONTEXT.md`](CONTEXT.md)'s Player Lookup (last name + birthdate, disambiguated by preferred name), served at `/signup` and `/player/[playerId]`. Kept here for historical reference only — do not use this doc's Authentication Flow, URL Structure, or Portal Columns sections as current. See `CONTEXT.md`, the ADRs in `docs/adr/`, and `docs/fall-2026/signup-plan.md` for the current model.
+
 ## Overview
 Build a Progressive Web App (PWA) player portal where students and families can view player information and mark availability for practices and games. This stage focuses on creating a clean, maintainable implementation using popular web frameworks and live data from Google Sheets.
 

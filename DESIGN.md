@@ -97,7 +97,7 @@ The application integrates data from three sources to create a comprehensive sig
 - **Styling**: Tailwind CSS
 - **Authentication**: Google Service Account (server-side)
 - **Data Sources**: Google Sheets API + Google Drive API
-- **Deployment**: Vercel (https://madison-ultimate.vercel.app)
+- **Deployment**: Vercel (https://madisonultimate.org)
 
 ### Data Processing Pipeline
 
@@ -346,7 +346,7 @@ Required environment variables for production deployment:
 ### Vercel Production Deployment
 The application is deployed on Vercel with the following configuration:
 
-- **Production URL**: https://madison-ultimate.vercel.app
+- **Production URL**: https://madisonultimate.org
 - **Build Command**: `npm run build` 
 - **Framework**: Next.js 15 with App Router
 - **Function Timeout**: 60 seconds (configured for Google API calls)
@@ -397,7 +397,7 @@ vercel --prod --yes
   - First name alphabetical sorting
 ✅ **Deployment**: Successfully deployed to Vercel production environment
 
-🚀 **Production Status**: Live at https://madison-ultimate.vercel.app
+🚀 **Production Status**: Live at https://madisonultimate.org
 
 ## Stage 3: Player Portal UI Framework Decision
 
@@ -779,9 +779,11 @@ const team = row[columnMapping['Team']]; // Works even if Team column added late
 
 ## Known Issues & Future Improvements
 
-### Gmail OAuth Token Expiration
+### Gmail OAuth Token Expiration (removed)
 
-**Current Issue:**
+The Gmail OAuth send pipeline described below (`GMAIL_REFRESH_TOKEN`, `src/lib/gmail-oauth.ts`, `src/lib/gmail-api.ts`, `src/app/api/auth/gmail/`) no longer exists in this codebase — none of those files or the env var are present anymore. Left here only as historical context in case the rationale below is useful if email-sending is revisited; do not treat the "Current Issue"/"Current Workaround" below as describing anything live today.
+
+**Current Issue (historical, feature removed):**
 The Gmail OAuth refresh token (`GMAIL_REFRESH_TOKEN`) requires manual regeneration approximately once per week, creating maintenance overhead.
 
 **Problem Details:**

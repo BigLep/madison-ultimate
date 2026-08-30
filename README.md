@@ -42,8 +42,9 @@ A web application to track signup progress for Madison Middle School Ultimate Fr
 
 ## Documentation
 
-- **[PROJECT REQUIREMENTS.md](./PROJECT%20REQUIREMENTS.md)** - Business requirements and feature specifications
-- **[Stage 3 PLAN.md](./Stage%203%20PLAN.md)** - Player Portal implementation plan (active)
+- **[PROJECT REQUIREMENTS.md](./PROJECT%20REQUIREMENTS.md)** - Original business requirements (historical; Stages 1-2 were superseded, see below)
+- **[CONTEXT.md](./CONTEXT.md)** - Current domain language: player identity, Final Forms join, photos (start here for current architecture)
+- **[Stage 3 PLAN.md](./Stage%203%20PLAN.md)** - Player Portal implementation plan (historical; its login/identity model was superseded, see `docs/adr/0001-player-identity-model.md`)
 - **[DESIGN.md](./DESIGN.md)** - Technical architecture, data mapping, and implementation details
 - **[AGENTS.md](./AGENTS.md)** - Agent and developer guidelines, commit rules, and commands
 
@@ -67,7 +68,7 @@ madison-ultimate/
 - **Framework**: Next.js 16 with App Router (React 19)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS 4
-- **Deployment**: Vercel (https://madison-ultimate.vercel.app)
+- **Deployment**: Vercel (https://madisonultimate.org)
 - **Data Sources**: Google Sheets API, Google Drive API, Buttondown (RSS for team updates; optional API for newsletter status)
 
 ## Development Workflow
@@ -83,15 +84,12 @@ fix: resolve data matching issue
 docs: update setup instructions 📖
 ```
 
-## Current Features: Player Portal (Stage 3)
+## Current Features
 
-The application provides a Progressive Web App (PWA) player portal where students and families can:
+- **`/signup`**: webapp-native season signup (player identity lookup/creation, profile form, Final Forms status, Buttondown newsletter, photo upload) — the primary family-facing entry point each season.
+- **`/player/[playerId]`**: a Progressive Web App (PWA) player portal where students and families can view player info and status, mark availability for practices and games, and access season info and team news.
 
-- View player information and status
-- Mark availability for practices and games
-- Access season info and team news
-
-See `Stage 3 PLAN.md` for implementation details.
+See `CONTEXT.md` for the current domain model and `docs/adr/` for the identity/signup architecture decisions.
 
 ### Double headers — multiple events on the same calendar day
 
@@ -242,7 +240,7 @@ vercel --prod
 1. **Complete authentication setup** following [AUTHENTICATION_SETUP.md](./AUTHENTICATION_SETUP.md)
 
 2. **Update OAuth redirect URI** in Google Cloud Console:
-   - Add production domain: `https://your-app.vercel.app/api/auth/callback`
+   - Add production domain: `https://madisonultimate.org/api/auth/callback`
 
 3. **Set environment variables** in Vercel dashboard
 
@@ -250,5 +248,5 @@ vercel --prod
 
 5. **Test**:
    ```bash
-   curl https://your-app.vercel.app/api/team-updates
+   curl https://madisonultimate.org/api/team-updates
    ```

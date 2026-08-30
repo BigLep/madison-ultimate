@@ -60,6 +60,12 @@ Never commit the key. Subscriber list reads are cached for 5 minutes.
   - `https://www.googleapis.com/auth/spreadsheets`
   - `https://www.googleapis.com/auth/drive.readonly`
 
+### OAuth Drive identity (photo upload)
+- **File**: `src/lib/google-oauth-drive.ts`
+- **Environment**: `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REFRESH_TOKEN`, `PHOTOS_FOLDER_ID`
+- **Used for**: Uploading player photos to Google Drive. Google service accounts have no Drive storage quota and cannot create files in a "My Drive" folder, so photo uploads authenticate as a real Google account (the coach account) via OAuth refresh token instead of the service account above.
+- **Confirm setup**: `/api/diagnostics` reports "Photo Upload" checks (missing env vars, missing `PHOTOS_FOLDER_ID`, or an invalid/expired refresh token all show up there).
+
 ## Setup Instructions for New Environments
 
 ### Prerequisites
