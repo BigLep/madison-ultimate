@@ -81,14 +81,25 @@ All of these live in **`src/app/player-portal/[portalId]/page.tsx`**. Decide eac
 
 ---
 
-## 6. Team updates and newsletter (Buttondown)
+## 6. Signup date-of-birth window (6th–8th graders)
+
+The native date picker on `/signup` and the player profile form is bounded so families only scroll middle-school years. **Must be updated every season** — 8th graders age out and incoming 6th graders fall outside last season's window.
+
+| Setting | Where | What to decide |
+|--------|-----------------|-----------------|
+| **PLAYER_BIRTHDATE_MIN / MAX / PICKER_DEFAULT** | `src/lib/player-birthdates.ts` | Oldest and youngest birthdays you will accept. Fall 2026 is `2011-01-01` through `2015-12-31`. The picker default is Jan 1 of the oldest year so the year spinner opens in-range. |
+| **Portal login year list** | `src/app/player-portal/page.tsx` (`years`) | Same years if that login is still in use. |
+
+---
+
+## 7. Team updates and newsletter (Buttondown)
 
 - **Recent Team Updates** on the portal home come from the **public Buttondown RSS** at `https://buttondown.com/madisonultimate/rss` (cached 5 minutes). No API key needed. Ensure web archives are enabled in Buttondown so the RSS feed is available.
 - **Mailing list status** on the player page (whether parent/student emails are subscribed) uses the Buttondown Subscribers API when `BUTTONDOWN_API_KEY` is set (cached 5 minutes). See [AUTHENTICATION_SETUP.md](AUTHENTICATION_SETUP.md#getting-a-buttondown-api-key) for how to get the key.
 
 ---
 
-## 7. Game and team setup
+## 8. Game and team setup
 
 In **`src/lib/game-config.ts`**:
 
@@ -98,7 +109,7 @@ Sheet structure (single team vs Blue/Gold, etc.) is configured in the codebase a
 
 ---
 
-## 8. Special portal behaviors (Bye, Cancelled, etc.)
+## 9. Special portal behaviors (Bye, Cancelled, etc.)
 
 These behaviors are driven by values in the **Practice Info** and **Game Info** sheets.
 
@@ -160,6 +171,7 @@ These behaviors are driven by values in the **Practice Info** and **Game Info** 
 - **`src/lib/sheet-config.ts`** – `ROSTER_FIRST_DATA_ROW` if your roster has more than one header row (e.g. first data row is not row 2).
 - **`src/app/player-portal/[portalId]/page.tsx`** – Season label, `MAILING_LIST_INFO_URL`, `SHOW_ADDITIONAL_INFO_FORM`.
 - **`src/lib/app-config.ts`** – `SEASON_INFO_URL`; Join the Community: **`WHATSAPP_LEARN_MORE_URL` and `GAME_SNACK_SIGNUP_URL` (required each season)**; `ACTIVATION_STATUS_INFO_URL` (empty until this season has a heading). Invite is env, not this file.
+- **`src/lib/player-birthdates.ts`** – `PLAYER_BIRTHDATE_MIN` / `MAX` / picker default for the signup and profile date-of-birth fields (6th–8th grade window). Also update the year list on `src/app/player-portal/page.tsx` if that login is still in use.
 - **`src/lib/game-config.ts`** – `TEAM_DISPLAY_NAME` if you use a different default team name.
 - **Google Sheet** – Share with service account; update tabs and data.
 - **Buttondown** – RSS is public; set `BUTTONDOWN_API_KEY` if you want mailing list status on the player page.

@@ -13,6 +13,7 @@ import { PhotoUpload } from '@/components/PhotoUpload'
 import { MailingStatusInline } from '@/components/MailingStatusInline'
 import { WhatsAppIcon } from '@/components/WhatsAppIcon'
 import { APP_CONFIG } from '@/lib/app-config'
+import { PLAYER_BIRTHDATE_MAX, PLAYER_BIRTHDATE_MIN } from '@/lib/player-birthdates'
 import {
   profileFormSchema,
   ProfileFormValues,
@@ -150,7 +151,12 @@ export function PlayerProfileForm({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label style={fieldLabelStyle}>Date of birth<Req /></Label>
-            <Input type="date" {...register('dateOfBirth')} />
+            <Input
+              type="date"
+              min={PLAYER_BIRTHDATE_MIN}
+              max={PLAYER_BIRTHDATE_MAX}
+              {...register('dateOfBirth')}
+            />
             <FieldError message={errors.dateOfBirth?.message} />
           </div>
           <div className="space-y-2">

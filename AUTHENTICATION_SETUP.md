@@ -4,13 +4,14 @@ This document explains how the portal authenticates with external services.
 
 ## Seasonal Setup Checklist
 
-**Use [SEASON_SETUP.md](SEASON_SETUP.md) as the main checklist** for everything that must be set or decided each season (env, Sheets, portal labels and links, Additional Info Form visibility, Buttondown, etc.). The rest of this file covers auth only.
+**Use [SEASON_SETUP.md](SEASON_SETUP.md) as the main checklist** for everything that must be set or decided each season (env, Sheets, portal labels and links, Additional Info Form visibility, signup birth-year window, Buttondown, etc.). The rest of this file covers auth only.
 
 For each new season you will need to:
 
 1. **Google Sheets**: Set `ROSTER_SHEET_ID` in `.env.local` and **share that spreadsheet** with the service account (see "Grant Permissions" below).
 2. **Portal and links**: Update season label, `SEASON_INFO_URL`, `MAILING_LIST_INFO_URL`, `WHATSAPP_LEARN_MORE_URL` (season-specific Notion deep link — do not leave last season's More Season Info URL), and `SHOW_ADDITIONAL_INFO_FORM` — see [SEASON_SETUP.md](SEASON_SETUP.md).
-3. **Buttondown** (optional): Set `BUTTONDOWN_API_KEY` in `.env.local` if you want the player page to show whether contact emails are on the newsletter. See **Getting a Buttondown API key** below. Team updates (Recent Team Updates) use the public Buttondown RSS and do not require an API key.
+3. **Signup birth-year window**: Bump `PLAYER_BIRTHDATE_MIN` / `MAX` / picker default in `src/lib/player-birthdates.ts` (and the portal login year list if that login is still in use) so the date picker stays on current 6th–8th graders.
+4. **Buttondown** (optional): Set `BUTTONDOWN_API_KEY` in `.env.local` if you want the player page to show whether contact emails are on the newsletter. See **Getting a Buttondown API key** below. Team updates (Recent Team Updates) use the public Buttondown RSS and do not require an API key.
 
 ## Overview
 
