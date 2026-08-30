@@ -25,6 +25,7 @@ export function MailingStatusInline({
 }) {
   const [entry, setEntry] = useState<MailingEntry | null | undefined>(undefined)
   const [pending, setPending] = useState(false)
+  const [error, setError] = useState('')
 
   const load = async () => {
     try {
@@ -49,6 +50,7 @@ export function MailingStatusInline({
   const toggle = async () => {
     if (!entry) return
     setPending(true)
+    setError('')
     try {
       const action = entry.subscribed ? 'unsubscribe' : 'subscribe'
       const res = await fetch(`/api/signup/player/${playerId}/mailing`, {
@@ -56,7 +58,13 @@ export function MailingStatusInline({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: entry.email, action }),
       })
-      if (res.ok) await load()
+      if (res.ok) {
+        await load()
+      } else {
+        setError("Couldn't update newsletter status. Please try again.")
+      }
+    } catch {
+      setError("Couldn't update newsletter status. Please try again.")
     } finally {
       setPending(false)
     }
@@ -88,6 +96,11 @@ export function MailingStatusInline({
       >
         {entry.subscribed ? '📭 Leave' : '📬 Join'}
       </Button>
+      {error ? (
+        <span role="status" className="w-full text-red-700">
+          {error}
+        </span>
+      ) : null}
     </p>
   )
 }

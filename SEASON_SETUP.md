@@ -31,7 +31,7 @@ Node 20 reached end-of-life on 30 April 2026; Vercel disables it for new deploym
 | **ROSTER_SHEET_ID** | `.env.local` | Google Sheet ID of the **season workbook** (roster + Practice Info, Game Info, availability tabs). |
 | **SPS_FINAL_FORMS_FOLDER_ID** | `.env.local` | Google Drive folder of SPS Final Forms exports (`students_basic_*.csv`) that the signup dashboard joins against for signed/cleared status. **Each season's Final Forms data lives in a different Drive folder**; forgetting to update this points the app at last season's (stale) exports and Final Forms status will silently fail to find current players. Verify the folder actually has a recent (same-week) `students_basic_*.csv` before trusting it, not just that the ID is set. |
 | **TEAM_MAILING_LIST_FOLDER_ID** | `.env.local` | Optional. Google Drive folder for mailing list CSV if you use that feature. |
-| **BUTTONDOWN_API_KEY** | `.env.local` | Optional. Buttondown API key so the player page can show whether contact emails are on the newsletter. Team updates use the public RSS and do not require this. |
+| **BUTTONDOWN_API_KEY** | `.env.local` | Optional. Buttondown API key so the player page can show and change newsletter status (Join / Leave and auto-subscribe). The key needs **subscriber write**, not read-only — see [AUTHENTICATION_SETUP.md](AUTHENTICATION_SETUP.md#getting-a-buttondown-api-key). Team updates use the public RSS and do not require this. |
 
 After changing `ROSTER_SHEET_ID`, restart the dev/server process.
 
@@ -66,7 +66,7 @@ All of these live in **`src/app/player-portal/[portalId]/page.tsx`**. Decide eac
 |--------|----------------|-----------------|
 | **Season label** | `HomeScreen`: `<CardDescription>… Season</CardDescription>` (e.g. “Spring 2026 Season”) | Exact label shown on the portal home. |
 | **SEASON_INFO_URL** | `HomeScreen`: `const SEASON_INFO_URL = '…'` | Notion (or other) URL for “team site” / season info. |
-| **MAILING_LIST_INFO_URL** | Top of `player-portal/[portalId]/page.tsx` | Notion deep link next to newsletter / mailing-list status. Replace last season's heading when this season has one; until then it is OK to keep last season's URL (Fall 2026 still does). |
+| **MAILING_LIST_INFO_URL** | Top of `player-portal/[portalId]/page.tsx` | Notion deep link next to newsletter status. Replace last season's heading when this season has one; until then it is OK to keep last season's URL (Fall 2026 still does). |
 | **Show “Additional Info Form”** | Top of file: `const SHOW_ADDITIONAL_INFO_FORM = true \| false` | Whether to show the “Additional Info Form” link and questionnaire status in **Player Info**. Set to `false` to hide for seasons that don’t use it (e.g. Spring 2026). |
 
 **Join the Community** (WhatsApp and game snack links on the portal home and the signed-up player profile):
@@ -95,7 +95,7 @@ The native date picker on `/signup` and the player profile form is bounded so fa
 ## 7. Team updates and newsletter (Buttondown)
 
 - **Recent Team Updates** on the portal home come from the **public Buttondown RSS** at `https://buttondown.com/madisonultimate/rss` (cached 5 minutes). No API key needed. Ensure web archives are enabled in Buttondown so the RSS feed is available.
-- **Mailing list status** on the player page (whether parent/student emails are subscribed) uses the Buttondown Subscribers API when `BUTTONDOWN_API_KEY` is set (cached 5 minutes). See [AUTHENTICATION_SETUP.md](AUTHENTICATION_SETUP.md#getting-a-buttondown-api-key) for how to get the key.
+- **Newsletter status** on the player page uses the Buttondown Subscribers API when `BUTTONDOWN_API_KEY` is set (cached 5 minutes). The key must have **subscriber write**. Confirm on `/api/diagnostics`. See [AUTHENTICATION_SETUP.md](AUTHENTICATION_SETUP.md#getting-a-buttondown-api-key).
 
 ---
 
@@ -174,6 +174,6 @@ These behaviors are driven by values in the **Practice Info** and **Game Info** 
 - **`src/lib/player-birthdates.ts`** – `PLAYER_BIRTHDATE_MIN` / `MAX` / picker default for the signup and profile date-of-birth fields (6th–8th grade window). Also update the year list on `src/app/player-portal/page.tsx` if that login is still in use.
 - **`src/lib/game-config.ts`** – `TEAM_DISPLAY_NAME` if you use a different default team name.
 - **Google Sheet** – Share with service account; update tabs and data.
-- **Buttondown** – RSS is public; set `BUTTONDOWN_API_KEY` if you want mailing list status on the player page.
+- **Buttondown** – RSS is public. Set `BUTTONDOWN_API_KEY` with **subscriber write** for newsletter status and Join / Leave; confirm both Buttondown checks on `/api/diagnostics`.
 
 For auth details (service account, OAuth, tokens), see [AUTHENTICATION_SETUP.md](AUTHENTICATION_SETUP.md).

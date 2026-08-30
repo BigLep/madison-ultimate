@@ -4,6 +4,7 @@ import * as path from 'path';
 import { getSheetData, getMostRecentFileInfoFromFolder } from '../../../lib/google-api';
 import { getDriveFolderName } from '../../../lib/google-oauth-drive';
 import { SHEET_CONFIG } from '../../../lib/sheet-config';
+import { probeButtondownPermissions } from '../../../lib/buttondown-api';
 
 interface DiagnosticResult {
   category: string;
@@ -75,6 +76,14 @@ export async function GET(request: NextRequest) {
     addResult('Environment', 'WHATSAPP_COMMUNITY_JOIN_URL', 'pass', 'Set');
   } else {
     addResult('Environment', 'WHATSAPP_COMMUNITY_JOIN_URL', 'warning', 'Not set (/whatsapp will 404)');
+  }
+
+  // Do not print any prefix of the key.
+  if (process.env.BUTTONDOWN_API_KEY) {
+    addResult('Environment', 'BUTTONDOWN_API_KEY', 'pass', 'Set');
+  } else {
+    addResult('Environment', 'BUTTONDOWN_API_KEY', 'warning',
+      'Not set (newsletter status, Join / Leave, and auto-subscribe are disabled)');
   }
 
   // Check service account credential configuration
@@ -315,7 +324,29 @@ export async function GET(request: NextRequest) {
       `Error checking GitHub Actions access: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 
-  // 7. System Checks
+  // 7. Buttondown (optional). Read-only keys still list subscribers, so a GET-only
+  // check would hide the failure mode Join / Leave actually hits. The write probe
+  // PATCHes a reserved address that should not exist: 404 = can write, 403 = read-only.
+  try {
+    const probe = await probeButtondownPermissions();
+    if (!probe.configured) {
+      addResult('Buttondown', 'API Key', 'warning',
+        'BUTTONDOWN_API_KEY not set; newsletter Join / Leave and auto-subscribe are disabled (RSS team updates still work)');
+    } else if (probe.read && probe.write) {
+      addResult('Buttondown', 'Subscriber Read', 'pass', 'Key can list subscribers');
+      addResult('Buttondown', 'Subscriber Write', 'pass', probe.message);
+    } else if (probe.read && !probe.write) {
+      addResult('Buttondown', 'Subscriber Read', 'pass', 'Key can list subscribers');
+      addResult('Buttondown', 'Subscriber Write', 'fail', probe.message);
+    } else {
+      addResult('Buttondown', 'API Key', 'fail', probe.message);
+    }
+  } catch (error) {
+    addResult('Buttondown', 'API Key', 'fail',
+      `Error checking Buttondown: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+
+  // 8. System Checks
   try {
     // Check Node.js version
     const nodeVersion = process.version;

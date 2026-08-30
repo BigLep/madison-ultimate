@@ -33,7 +33,7 @@ Signup routes go through `@/lib/signups-sheet`, `@/lib/buttondown-api`, and (for
 | Seam | Mocked in | Why |
 |---|---|---|
 | `@/lib/signups-sheet` (`findSignupByIdentity`, `findSignupByPlayerId`, `createSignupRow`, `updateSignupRow`) | lookup, mailing, profile-save, finalforms route | Avoids the real Signups spreadsheet. (Layer 2 integration covers the real sheet.) |
-| `@/lib/buttondown-api` (`isSubscriber`, `subscribeEmail`, `unsubscribeEmail`, `subscribeUnlessUnsubscribed`) | mailing, profile-save, finalforms | Avoids the real newsletter API. |
+| `@/lib/buttondown-api` (`isSubscriber`, `subscribeEmail`, `unsubscribeEmail`, `subscribeUnlessUnsubscribed`, `probeButtondownPermissions`) | mailing, profile-save, finalforms | Avoids the real newsletter API. The permission probe is unit-tested with mocked fetch (404 = write, 403 = read-only). |
 | `@/lib/google-api` (`getMostRecentFileInfoFromFolder`, `downloadCsvFromDrive`) plus `SHEET_CONFIG.SPS_FINAL_FORMS_FOLDER_ID` | Final Forms join | Feeds a canned CSV into `findFinalFormsMatch` without Drive. `google-api` must be mocked in any file that loads `final-forms.ts`, because that module initializes auth on import. |
 | `@/lib/signup-deadlines.getDeadlineState` | lookup route | Lets lookup tests pin open vs closed without depending on today's date. Deadlines themselves are tested by passing an explicit `Date` into `getDeadlineState`. |
 
@@ -93,11 +93,12 @@ These are the family-facing states from ADRs 0001–0004 and `docs/fall-2026/sig
 - Checklist: Final Forms is done only when found **and** all three flags are true.
 - Not-found dashboard ([src/__tests__/FinalFormsRow.test.tsx](../src/__tests__/FinalFormsRow.test.tsx)): register-now, then stale-data with last-refreshed + refresh, then name mismatch; C4 live status after click.
 
-**Mailing list** ([src/__tests__/signup-mailing.test.ts](../src/__tests__/signup-mailing.test.ts), [src/__tests__/signup-profile-save.test.ts](../src/__tests__/signup-profile-save.test.ts))
+**Newsletter** ([src/__tests__/signup-mailing.test.ts](../src/__tests__/signup-mailing.test.ts), [src/__tests__/signup-profile-save.test.ts](../src/__tests__/signup-profile-save.test.ts))
 
 - Eligible emails: caretaker 1, caretaker 2, student personal. SPS email is never eligible. Blank emails are omitted.
 - GET mixed on/off status per email.
 - POST join and opt-out for caretaker and student personal; ineligible / SPS → 400; Buttondown failure → 502.
+- Join / Leave widget ([src/__tests__/MailingStatusInline.test.tsx](../src/__tests__/MailingStatusInline.test.tsx)): a 502 leaves status unchanged and shows a live error (silent failure was the family-facing bug).
 - Auto-subscribe (first Final Forms join and profile save) covers caretaker 1/2 and student personal, never SPS; skips addresses already unsubscribed in Buttondown; a false subscribe result does not block the sheet write. Fixtures never hit the real list.
 
 **Caretakers / schema / checklist / deadlines**

@@ -16,7 +16,7 @@ Go to `/signup` and enter any preferred first name and any birthdate, with one o
 | `TestAllSigned` | Found; caretaker + student signed, not yet cleared |
 | `TestCleared` | Found; fully signed and physical cleared (expiration 2027-06-01) |
 
-This creates a real row in the "2026 Fall Signups" spreadsheet, exactly like any other signup (safe to delete afterward, or leave in place and re-visit the same `/player/$playerId` URL to re-test). Only the Final Forms *join* is faked; everything else in the flow is real: profile save, Buttondown subscribe, photo upload, the mailing list row, etc. Each fixture also carries fake seeded fields (grade 7, fake parent/student names/emails/phones) so a join auto-fills the profile form the same way a real Final Forms match would.
+This creates a real row in the "2026 Fall Signups" spreadsheet, exactly like any other signup (safe to delete afterward, or leave in place and re-visit the same `/player/$playerId` URL to re-test). Only the Final Forms *join* is faked; everything else in the flow is real: profile save, Buttondown subscribe, photo upload, the newsletter row, etc. Each fixture also carries fake seeded fields (grade 7, fake parent/student names/emails/phones) so a join auto-fills the profile form the same way a real Final Forms match would.
 
 `spsStudentId` is never written back to the signup row for these fixture matches, so re-visiting a test player's dashboard always re-evaluates the fixture rather than getting stuck on a stale join.
 

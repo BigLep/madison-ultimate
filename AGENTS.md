@@ -57,6 +57,7 @@ Install a real `node_modules` with `npm ci`. A `node_modules` symlink makes Turb
 - **Sheets Access**: Tests Google Sheets API access to roster and questionnaire
 - **Drive Access**: Tests Google Drive API access to SPS and mailing list folders
 - **Sheets/Drive**: Tests service account access to roster and Drive folders
+- **Buttondown**: Lists subscribers (read) and probes subscriber write without adding anyone to the list
 - **System**: Checks Node.js version, timezone, and memory usage
 
 Look for `"status": "fail"` items to identify configuration issues.

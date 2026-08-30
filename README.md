@@ -68,7 +68,7 @@ madison-ultimate/
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS 4
 - **Deployment**: Vercel (https://madison-ultimate.vercel.app)
-- **Data Sources**: Google Sheets API, Google Drive API, Buttondown (RSS for team updates; optional API for mailing list status)
+- **Data Sources**: Google Sheets API, Google Drive API, Buttondown (RSS for team updates; optional API for newsletter status)
 
 ## Development Workflow
 
@@ -199,7 +199,7 @@ You must share each Google resource with the service account email (found in the
 This application uses **dual authentication** for different Google APIs:
 
 - **Service Account**: For Google Sheets and Drive APIs
-- **Buttondown**: Public RSS for "Recent Team Updates"; optional API key for mailing list status on player page
+- **Buttondown**: Public RSS for "Recent Team Updates"; optional API key for newsletter status on the player page
 
 For complete authentication setup instructions, see [AUTHENTICATION_SETUP.md](./AUTHENTICATION_SETUP.md). For a checklist of what to set or decide each season (roster sheet, portal labels, Additional Info Form visibility, signup birth-year window, etc.), see [SEASON_SETUP.md](./SEASON_SETUP.md).
 
@@ -213,7 +213,7 @@ Set these in Vercel Dashboard → Project → Settings → Environment Variables
 # Service Account
 GOOGLE_SERVICE_ACCOUNT_KEY=<full-json-content-as-string>
 
-# Optional: Buttondown API key for mailing list status on player page
+# Optional: Buttondown API key (subscriber write) for newsletter status and Join / Leave
 # BUTTONDOWN_API_KEY=<your-buttondown-api-key>
 
 # Resource IDs
