@@ -138,10 +138,17 @@ const availability = playerRow[3 + (i - 1) * 2]; // Breaks when columns change
 
 ## Testing Guidelines
 
-**Puppeteer Screenshots**: Always use iPhone screen dimensions for testing mobile-first design:
-- Use width: 375, height: 812 for iPhone screen size
-- Example: `puppeteer_screenshot({name: "test", width: 375, height: 812})`
-- This ensures screenshots reflect the actual mobile user experience
+**Mobile viewport screenshots**: Always check mobile-first design at iPhone screen dimensions using the `chrome-devtools-mcp` plugin's `emulate` tool, not a real browser window resize:
+- `emulate({ pageId, viewport: "375x812x3,mobile,touch" })`, then `take_screenshot({ pageId })`
+- This sets device metrics via CDP on that tab only; it doesn't move or resize the actual browser window, and doesn't conflict with any other extension/session also attached to the browser
+- Confirmed working 2026-08-30: opening Chrome's real DevTools device toolbar (e.g. via a Cmd+Shift+M keystroke) instead breaks any other CDP-based automation attached to that tab (screenshots start failing) — don't do that
+
+**chrome-devtools-mcp runs its own separate Chrome, not your daily browser**: as installed (`.claude-plugin/plugin.json` in the `chrome-devtools-mcp` plugin runs plain `npx chrome-devtools-mcp@1.8.0`, no `--browserUrl`/`--autoConnect`), Puppeteer launches a dedicated, logged-out Chrome instance with its own profile. It cannot see or attach to tabs already open in your regular Chrome (that's what `claude-in-chrome` is for). This is deliberate for now: it keeps viewport/perf checks isolated and doesn't need your real session's cookies/logins.
+
+If we ever want chrome-devtools-mcp to attach to one of your actual Chrome sessions instead:
+1. Launch that Chrome with `--remote-debugging-port=9222` (must be a fresh launch — you can't turn this on for an already-running instance)
+2. Add `--browserUrl=http://127.0.0.1:9222` (or `--autoConnect`) to the `args` array for the `chrome-devtools` server in that plugin's `.claude-plugin/plugin.json`
+3. Know the tradeoff before doing this: it inherits whatever's logged into that browser (cookies, accounts), so it's a bigger trust step than the current sandboxed instance — only do it deliberately, not as a default.
 
 **Signup tests**: Vitest covers identity, Final Forms join (including magic last names and `spsStudentId` handoff), mailing on/off, caretaker cap/completeness, lookup, and profile-save — see `docs/TEST_DESIGN.md` (layer 1, “Signup domain states”). To visually exercise `/signup` and the player dashboard in every Final Forms state without a real registration, use one of the magic last names documented in `docs/fall-2026/signup-test-fixtures.md` (e.g. `TestCleared`).
 
