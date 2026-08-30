@@ -39,7 +39,6 @@ export async function GET(request: NextRequest) {
   const requiredEnvVars = [
     'ROSTER_SHEET_ID',
     'SPS_FINAL_FORMS_FOLDER_ID',
-    'TEAM_MAILING_LIST_FOLDER_ID',
     'ADDITIONAL_QUESTIONNAIRE_SHEET_ID',
     'SIGNUPS_SHEET_ID',
   ];
@@ -52,6 +51,16 @@ export async function GET(request: NextRequest) {
       addResult('Environment', envVar, 'fail', 'Not set or empty');
     }
   });
+
+  // Optional, per SEASON_SETUP.md: only the legacy team-mailing-list-CSV roster
+  // feature (roster-synthesizer.ts) uses it, and it degrades gracefully without it.
+  if (process.env.TEAM_MAILING_LIST_FOLDER_ID) {
+    addResult('Environment', 'TEAM_MAILING_LIST_FOLDER_ID', 'pass',
+      `Set (${process.env.TEAM_MAILING_LIST_FOLDER_ID.substring(0, 10)}...)`);
+  } else {
+    addResult('Environment', 'TEAM_MAILING_LIST_FOLDER_ID', 'warning',
+      'Not set (legacy team-mailing-list-CSV roster feature will not work)');
+  }
 
   // Photo upload/carryover vars are checked as warnings, not failures: unlike the vars above,
   // the rest of the app works fine without them, only the player-photo feature degrades.
