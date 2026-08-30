@@ -10,10 +10,10 @@ export interface EligibleMailingEmail {
   email: string;
 }
 
-export function eligibleMailingEmails(record: Record<string, string>): EligibleMailingEmail[] {
+export function eligibleMailingEmails(record: Record<string, string | undefined>): EligibleMailingEmail[] {
   return [
     { label: 'Caretaker 1', email: record[SIGNUPS_COLUMNS.CARETAKER_1_EMAIL] },
     { label: 'Caretaker 2', email: record[SIGNUPS_COLUMNS.CARETAKER_2_EMAIL] },
     { label: 'Student personal email', email: record[SIGNUPS_COLUMNS.STUDENT_PERSONAL_EMAIL] },
-  ].filter(entry => Boolean(entry.email?.trim()));
+  ].filter((entry): entry is EligibleMailingEmail => Boolean(entry.email?.trim()));
 }
