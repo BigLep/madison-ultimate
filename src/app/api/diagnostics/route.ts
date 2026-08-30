@@ -62,24 +62,35 @@ export async function GET(request: NextRequest) {
       'Not set (legacy team-mailing-list-CSV roster feature will not work)');
   }
 
-  // Photo upload/carryover vars are checked as warnings, not failures: unlike the vars above,
-  // the rest of the app works fine without them, only the player-photo feature degrades.
-  const photoEnvVars = [
+  // These vars are required for player-photo upload itself (google-oauth-drive.ts throws
+  // without them), a signup-critical feature — 2026-08-30: production shipped without them
+  // for a while because this only warned, not failed. Check as a hard failure, not a warning.
+  const requiredPhotoUploadEnvVars = [
     'GOOGLE_OAUTH_CLIENT_ID',
     'GOOGLE_OAUTH_CLIENT_SECRET',
     'GOOGLE_OAUTH_REFRESH_TOKEN',
     'PHOTOS_FOLDER_ID',
-    'FALL_2025_ROSTER_SHEET_ID',
   ];
 
-  photoEnvVars.forEach(envVar => {
+  requiredPhotoUploadEnvVars.forEach(envVar => {
     const value = process.env[envVar];
     if (value) {
       addResult('Environment', envVar, 'pass', `Set (${value.substring(0, 10)}...)`);
     } else {
-      addResult('Environment', envVar, 'warning', 'Not set (player photo upload/carryover will not work)');
+      addResult('Environment', envVar, 'fail', 'Not set: player photo upload will not work');
     }
   });
+
+  // FALL_2025_ROSTER_SHEET_ID is checked as a warning, not a failure: unlike the vars above,
+  // the rest of the app (including new photo uploads) works fine without it, only the
+  // Fall-2025-photo-carryover feature degrades.
+  if (process.env.FALL_2025_ROSTER_SHEET_ID) {
+    addResult('Environment', 'FALL_2025_ROSTER_SHEET_ID', 'pass',
+      `Set (${process.env.FALL_2025_ROSTER_SHEET_ID.substring(0, 10)}...)`);
+  } else {
+    addResult('Environment', 'FALL_2025_ROSTER_SHEET_ID', 'warning',
+      'Not set (player photo carryover from Fall 2025 will not work)');
+  }
 
   // Invite URL must never appear in diagnostics output (or the client bundle).
   if (process.env.WHATSAPP_COMMUNITY_JOIN_URL) {
@@ -218,10 +229,10 @@ export async function GET(request: NextRequest) {
     const photosFolderId = process.env.PHOTOS_FOLDER_ID;
 
     if (!hasOAuthCreds) {
-      addResult('Photo Upload', 'OAuth Identity', 'warning',
+      addResult('Photo Upload', 'OAuth Identity', 'fail',
         'GOOGLE_OAUTH_CLIENT_ID/SECRET/REFRESH_TOKEN not fully set; photo upload is disabled');
     } else if (!photosFolderId) {
-      addResult('Photo Upload', 'Photos Folder', 'warning', 'PHOTOS_FOLDER_ID not set');
+      addResult('Photo Upload', 'Photos Folder', 'fail', 'PHOTOS_FOLDER_ID not set; photo upload is disabled');
     } else {
       const folderName = await getDriveFolderName(photosFolderId);
       if (folderName) {
