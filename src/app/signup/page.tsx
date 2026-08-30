@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -22,6 +22,14 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false)
   const formRenderedAt = useRef(Date.now())
   const router = useRouter()
+
+  // The button is server-rendered disabled and only enabled once mounted client-side, so a tap
+  // in the brief pre-hydration window on a slow mobile connection can't fall through to a native
+  // (unhandled) form GET submit, which would silently reload the page and wipe every field.
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Two-path chooser (docs/fall-2026/player-switcher-grill.md Q8/Q9): typing into the
   // lookup/signup form de-emphasizes the "Your players" list; clearing the form reverses it.
@@ -202,7 +210,7 @@ export default function SignupPage() {
               type="submit"
               className="w-full text-white font-semibold hover:opacity-90 transition-opacity"
               style={{ background: 'var(--accent)' }}
-              disabled={isLoading}
+              disabled={isLoading || !mounted}
             >
               {isLoading ? 'Looking...' : 'Continue'}
             </Button>

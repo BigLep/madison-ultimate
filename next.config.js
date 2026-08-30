@@ -3,6 +3,12 @@ const nextConfig = {
   // Fix workspace root warning
   outputFileTracingRoot: __dirname,
 
+  // Dev-only: Next.js blocks cross-origin requests to /_next/* assets by default, which
+  // silently breaks client-side hydration (buttons stay disabled, nothing becomes interactive)
+  // when testing on a phone against `npm run dev` via a LAN mDNS hostname like
+  // steve-macbook-pro-2023.local. *.local covers any teammate's Mac hostname.
+  allowedDevOrigins: ['*.local'],
+
   // /whatsapp is a Route Handler (src/app/whatsapp/route.ts), not a config redirect:
   // the invite lives in WHATSAPP_COMMUNITY_JOIN_URL so it is never baked into git or the client bundle.
   async redirects() {
