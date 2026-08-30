@@ -24,6 +24,8 @@ import {
   findFinalFormsMatch,
   seededFieldsFromFinalForms,
   clearFinalFormsCache,
+  getFinalFormsDataAsOf,
+  FINAL_FORMS_FIXTURE_DATA_AS_OF,
 } from '@/lib/final-forms';
 
 const getFile = vi.mocked(getMostRecentFileInfoFromFolder);
@@ -73,6 +75,12 @@ describe('findFinalFormsMatch — magic last names', () => {
   it('returns null for TestNotFound without hitting Drive', async () => {
     const result = await findFinalFormsMatch(signupRecord({ [SIGNUPS_COLUMNS.LAST_NAME]: 'TestNotFound' }));
     expect(result).toBeNull();
+    expect(getFile).not.toHaveBeenCalled();
+  });
+
+  it('still reports the fixture timestamp for TestNotFound so the dashboard can show last-synced', async () => {
+    const dataAsOf = await getFinalFormsDataAsOf(signupRecord({ [SIGNUPS_COLUMNS.LAST_NAME]: 'TestNotFound' }));
+    expect(dataAsOf).toBe(FINAL_FORMS_FIXTURE_DATA_AS_OF);
     expect(getFile).not.toHaveBeenCalled();
   });
 
@@ -190,6 +198,17 @@ describe('findFinalFormsMatch — live export join', () => {
       })
     );
     expect(result).toBeNull();
+  });
+
+  it('still reports the export timestamp when last name + birthdate match nothing', async () => {
+    await stubSnapshot();
+    const dataAsOf = await getFinalFormsDataAsOf(
+      signupRecord({
+        [SIGNUPS_COLUMNS.LAST_NAME]: 'Nobody',
+        [SIGNUPS_COLUMNS.DATE_OF_BIRTH]: '2014-01-01',
+      })
+    );
+    expect(dataAsOf).toBe('2026-08-28T05:15:11Z');
   });
 
   it('finds a match after the family corrects a wrong birthdate, without a new Drive fetch', async () => {

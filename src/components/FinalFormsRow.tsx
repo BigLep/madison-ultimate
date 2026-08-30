@@ -110,6 +110,71 @@ function FinalFormsSection({ children }: { children: ReactNode }) {
   )
 }
 
+function formatSyncedAt(dataAsOf?: string): string {
+  if (!dataAsOf) return ''
+  const relative = formatRelativeHighestUnit(dataAsOf)
+  return `${formatLocalTimestamp(dataAsOf)}${relative ? ` (${relative})` : ''}`
+}
+
+function RefreshButton({
+  isRefreshing,
+  onRefresh,
+}: {
+  isRefreshing: boolean
+  onRefresh: () => void
+}) {
+  return (
+    <button
+      type="button"
+      className="underline"
+      style={accentLink}
+      disabled={isRefreshing}
+      onClick={onRefresh}
+      aria-label="Check Final Forms again"
+    >
+      {isRefreshing ? 'requesting…' : 'click here'}
+    </button>
+  )
+}
+
+function RefreshFeedback({
+  isRefreshing,
+  message,
+}: {
+  isRefreshing: boolean
+  message: string
+}) {
+  if (!isRefreshing && !message) return null
+  return (
+    <p role="status" className="text-sm font-medium pt-1" style={accentLink}>
+      {message || 'Requesting a refresh…'}
+    </p>
+  )
+}
+
+/** C3: last-synced stamp plus inline refresh (found state). */
+function FinalFormsRefreshPrompt({
+  dataAsOf,
+  isRefreshing,
+  onRefresh,
+}: {
+  dataAsOf?: string
+  isRefreshing: boolean
+  onRefresh: () => void
+}) {
+  const syncedAt = formatSyncedAt(dataAsOf)
+
+  return (
+    <>
+      {syncedAt
+        ? `Data last synchronized with Final Forms on ${syncedAt}. If you have updated Final Forms since then, `
+        : 'If you have updated Final Forms, '}
+      <RefreshButton isRefreshing={isRefreshing} onRefresh={onRefresh} />
+      {' '}and we&apos;ll try again.
+    </>
+  )
+}
+
 export function FinalFormsRow({
   preferredFirstName,
   playerId,
@@ -163,6 +228,11 @@ export function FinalFormsRow({
     )
   }
 
+  const refreshFeedback = (
+    <RefreshFeedback isRefreshing={isRefreshing} message={refreshMessage} />
+  )
+  const syncedAt = formatSyncedAt(status.dataAsOf)
+
   if (!status.found) {
     return (
       <FinalFormsSection>
@@ -170,12 +240,20 @@ export function FinalFormsRow({
           <span aria-hidden="true">⚠️</span>
           <span>
             We couldn&apos;t find {preferredFirstName || 'your player'} in the school&apos;s Final Forms
-            registration yet. Two common reasons:
+            registration yet. Three common reasons:
           </span>
         </p>
         <ol className="list-decimal ml-9 space-y-1">
           <li>
-            You haven&apos;t registered in <FinalFormsLink /> yet.
+            You haven&apos;t registered in <FinalFormsLink /> yet. If you haven&apos;t, please do so now.
+          </li>
+          <li>
+            Our Final Forms data may be stale.
+            {syncedAt ? ` It was last refreshed on ${syncedAt}.` : ''}
+            {' '}If you have updated Final Forms since then,{' '}
+            <RefreshButton isRefreshing={isRefreshing} onRefresh={refresh} />
+            {' '}and we&apos;ll try again.
+            {refreshFeedback}
           </li>
           <li>
             The name we have doesn&apos;t match school records; enter the last name and legal first name exactly
@@ -186,11 +264,6 @@ export function FinalFormsRow({
     )
   }
 
-  const relative = status.dataAsOf ? formatRelativeHighestUnit(status.dataAsOf) : ''
-  const syncedAt = status.dataAsOf
-    ? `${formatLocalTimestamp(status.dataAsOf)}${relative ? ` (${relative})` : ''}`
-    : ''
-
   return (
     <FinalFormsSection>
       <StatusChecks status={status} />
@@ -200,22 +273,13 @@ export function FinalFormsRow({
         </p>
       )}
       <p className="text-xs" style={{ color: 'var(--secondary-text)' }}>
-        {syncedAt
-          ? `Data last synchronized with Final Forms on ${syncedAt}. If you have updated Final Forms since then, `
-          : 'If you have updated Final Forms, '}
-        <button
-          type="button"
-          className="underline"
-          style={accentLink}
-          disabled={isRefreshing}
-          onClick={refresh}
-          aria-label="Check Final Forms again"
-        >
-          click here
-        </button>
-        {' '}and we&apos;ll try again.
+        <FinalFormsRefreshPrompt
+          dataAsOf={status.dataAsOf}
+          isRefreshing={isRefreshing}
+          onRefresh={refresh}
+        />
       </p>
-      {refreshMessage && <p className="text-xs" style={{ color: 'var(--secondary-text)' }}>{refreshMessage}</p>}
+      {refreshFeedback}
     </FinalFormsSection>
   )
 }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { findSignupByPlayerId } from '../../../../../../lib/signups-sheet';
-import { findFinalFormsMatch, applyFirstJoinSideEffects } from '../../../../../../lib/final-forms';
+import { findFinalFormsMatch, applyFirstJoinSideEffects, getFinalFormsDataAsOf } from '../../../../../../lib/final-forms';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ playerId: string }> }) {
   try {
@@ -12,7 +12,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const match = await findFinalFormsMatch(existing.record);
     if (!match) {
-      return NextResponse.json({ success: true, found: false });
+      return NextResponse.json({
+        success: true,
+        found: false,
+        dataAsOf: await getFinalFormsDataAsOf(existing.record),
+      });
     }
 
     // Seeded Fields copy only on first join (ADR 0004); after that the row owns them, so a

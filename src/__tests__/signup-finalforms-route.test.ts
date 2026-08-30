@@ -93,6 +93,23 @@ describe('GET /api/signup/player/[playerId]/finalforms', () => {
     expect(updateRow).not.toHaveBeenCalled();
   });
 
+  it('includes dataAsOf on a not-found response so the dashboard can show last-synced', async () => {
+    findMatch.mockResolvedValue(null);
+    findSignup.mockResolvedValue({
+      record: signupRecord({
+        [SIGNUPS_COLUMNS.PLAYER_ID]: PLAYER_ID,
+        [SIGNUPS_COLUMNS.LAST_NAME]: 'TestNotFound',
+      }),
+      rowNumber: 2,
+    });
+    const res = await GET(ffRequest(), routeParams);
+    expect(await res.json()).toMatchObject({
+      success: true,
+      found: false,
+      dataAsOf: '2026-08-28T05:15:11Z',
+    });
+  });
+
   it('never writes spsStudentId for a magic-name fixture, but still copies empty seed fields', async () => {
     findMatch.mockResolvedValue({ record: matchedRecord, dataAsOf: '2026-08-28', isTest: true });
     const res = await GET(ffRequest(), routeParams);

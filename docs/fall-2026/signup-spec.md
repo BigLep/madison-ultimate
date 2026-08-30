@@ -111,7 +111,7 @@ Final Forms row states:
 
 - Found and not found both open with copy C15 (SPS-required, external, link to Final Forms) and close with the AD / coach contact lines from C5.
 - Found: parent signed / student signed / physical cleared, each as a distinct check; physical clearance/expiration date; last-synced timestamp plus inline refresh (copy C3/C4).
-- Not found: copy block C5 (couldn't-find + two reasons; physical requirement and contacts now live in C15 / shared help).
+- Not found: copy block C5 (couldn't-find + three reasons, stale-data second with its own last-refreshed wording plus C4; physical requirement and contacts now live in C15 / shared help).
 
 ## Copy pack (drafts for review)
 
@@ -123,9 +123,9 @@ Final Forms row states:
 
 **C3, refresh prompt:** "Data last synchronized with Final Forms on [time] ([relative]). If you have updated Final Forms since then, click here and we'll try again." ("click here" is the action. Omit the first sentence if there is no timestamp.) `[relative]` is a parenthetical relative-time hint (e.g. "2 days ago"), added 2026-08-29 via `formatRelativeHighestUnit`: proximity to now is exactly what a family needs to judge whether "since then" plausibly covers their own recent Final Forms edit, so it's worth showing alongside the absolute local timestamp rather than instead of it. Omit the parenthetical (not just the whole sentence) when `dataAsOf` is missing or unparseable, since `formatRelativeHighestUnit` returns `''` in that case; a future/skewed timestamp still renders "just now" rather than being hidden.
 
-**C4, refresh responses:** started: "Great, we're syncing with Final Forms now. Check back and refresh in about 5 minutes." Already running: "A sync is already underway; refresh in a few minutes."
+**C4, refresh responses:** started: "Great, we're syncing with Final Forms now. Reload this page in a couple of minutes to see if that worked." Already running: "A sync is already underway. Reload this page in a couple of minutes to see if that worked." Shown as a live status next to the click (accent, not muted secondary) so the family can see that the click did something.
 
-**C5, Final Forms not found:** Shown after C15. "We couldn't find [preferred name] in the school's Final Forms registration yet. Two common reasons: (1) You haven't registered in SPS Final Forms yet. (2) The name we have doesn't match school records; enter the last name and legal first name exactly as they appear in Final Forms above. Preferred name is what we'll actually use with your player." AD and coach contacts follow as shared help (same as the found state).
+**C5, Final Forms not found:** Shown after C15. "We couldn't find [preferred name] in the school's Final Forms registration yet. Three common reasons: (1) You haven't registered in SPS Final Forms yet. If you haven't, please do so now. (2) Our Final Forms data may be stale. It was last refreshed on [time] ([relative]). If you have updated Final Forms since then, click here and we'll try again. (3) The name we have doesn't match school records; enter the last name and legal first name exactly as they appear in Final Forms above. Preferred name is what we'll actually use with your player." Omit "It was last refreshed on…" when `dataAsOf` is missing. Reason (2) uses C4 for the click response (same as found). AD and coach contacts follow as shared help (same as the found state).
 
 **C6, deadline banner (until Sept 9):** "Complete signup and Final Forms by end of day Wednesday, September 9, and sooner is better: the school needs time to process clearance. SPS rules: players who aren't fully cleared in Final Forms can't set foot on the field at tryouts (Sept 10-11)."
 

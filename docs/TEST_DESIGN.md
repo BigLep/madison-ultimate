@@ -87,10 +87,11 @@ These are the family-facing states from ADRs 0001–0004 and `docs/fall-2026/sig
 
 **Final Forms** ([src/__tests__/final-forms.test.ts](../src/__tests__/final-forms.test.ts), [src/__tests__/signup-finalforms-route.test.ts](../src/__tests__/signup-finalforms-route.test.ts), [src/__tests__/signup-checklist.test.ts](../src/__tests__/signup-checklist.test.ts))
 
-- Magic last names: `TestNotFound` plus the four found signature/clearance combos; case/spacing insensitive; Drive is not called; `isTest` is set.
-- Live join: unique last+DOB (including student-signed / caretaker-unsigned), twins by legal first name, preferred-name fallback, ambiguous twins return null, `spsStudentId` is authoritative, missing id / missing name → not found.
-- Route: first join writes `spsStudentId`; never overwrite; never write `spsStudentId` for a fixture; empty seed fields are copied only on first join (fixtures: only while every seed column is still empty); never overwrite a saved seed value; never refill after the join is established.
+- Magic last names: `TestNotFound` plus the four found signature/clearance combos; case/spacing insensitive; Drive is not called; `isTest` is set. `TestNotFound` still reports the fixture `dataAsOf` so the dashboard can show last-synced.
+- Live join: unique last+DOB (including student-signed / caretaker-unsigned), twins by legal first name, preferred-name fallback, ambiguous twins return null, `spsStudentId` is authoritative, missing id / missing name → not found. A miss still reports the export timestamp via `getFinalFormsDataAsOf`.
+- Route: not-found includes `dataAsOf`; first join writes `spsStudentId`; never overwrite; never write `spsStudentId` for a fixture; empty seed fields are copied only on first join (fixtures: only while every seed column is still empty); never overwrite a saved seed value; never refill after the join is established.
 - Checklist: Final Forms is done only when found **and** all three flags are true.
+- Not-found dashboard ([src/__tests__/FinalFormsRow.test.tsx](../src/__tests__/FinalFormsRow.test.tsx)): register-now, then stale-data with last-refreshed + refresh, then name mismatch; C4 live status after click.
 
 **Mailing list** ([src/__tests__/signup-mailing.test.ts](../src/__tests__/signup-mailing.test.ts), [src/__tests__/signup-profile-save.test.ts](../src/__tests__/signup-profile-save.test.ts))
 
@@ -107,7 +108,7 @@ These are the family-facing states from ADRs 0001–0004 and `docs/fall-2026/sig
 
 **Still layer 3 only (no unit/DOM suite)**
 
-- Dashboard copy and layout for each Final Forms state (C5/C15), mailing widget visibility, caretaker-2 collapsed vs expanded, photo upload UI, media opt-out vs photo independence, refresh C3/C4 copy. Drive those with the magic last names at desktop and 375×812 as below.
+- Dashboard copy and layout for each Final Forms state (C5/C15) other than the not-found last-synced/refresh covered above, mailing widget visibility, caretaker-2 collapsed vs expanded, photo upload UI, media opt-out vs photo independence, found-state refresh C3/C4 copy. Drive those with the magic last names at desktop and 375×812 as below.
 
 ## What we don’t do
 

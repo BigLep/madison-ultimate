@@ -64,7 +64,7 @@ export async function POST() {
         return NextResponse.json({
           success: true,
           status: 'already-running',
-          message: 'A sync is already underway; refresh in a few minutes.',
+          message: 'A sync is already underway. Reload this page in a couple of minutes to see if that worked.',
         });
       }
     }
@@ -88,7 +88,7 @@ export async function POST() {
     return NextResponse.json({
       success: true,
       status: 'started',
-      message: 'Great, we’re syncing with Final Forms now. Check back and refresh in about 5 minutes.',
+      message: 'Great, we’re syncing with Final Forms now. Reload this page in a couple of minutes to see if that worked.',
     });
   } catch (error) {
     console.error('Error triggering Final Forms refresh:', error);

@@ -161,6 +161,9 @@ async function loadSnapshot(): Promise<FinalFormsSnapshot | null> {
   return cache;
 }
 
+/** Shared "data as of" for every magic-name fixture, including TestNotFound. */
+export const FINAL_FORMS_FIXTURE_DATA_AS_OF = '2026-08-28T05:15:11Z';
+
 export interface FinalFormsJoinResult {
   record: FinalFormsRecord;
   dataAsOf: string;
@@ -176,7 +179,7 @@ export interface FinalFormsJoinResult {
 export async function findFinalFormsMatch(signup: SignupRecord): Promise<FinalFormsJoinResult | null> {
   const fixture = findTestFixture(signup[SIGNUPS_COLUMNS.LAST_NAME]);
   if (fixture !== undefined) {
-    return fixture ? { record: fixture, dataAsOf: '2026-08-28T05:15:11Z', isTest: true } : null;
+    return fixture ? { record: fixture, dataAsOf: FINAL_FORMS_FIXTURE_DATA_AS_OF, isTest: true } : null;
   }
 
   const snapshot = await loadSnapshot();
@@ -203,6 +206,17 @@ export async function findFinalFormsMatch(signup: SignupRecord): Promise<FinalFo
   const legalFirst = normalizeName(signup[SIGNUPS_COLUMNS.LEGAL_FIRST_NAME] || signup[SIGNUPS_COLUMNS.PREFERRED_FIRST_NAME]);
   const exact = candidates.find(r => normalizeName(r.legalFirstName) === legalFirst);
   return exact ? { record: exact, dataAsOf: snapshot.fileTimestamp } : null;
+}
+
+/**
+ * Export timestamp even when the player has no join. Used by the not-found dashboard
+ * so a family can see how stale our copy is and request a refresh (same C3 stamp as found).
+ */
+export async function getFinalFormsDataAsOf(signup: SignupRecord): Promise<string | undefined> {
+  const fixture = findTestFixture(signup[SIGNUPS_COLUMNS.LAST_NAME]);
+  if (fixture !== undefined) return FINAL_FORMS_FIXTURE_DATA_AS_OF;
+  const snapshot = await loadSnapshot();
+  return snapshot?.fileTimestamp;
 }
 
 /** Seeded fields (grade, student email/phone, caretaker names/emails/phones) copied into empty signup-row cells on first join per ADR 0004. */
