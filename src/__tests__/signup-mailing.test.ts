@@ -26,10 +26,11 @@ const unsubscribe = vi.mocked(unsubscribeEmail);
 const PLAYER_ID = 'testplayerid';
 const routeParams = { params: Promise.resolve({ playerId: PLAYER_ID }) };
 
-function mailingRequest(body?: object): NextRequest {
+function mailingRequest(body?: object, headers?: Record<string, string>): NextRequest {
   return new NextRequest(`http://localhost/api/signup/player/${PLAYER_ID}/mailing`, {
     method: body ? 'POST' : 'GET',
     body: body ? JSON.stringify(body) : undefined,
+    headers,
   });
 }
 
@@ -117,7 +118,7 @@ describe('POST /api/signup/player/[playerId]/mailing', () => {
       routeParams
     );
     expect(res.status).toBe(200);
-    expect(subscribe).toHaveBeenCalledWith('ct1@example.com');
+    expect(subscribe).toHaveBeenCalledWith('ct1@example.com', undefined);
     expect((await res.json()).subscribed).toBe(true);
   });
 
@@ -139,7 +140,17 @@ describe('POST /api/signup/player/[playerId]/mailing', () => {
       routeParams
     );
     expect(res.status).toBe(200);
-    expect(subscribe).toHaveBeenCalledWith('student@example.com');
+    expect(subscribe).toHaveBeenCalledWith('student@example.com', undefined);
+  });
+
+  it('forwards the subscriber IP from x-forwarded-for to subscribeEmail', async () => {
+    subscribe.mockResolvedValue(true);
+    const res = await POST(
+      mailingRequest({ email: 'ct1@example.com', action: 'subscribe' }, { 'x-forwarded-for': '203.0.113.5, 10.0.0.1' }),
+      routeParams
+    );
+    expect(res.status).toBe(200);
+    expect(subscribe).toHaveBeenCalledWith('ct1@example.com', '203.0.113.5');
   });
 
   it('rejects the SPS email and any address not on the row', async () => {

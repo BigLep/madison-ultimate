@@ -26,10 +26,11 @@ const subscribeUnlessUnsub = vi.mocked(subscribeUnlessUnsubscribed);
 const PLAYER_ID = 'testplayerid';
 const routeParams = { params: Promise.resolve({ playerId: PLAYER_ID }) };
 
-function putRequest(body: object): NextRequest {
+function putRequest(body: object, headers?: Record<string, string>): NextRequest {
   return new NextRequest(`http://localhost/api/signup/player/${PLAYER_ID}`, {
     method: 'PUT',
     body: JSON.stringify(body),
+    headers,
   });
 }
 
@@ -58,11 +59,22 @@ describe('PUT /api/signup/player/[playerId]', () => {
     );
     expect(res.status).toBe(200);
     expect(subscribeUnlessUnsub).toHaveBeenCalledTimes(3);
-    expect(subscribeUnlessUnsub).toHaveBeenCalledWith('ct1@example.com');
-    expect(subscribeUnlessUnsub).toHaveBeenCalledWith('ct2@example.com');
-    expect(subscribeUnlessUnsub).toHaveBeenCalledWith('student@example.com');
-    expect(subscribeUnlessUnsub).not.toHaveBeenCalledWith('student@seattleschools.org');
+    expect(subscribeUnlessUnsub).toHaveBeenCalledWith('ct1@example.com', undefined);
+    expect(subscribeUnlessUnsub).toHaveBeenCalledWith('ct2@example.com', undefined);
+    expect(subscribeUnlessUnsub).toHaveBeenCalledWith('student@example.com', undefined);
+    expect(subscribeUnlessUnsub).not.toHaveBeenCalledWith('student@seattleschools.org', undefined);
     expect(subscribe).not.toHaveBeenCalled();
+  });
+
+  it('forwards the visitor IP from x-forwarded-for to subscribeUnlessUnsubscribed', async () => {
+    const res = await PUT(
+      putRequest(validProfile({ caretaker1Email: 'ct1@example.com' }), {
+        'x-forwarded-for': '203.0.113.5, 10.0.0.1',
+      }),
+      routeParams
+    );
+    expect(res.status).toBe(200);
+    expect(subscribeUnlessUnsub).toHaveBeenCalledWith('ct1@example.com', '203.0.113.5');
   });
 
   it('does not call Buttondown when no eligible emails are present', async () => {

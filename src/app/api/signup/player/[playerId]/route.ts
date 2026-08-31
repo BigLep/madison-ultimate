@@ -3,6 +3,7 @@ import { findSignupByPlayerId, updateSignupRow } from '../../../../../lib/signup
 import { profileFormSchema, formValuesToRecord } from '../../../../../lib/signup-form-schema';
 import { eligibleMailingEmails } from '../../../../../lib/mailing-eligibility';
 import { subscribeUnlessUnsubscribed } from '../../../../../lib/buttondown-api';
+import { getClientIp } from '../../../../../lib/request-ip';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ playerId: string }> }) {
   try {
@@ -44,8 +45,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     // Auto-subscribe eligible emails (caretakers + student personal, never SPS) unless the
     // address has already opted out of Buttondown. Failure must not block the sheet write.
+    const clientIp = getClientIp(request);
     await Promise.all(
-      eligibleMailingEmails(fields).map(entry => subscribeUnlessUnsubscribed(entry.email))
+      eligibleMailingEmails(fields).map(entry => subscribeUnlessUnsubscribed(entry.email, clientIp))
     );
 
     const updated = await updateSignupRow(playerId, fields);

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { findSignupByPlayerId } from '../../../../../../lib/signups-sheet';
 import { eligibleMailingEmails } from '../../../../../../lib/mailing-eligibility';
 import { isSubscriber, subscribeEmail, unsubscribeEmail } from '../../../../../../lib/buttondown-api';
+import { getClientIp } from '../../../../../../lib/request-ip';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ playerId: string }> }) {
   try {
@@ -40,7 +41,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ success: false, error: 'Email is not eligible for this player' }, { status: 400 });
     }
 
-    const ok = action === 'unsubscribe' ? await unsubscribeEmail(email) : await subscribeEmail(email);
+    const ok =
+      action === 'unsubscribe' ? await unsubscribeEmail(email) : await subscribeEmail(email, getClientIp(request));
     if (!ok) {
       return NextResponse.json({ success: false, error: 'Buttondown request failed' }, { status: 502 });
     }

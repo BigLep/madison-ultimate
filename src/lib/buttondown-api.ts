@@ -134,14 +134,14 @@ export async function getSubscriberStatus(email: string): Promise<SubscriberStat
  * Subscribe an email unless it is already on the list or has opted out.
  * Never re-subscribes an unsubscribed address. Never throws.
  */
-export async function subscribeUnlessUnsubscribed(email: string): Promise<boolean> {
+export async function subscribeUnlessUnsubscribed(email: string, ipAddress?: string): Promise<boolean> {
   const apiKey = process.env.BUTTONDOWN_API_KEY;
   const trimmed = email?.trim();
   const status = await getSubscriberStatus(email);
   if (status === 'unsubscribed' || status === 'subscribed') return true;
   if (status === 'absent') {
     if (!apiKey || !trimmed) return false;
-    return performSubscribe(trimmed, apiKey, 'absent');
+    return performSubscribe(trimmed, apiKey, 'absent', ipAddress);
   }
   return false;
 }
@@ -153,7 +153,7 @@ export async function subscribeUnlessUnsubscribed(email: string): Promise<boolea
  * to regular. New addresses are created with collision `add`.
  * Returns true on success, false on failure (never throws).
  */
-export async function subscribeEmail(email: string): Promise<boolean> {
+export async function subscribeEmail(email: string, ipAddress?: string): Promise<boolean> {
   const apiKey = process.env.BUTTONDOWN_API_KEY;
   const trimmed = email?.trim();
   if (!apiKey || !trimmed) return false;
@@ -162,14 +162,15 @@ export async function subscribeEmail(email: string): Promise<boolean> {
   if (status === 'subscribed') return true;
   if (status === null) return false;
 
-  return performSubscribe(trimmed, apiKey, status);
+  return performSubscribe(trimmed, apiKey, status, ipAddress);
 }
 
 /** Shared PATCH/POST write for subscribeEmail and subscribeUnlessUnsubscribed, given an already-known status. */
 async function performSubscribe(
   trimmed: string,
   apiKey: string,
-  status: 'unsubscribed' | 'absent'
+  status: 'unsubscribed' | 'absent',
+  ipAddress?: string
 ): Promise<boolean> {
   try {
     const res =
@@ -190,7 +191,11 @@ async function performSubscribe(
               'Content-Type': 'application/json',
               'X-Buttondown-Collision-Behavior': 'add',
             },
-            body: JSON.stringify({ email_address: trimmed, type: 'regular' }),
+            body: JSON.stringify({
+              email_address: trimmed,
+              type: 'regular',
+              ...(ipAddress ? { ip_address: ipAddress } : {}),
+            }),
             next: { revalidate: 0 },
           });
 
