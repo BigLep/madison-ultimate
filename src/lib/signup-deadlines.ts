@@ -3,7 +3,7 @@
 
 export type DeadlineState = 'open' | 'late' | 'closed';
 
-const DEADLINE_DATE = '2026-09-09'; // EOD Wednesday, September 9
+const DEADLINE_DATE = '2026-09-08'; // EOD Tuesday, September 8
 const CLOSE_DATE = '2026-09-18'; // ~a week after tryouts; new-player creation closes
 
 export function getDeadlineState(now: Date = new Date()): DeadlineState {
@@ -15,7 +15,7 @@ export function getDeadlineState(now: Date = new Date()): DeadlineState {
 
 export const DEADLINE_COPY: Record<DeadlineState, string> = {
   open:
-    'Complete signup and Final Forms by end of day Wednesday, September 9, and sooner is better: the school needs time to process clearance. SPS rules: players who aren’t fully cleared in Final Forms can’t set foot on the field at tryouts (Sept 10-11).',
+    'Complete signup and Final Forms by end of day Tuesday, September 8, and sooner is better: the school needs time to process clearance. SPS rules: players who aren’t fully cleared in Final Forms can’t set foot on the field at tryouts (Sept 9 and 11).',
   late:
     'Tryout registration has closed. Late signups are not guaranteed. Go ahead and submit and contact the coaches at madisonultimate@gmail.com.',
   closed:

@@ -6,13 +6,13 @@ function utcDate(isoDate: string): Date {
 }
 
 describe('getDeadlineState', () => {
-  it('is open on and before September 9', () => {
+  it('is open on and before September 8', () => {
+    expect(getDeadlineState(utcDate('2026-09-07'))).toBe('open');
     expect(getDeadlineState(utcDate('2026-09-08'))).toBe('open');
-    expect(getDeadlineState(utcDate('2026-09-09'))).toBe('open');
   });
 
-  it('is late from September 10 through September 18', () => {
-    expect(getDeadlineState(utcDate('2026-09-10'))).toBe('late');
+  it('is late from September 9 through September 18', () => {
+    expect(getDeadlineState(utcDate('2026-09-09'))).toBe('late');
     expect(getDeadlineState(utcDate('2026-09-18'))).toBe('late');
   });
 

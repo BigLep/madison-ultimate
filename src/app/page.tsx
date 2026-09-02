@@ -35,8 +35,8 @@ export default function Home() {
             className="max-w-lg mx-auto mb-8 text-base leading-relaxed"
             style={{ color: 'var(--secondary-text)' }}
           >
-            Fall 2026 tryouts are tentatively scheduled for Thursday, September 10 and
-            Friday, September 11. Signup and Final Forms are due Wednesday, September 9.{' '}
+            Fall 2026 tryouts are scheduled for Wednesday, September 9 and
+            Friday, September 11. Signup and Final Forms are due Tuesday, September 8.{' '}
             <a
               href="/info"
               className="underline hover:opacity-80 transition-opacity"

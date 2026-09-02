@@ -127,9 +127,9 @@ Final Forms row states:
 
 **C5, Final Forms not found:** Shown after C15. "We couldn't find [preferred name] in the school's Final Forms registration yet. Three common reasons: (1) You haven't registered in SPS Final Forms yet. If you haven't, please do so now. (2) Our Final Forms data may be stale. It was last refreshed on [time] ([relative]). If you have updated Final Forms since then, click here and we'll try again. (3) The name we have doesn't match school records; enter the last name and legal first name exactly as they appear in Final Forms above. Preferred name is what we'll actually use with your player." Omit "It was last refreshed on…" when `dataAsOf` is missing. Reason (2) uses C4 for the click response (same as found). AD and coach contacts follow as shared help (same as the found state).
 
-**C6, deadline banner (until Sept 9):** "Complete signup and Final Forms by end of day Wednesday, September 9, and sooner is better: the school needs time to process clearance. SPS rules: players who aren't fully cleared in Final Forms can't set foot on the field at tryouts (Sept 10-11)."
+**C6, deadline banner (until Sept 8):** "Complete signup and Final Forms by end of day Tuesday, September 8, and sooner is better: the school needs time to process clearance. SPS rules: players who aren't fully cleared in Final Forms can't set foot on the field at tryouts (Sept 9 and 11)."
 
-**C7, post-deadline banner (Sept 10-18):** "Tryout registration has closed. Late signups are not guaranteed. Go ahead and submit and contact the coaches at madisonultimate@gmail.com."
+**C7, post-deadline banner (Sept 9-18):** "Tryout registration has closed. Late signups are not guaranteed. Go ahead and submit and contact the coaches at madisonultimate@gmail.com."
 
 **C8, closed state (after ~Sept 18):** "Signups for the fall season are closed. Contact the coaches at madisonultimate@gmail.com." (Lookup for existing players keeps working.)
 

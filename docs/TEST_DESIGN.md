@@ -105,7 +105,7 @@ These are the family-facing states from ADRs 0001–0004 and `docs/fall-2026/sig
 
 - Cap of 2 is structural: exactly two `CARETAKER_*` column groups and no `caretaker3*` schema fields ([src/__tests__/signup-form-schema.test.ts](../src/__tests__/signup-form-schema.test.ts)). Completeness requires caretaker 1 name+email; caretaker 2 is optional; zero caretakers is incomplete but save is still allowed.
 - Checklist: player-info required fields (Other Info excluded), photo, volunteering including “Not this season”.
-- Deadlines: open through Sept 9, late Sept 10–18, closed after Sept 18; only `closed` blocks new-player creation.
+- Deadlines: open through Sept 8, late Sept 9–18, closed after Sept 18; only `closed` blocks new-player creation.
 
 **Still layer 3 only (no unit/DOM suite)**
 
