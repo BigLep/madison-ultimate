@@ -14,7 +14,11 @@
   --secondary-text: #94a3b8;      /* Medium gray for secondary text */
   --primary-bg: #0f172a;          /* Dark slate background */
   --card-bg: #1e293b;             /* Dark gray for cards */
-  --accent: #3b82f6;              /* Bright blue for accent */
+  --accent: #3b82f6;              /* Bright blue for accent. Also set as tint_color on the Buttondown
+                                      newsletter (news_7z2dpf1sd38tjvavafdr97mffq) for brand consistency.
+                                      If you change this, update Buttondown too, e.g. via
+                                      PATCH https://api.buttondown.com/v1/newsletters/news_7z2dpf1sd38tjvavafdr97mffq
+                                      with {"tint_color": "..."} using the admin key in madisonultimate.org/.env. */
   --border: #334155;              /* Dark gray for borders */
 
   /* Availability Status Colors - Consistent across selector and summary */
