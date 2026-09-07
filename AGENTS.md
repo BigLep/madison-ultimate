@@ -102,6 +102,10 @@ Files changed:
 - Use fuzzy matching for joining player data across different sources
 - Mobile-first responsive design approach with Tailwind CSS
 
+## One-off live data lookups/fixes (Signups, roster, etc.)
+
+For a one-off read or single-field correction against a live sheet (e.g. "fix PlayerID X's Date of Birth"), use the `gog` CLI (`gog sheets get` / `gog sheets update`) rather than writing a script under `scripts/` that authenticates via the app's own `GOOGLE_SERVICE_ACCOUNT_KEY_FILE`. Get the sheet ID from `.env.local` (e.g. `SIGNUPS_SHEET_ID`) and the tab/column names from `src/lib/signups-config.ts` or `sheet-config.ts`; resolve column letters dynamically from the header row (`gog sheets get <sheetId> "'<Tab>'!1:1" -p`) rather than hardcoding them, per the column-position rule below. Confirm the current value before overwriting it, and re-read the row afterward to confirm the write. Reserve a real script under `scripts/` for cases needing actual programmatic logic (loops, joins, bulk operations) that a couple of `gog` calls can't express.
+
 ## Data Access Guidelines
 
 ### CRITICAL: Never Use Hardcoded Column Positions
