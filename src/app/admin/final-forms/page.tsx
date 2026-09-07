@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import type { PlanSummary, AppliedSummary } from '@/lib/reconciliation-summary'
+import { OUTREACH_CHECKLIST_ROWS, type OutreachEntry } from '@/lib/signup-outreach'
 import { formatLocalTimestamp } from '@/lib/date-formatters'
 
 interface PreviewResponse {
@@ -10,7 +11,15 @@ interface PreviewResponse {
   blockedCount: number | null
   noSnapshot: boolean
   preview: PlanSummary | null
-  outreachEmails: string[]
+}
+
+interface OutreachResponse {
+  success: boolean
+  error?: string
+  dataAsOf: string | null
+  players: OutreachEntry[]
+  unreachable: { playerId: string; fullName: string; reason: string }[]
+  counts: { total: number; notChecklistComplete: number; unreachable: number }
 }
 
 interface ApplyResponse {
@@ -27,6 +36,8 @@ export default function FinalFormsAdminPage() {
   const [loading, setLoading] = useState<'preview' | 'apply' | 'sync' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [syncMessage, setSyncMessage] = useState<string | null>(null)
+  const [outreach, setOutreach] = useState<OutreachResponse | null>(null)
+  const [outreachError, setOutreachError] = useState<string | null>(null)
 
   const runPreview = useCallback(async () => {
     setLoading('preview')
@@ -43,9 +54,22 @@ export default function FinalFormsAdminPage() {
     }
   }, [])
 
+  const loadOutreach = useCallback(async () => {
+    setOutreachError(null)
+    try {
+      const res = await fetch('/api/admin/outreach')
+      const data: OutreachResponse = await res.json()
+      if (!res.ok || !data.success) throw new Error(data.error || 'Could not load the outreach list')
+      setOutreach(data)
+    } catch (err) {
+      setOutreachError(err instanceof Error ? err.message : 'Unknown error')
+    }
+  }, [])
+
   useEffect(() => {
     runPreview()
-  }, [runPreview])
+    loadOutreach()
+  }, [runPreview, loadOutreach])
 
   async function runApply() {
     setLoading('apply')
@@ -87,7 +111,6 @@ export default function FinalFormsAdminPage() {
 
   const preview = previewData?.preview ?? null
   const blockedCount = previewData?.blockedCount
-  const outreach = previewData?.outreachEmails ?? []
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
@@ -280,26 +303,112 @@ export default function FinalFormsAdminPage() {
               </li>
             ))}
           </ReportSection>
-
-          <div>
-            <h2 className="text-lg font-semibold mb-2" style={{ color: 'var(--secondary-header)' }}>
-              Outreach BCC list ({outreach.length})
-            </h2>
-            <p className="text-sm mb-2" style={{ color: 'var(--secondary-text)' }}>
-              Caretaker emails of seeded signups the family has not finished. Paste into BCC.
-            </p>
-            <div className="flex items-start gap-2">
-              <textarea
-                readOnly
-                value={outreach.join(', ')}
-                rows={4}
-                className="w-full p-2 rounded text-sm font-mono border"
-                style={{ background: 'var(--card-bg)', borderColor: 'var(--border)', color: 'var(--primary-text)' }}
-              />
-              <CopyButton text={outreach.join(', ')} />
-            </div>
-          </div>
         </div>
+      )}
+
+      <OutreachSection data={outreach} error={outreachError} onReload={loadOutreach} />
+    </div>
+  )
+}
+
+/**
+ * Signup Outreach (ADR 0007): the same list scripts/outreach-drafts.mjs reads, so the coach can
+ * eyeball the audience before building drafts. Read-only.
+ */
+function OutreachSection({
+  data,
+  error,
+  onReload,
+}: {
+  data: OutreachResponse | null
+  error: string | null
+  onReload: () => void
+}) {
+  return (
+    <div className="mt-10 space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-xl font-semibold" style={{ color: 'var(--page-title)' }}>
+          Signup Outreach
+        </h2>
+        <button
+          onClick={onReload}
+          className="px-3 py-1 rounded-lg text-sm"
+          style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', color: 'var(--primary-text)' }}
+        >
+          Reload
+        </button>
+      </div>
+      <p className="text-sm" style={{ color: 'var(--secondary-text)' }}>
+        Every signup with the six checklist rows the player page shows. Rows not Checklist Complete come first; they are
+        the audience for the next Outreach Wave. Drafts are built with <code>scripts/outreach-drafts.mjs</code> (see{' '}
+        <code>docs/fall-2026/signup-outreach-plan.md</code>); nothing here sends anything.
+      </p>
+
+      {error && <div style={{ color: 'var(--availability-cant-make-text)' }}>Error: {error}</div>}
+      {!data && !error && <p className="text-sm" style={{ color: 'var(--secondary-text)' }}>Loading the outreach list…</p>}
+
+      {data && (
+        <>
+          <p className="text-sm" style={{ color: 'var(--secondary-text)' }}>
+            {data.counts.notChecklistComplete} of {data.counts.total} signups not Checklist Complete; {data.counts.unreachable}{' '}
+            unreachable. Final Forms export as of {data.dataAsOf ? formatLocalTimestamp(data.dataAsOf) : 'unknown'}.
+          </p>
+
+          <div className="overflow-x-auto rounded-lg border" style={{ borderColor: 'var(--border)', background: 'var(--card-bg)' }}>
+            <table className="text-sm min-w-full" style={{ color: 'var(--primary-text)' }}>
+              <thead>
+                <tr className="text-left [&>th]:px-3 [&>th]:py-2 [&>th]:whitespace-nowrap" style={{ color: 'var(--secondary-text)' }}>
+                  <th>Player</th>
+                  <th>PlayerID</th>
+                  <th>Source</th>
+                  {OUTREACH_CHECKLIST_ROWS.map(c => (
+                    <th key={c.key}>{c.label}</th>
+                  ))}
+                  <th>To</th>
+                  <th>Cc</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.players.map(p => (
+                  <tr
+                    key={p.playerId}
+                    className={`border-t [&>td]:px-3 [&>td]:py-2 [&>td]:whitespace-nowrap ${p.checklistComplete ? 'opacity-60' : ''}`}
+                    style={{ borderColor: 'var(--border)' }}
+                  >
+                    <td>
+                      <a href={`/player/${p.playerId}`} className="underline" target="_blank" rel="noreferrer">
+                        {p.fullName || '(no name)'}
+                      </a>
+                    </td>
+                    <td className="font-mono text-xs" style={{ color: 'var(--secondary-text)' }}>
+                      {p.playerId}
+                    </td>
+                    <td>{p.seeded ? 'seeded' : 'family'}</td>
+                    {OUTREACH_CHECKLIST_ROWS.map(c => (
+                      <td key={c.key} aria-label={p.checklist[c.key] ? `${c.label} done` : `${c.label} not done`}>
+                        {p.checklist[c.key] ? '✅' : '❌'}
+                      </td>
+                    ))}
+                    <td className={p.to.length === 0 ? 'text-[var(--availability-cant-make-text)]' : ''}>
+                      {p.to.length > 0 ? p.to.join(', ') : 'none'}
+                    </td>
+                    <td>{p.cc.join(', ')}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {data.unreachable.length > 0 && (
+            <ReportSection title={`Unreachable, no draft (${data.unreachable.length})`}>
+              {data.unreachable.map(u => (
+                <li key={u.playerId}>
+                  {u.playerId} ({u.fullName || 'no name'}): {u.reason}
+                </li>
+              ))}
+            </ReportSection>
+          )}
+        </>
       )}
     </div>
   )

@@ -71,3 +71,8 @@ export function isFinalFormsComplete(status: {
     status.physicalCleared
   );
 }
+
+/** A Seeded Signup the family has not finished (ADR 0006): drives the player-page banner. */
+export function isSeededAndIncomplete(record: SignupRecord): boolean {
+  return Boolean(record[SIGNUPS_COLUMNS.SEEDED_AT]) && record[SIGNUPS_COLUMNS.PROFILE_COMPLETE] !== PROFILE_COMPLETE_TRUE;
+}

@@ -1,7 +1,7 @@
 "use client"
 
 import { SignupRecord } from '@/lib/signups-sheet'
-import { isSeededAndIncomplete } from '@/lib/seeded-outreach'
+import { isSeededAndIncomplete } from '@/lib/signup-checklist'
 import { BANNER_STYLE } from '@/components/DeadlineBanner'
 
 /**

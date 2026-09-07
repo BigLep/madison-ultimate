@@ -1,5 +1,5 @@
-// Seed Signups from Final Forms (ADR 0006). GET is the Preview: the plan, the Buttondown
-// blocked-subscriber count, and the outreach BCC list, with no writes. POST applies the same
+// Seed Signups from Final Forms (ADR 0006). GET is the Preview: the plan and the Buttondown
+// blocked-subscriber count, with no writes. POST applies the same
 // plan (joins, then seeds, then the Profile Complete recompute) and reports what happened.
 // Gated by Basic Auth in src/proxy.ts. Report shapes live in src/lib/reconciliation-summary.ts.
 
@@ -8,7 +8,6 @@ import { listAllSignups } from '../../../../lib/signups-sheet';
 import { previewFinalFormsReconciliation, applyFinalFormsReconciliation } from '../../../../lib/final-forms';
 import { summarizePlan, summarizeApplied } from '../../../../lib/reconciliation-summary';
 import { getBlockedSubscriberCount } from '../../../../lib/buttondown-api';
-import { outreachEmails } from '../../../../lib/seeded-outreach';
 
 function errorResponse(context: string, error: unknown) {
   console.error(context, error);
@@ -27,7 +26,6 @@ export async function GET() {
       blockedCount,
       noSnapshot: plan === null,
       preview: plan ? summarizePlan(plan) : null,
-      outreachEmails: outreachEmails(signups),
     });
   } catch (error) {
     return errorResponse('Error previewing Seed Signups from Final Forms:', error);

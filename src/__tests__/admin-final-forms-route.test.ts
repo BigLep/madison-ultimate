@@ -68,14 +68,13 @@ describe('GET /api/admin/final-forms (Preview)', () => {
     blockedCount.mockResolvedValue(2);
   });
 
-  it('summarizes every plan entry kind, the outreach list, and the blocked count without writing', async () => {
+  it('summarizes every plan entry kind and the blocked count without writing', async () => {
     preview.mockResolvedValue(PLAN);
     const body = await (await GET()).json();
 
     expect(body.success).toBe(true);
     expect(body.noSnapshot).toBe(false);
     expect(body.blockedCount).toBe(2);
-    expect(body.outreachEmails).toEqual(['ct1@example.com']);
     expect(body.preview.dataAsOf).toBe('2026-09-07T13:00:00Z');
     expect(body.preview.skipped).toBe(1);
     expect(body.preview.seed).toEqual([{ studentId: 'FF-SOLO', firstName: 'Casey', lastName: 'Sololast', grade: '8', dateOfBirth: '2013-05-01' }]);
@@ -101,7 +100,6 @@ describe('GET /api/admin/final-forms (Preview)', () => {
     const body = await (await GET()).json();
     expect(body.noSnapshot).toBe(true);
     expect(body.preview).toBeNull();
-    expect(body.outreachEmails).toEqual(['ct1@example.com']);
   });
 
   it('returns a 500 with the message when the sheet read fails', async () => {

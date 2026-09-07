@@ -10,6 +10,7 @@ import {
   isFinalFormsComplete,
   isProfileComplete,
   profileCompleteCellValue,
+  isSeededAndIncomplete,
 } from '@/lib/signup-checklist';
 import { COMPLETE_PLAYER_INFO, signupRecord } from './fixtures/signup-record';
 
@@ -163,5 +164,15 @@ describe('isProfileComplete (ADR 0006)', () => {
     expect(isProfileComplete(signupRecord({ ...complete, [SIGNUPS_COLUMNS.CARETAKER_1_EMAIL]: '' }))).toBe(false);
     expect(isProfileComplete(signupRecord({ ...complete, [SIGNUPS_COLUMNS.PHOTO_DRIVE_FILE_ID]: '' }))).toBe(false);
     expect(profileCompleteCellValue(signupRecord())).toBe('FALSE');
+  });
+});
+
+describe('isSeededAndIncomplete', () => {
+  it('is true only for a seeded row that is not Profile Complete', () => {
+    const seeded = (overrides = {}) =>
+      signupRecord({ [SIGNUPS_COLUMNS.SEEDED_AT]: '2026-09-07T13:00:00Z', [SIGNUPS_COLUMNS.PROFILE_COMPLETE]: 'FALSE', ...overrides });
+    expect(isSeededAndIncomplete(seeded())).toBe(true);
+    expect(isSeededAndIncomplete(seeded({ [SIGNUPS_COLUMNS.PROFILE_COMPLETE]: 'TRUE' }))).toBe(false);
+    expect(isSeededAndIncomplete(signupRecord({ [SIGNUPS_COLUMNS.PROFILE_COMPLETE]: 'FALSE' }))).toBe(false);
   });
 });

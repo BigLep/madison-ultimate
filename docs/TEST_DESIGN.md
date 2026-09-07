@@ -39,7 +39,7 @@ Signup routes go through `@/lib/signups-sheet`, `@/lib/buttondown-api`, and (for
 | `@/lib/google-api` (`getSheetData`, `appendSheetData`, `updateSheetData`) | signups-sheet writes | The one place the sheet layer itself is exercised (Profile Complete column, Updated At rule, recompute pass) against an in-memory header row built from `SIGNUPS_COLUMNS`. |
 | `@/lib/signup-deadlines.getDeadlineState` | lookup route | Lets lookup tests pin open vs closed without depending on today's date. Deadlines themselves are tested by passing an explicit `Date` into `getDeadlineState`. |
 
-Pure functions (`player-identity`, `signup-checklist`, `signup-deadlines`, `signup-form-schema`, `eligibleMailingEmails`, `seededFieldsFromFinalForms`, `planFinalFormsReconciliation`, `seeded-outreach`, `admin-auth`) take no I/O and need no mocks.
+Pure functions (`player-identity`, `signup-checklist`, `signup-deadlines`, `signup-form-schema`, `eligibleMailingEmails`, `seededFieldsFromFinalForms`, `planFinalFormsReconciliation`, `signup-outreach`, `admin-auth`) take no I/O and need no mocks. The outreach template renderer is plain JS under `scripts/lib/outreach-template.mjs` (so the draft script can import it without a build step); `src/__tests__/outreach-template.test.ts` imports it across that boundary, the one place a test reaches outside `src/`.
 
 ## When we reset
 

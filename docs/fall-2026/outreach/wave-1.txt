@@ -1,6 +1,6 @@
 Subject: Madison Ultimate: please finish {{preferredName}} {{lastName}}'s signup
 
-[Steve: replace every paragraph in this file with the wave-1 copy. Keep the Subject line first. Variables available anywhere: {{preferredName}}, {{lastName}}, {{caretaker1Name}}, {{caretaker2Name}}, {{portalUrl}}, {{statusRows}}. A paragraph that is only {{statusRows}} renders as the checklist.]
+[Coach: replace every bracketed paragraph in this file with the wave-1 copy, and keep the Subject line first. Variables, written as a name inside double curly braces, may go anywhere: preferredName, lastName, caretaker1Name, caretaker2Name, portalUrl, statusRows. A paragraph that is only the statusRows variable renders as the checklist; the portalUrl variable renders as a link.]
 
 Hello, family of {{preferredName}} {{lastName}},
 

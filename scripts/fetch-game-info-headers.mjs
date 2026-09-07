@@ -2,23 +2,11 @@
  * One-off script to fetch Game Info sheet headers (and first 2 data rows) from the roster spreadsheet.
  * Loads .env.local and uses the service account. Run from repo root: node scripts/fetch-game-info-headers.mjs
  */
-import { readFileSync, existsSync } from 'fs';
-import { pathToFileURL } from 'url';
-import { dirname, join } from 'path';
-import { fileURLToPath } from 'url';
+import { existsSync } from 'fs';
+import { join } from 'path';
+import { loadEnvLocal, repoRoot as root } from './lib/env.mjs';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const root = join(__dirname, '..');
-
-// Load .env.local
-const envPath = join(root, '.env.local');
-if (existsSync(envPath)) {
-  const content = readFileSync(envPath, 'utf8');
-  content.split('\n').forEach((line) => {
-    const m = line.match(/^([^#=]+)=(.*)$/);
-    if (m) process.env[m[1].trim()] = m[2].trim();
-  });
-}
+loadEnvLocal();
 
 const sheetId = process.env.ROSTER_SHEET_ID;
 const keyFile = process.env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE
