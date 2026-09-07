@@ -12,14 +12,18 @@ const ICS_URL = `https://calendar.google.com/calendar/ical/${encodeURIComponent(
 const WEBCAL_URL = `webcal://calendar.google.com/calendar/ical/${encodeURIComponent(CALENDAR_ID)}/public/basic.ics`
 const EMBED_URL = `https://calendar.google.com/calendar/embed?src=${encodeURIComponent(CALENDAR_ID)}&ctz=America%2FLos_Angeles`
 
-function CalendarIcon() {
+// Stylized nod to the Google Calendar app icon (white tile, blue header, binder tabs, date
+// number) so the "Google Calendar" card reads as that specific app at a glance.
+function GoogleCalendarIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="5" width="18" height="16" rx="2" />
-      <path d="M3 10h18" />
-      <path d="M8 3v4" />
-      <path d="M16 3v4" />
-      <path d="M9 14l2 2 4-4" />
+    <svg width="24" height="24" viewBox="0 0 24 24">
+      <rect x="2" y="2" width="3" height="6" rx="1.5" fill="#8ab4f8" />
+      <rect x="19" y="2" width="3" height="6" rx="1.5" fill="#8ab4f8" />
+      <rect x="1" y="4" width="22" height="18" rx="3" fill="#ffffff" />
+      <path d="M1 7a3 3 0 0 1 3-3h16a3 3 0 0 1 3 3v3H1V7Z" fill="#1a73e8" />
+      <rect x="1" y="16.5" width="6" height="5.5" fill="#34a853" />
+      <rect x="17" y="16.5" width="6" height="5.5" rx="0" fill="#fbbc04" />
+      <text x="12" y="18.5" textAnchor="middle" fontFamily="Arial, Helvetica, sans-serif" fontSize="10" fontWeight="700" fill="#1a73e8">31</text>
     </svg>
   )
 }
@@ -141,7 +145,7 @@ export default function CalendarPage() {
 
           <div className="flex flex-col gap-3.5">
             <SubscribeCard
-              icon={<CalendarIcon />}
+              icon={<GoogleCalendarIcon />}
               title="Google Calendar"
               description="On the web, or the Google Calendar app on Android or iPhone."
             >
@@ -156,21 +160,21 @@ export default function CalendarPage() {
 
             <SubscribeCard
               icon={<PhoneIcon />}
-              title="iPhone Calendar app"
-              description="For families who don't use the Google Calendar app."
+              title="iPhone & Mac Calendar"
+              description="Apple's built-in Calendar app, for families who don't use the Google Calendar app."
             >
               <a
                 href={WEBCAL_URL}
                 className="flex h-[46px] items-center justify-center rounded-lg border text-[15px] font-semibold no-underline"
                 style={{ background: 'var(--primary-bg)', borderColor: 'var(--border)', color: 'var(--primary-text)' }}
               >
-                Subscribe on iPhone
+                Subscribe on iPhone or Mac
               </a>
             </SubscribeCard>
 
             <SubscribeCard
               icon={<LinkIcon />}
-              title="Outlook, Mac Calendar, or anything else"
+              title="Windows Outlook, or anything else"
               description={'Copy this link and paste it into your app’s "Add by URL" or "Subscribe" option.'}
             >
               <CopyLinkRow url={ICS_URL} />
