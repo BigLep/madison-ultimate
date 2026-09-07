@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import Link from 'next/link'
 import { SiteHeader } from '@/components/SiteHeader'
 
 const CALENDAR_ID = '21081b4ccff3c7ad50dc835ce259ff76a09e0f05d1a66d727fafff195a7af612@group.calendar.google.com'
@@ -11,35 +10,6 @@ const GOOGLE_CALENDAR_ADD_URL =
 const ICS_URL = `https://calendar.google.com/calendar/ical/${encodeURIComponent(CALENDAR_ID)}/public/basic.ics`
 const WEBCAL_URL = `webcal://calendar.google.com/calendar/ical/${encodeURIComponent(CALENDAR_ID)}/public/basic.ics`
 const EMBED_URL = `https://calendar.google.com/calendar/embed?src=${encodeURIComponent(CALENDAR_ID)}&ctz=America%2FLos_Angeles`
-
-// Stylized nod to the Google Calendar app icon (white tile, blue header, binder tabs, date
-// number) so the "Google Calendar" card reads as that specific app at a glance.
-function GoogleCalendarIcon() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24">
-      <rect x="2" y="2" width="3" height="6" rx="1.5" fill="#8ab4f8" />
-      <rect x="19" y="2" width="3" height="6" rx="1.5" fill="#8ab4f8" />
-      <rect x="1" y="4" width="22" height="18" rx="3" fill="#ffffff" />
-      <path d="M1 7a3 3 0 0 1 3-3h16a3 3 0 0 1 3 3v3H1V7Z" fill="#1a73e8" />
-      <rect x="1" y="16.5" width="6" height="5.5" fill="#34a853" />
-      <rect x="17" y="16.5" width="6" height="5.5" rx="0" fill="#fbbc04" />
-      <text x="12" y="18.5" textAnchor="middle" fontFamily="Arial, Helvetica, sans-serif" fontSize="10" fontWeight="700" fill="#1a73e8">31</text>
-    </svg>
-  )
-}
-
-function PhoneIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="6" y="2" width="12" height="20" rx="2" />
-      <path d="M10 5h4" />
-      <path d="M9 10h2" />
-      <path d="M13 10h2" />
-      <path d="M9 14h2" />
-      <path d="M13 14h2" />
-    </svg>
-  )
-}
 
 function LinkIcon() {
   return (
@@ -138,14 +108,14 @@ export default function CalendarPage() {
             <div className="flex flex-col gap-1.5">
               <h1 className="text-[28px] font-bold leading-tight" style={{ color: 'var(--page-title)' }}>Team Calendar</h1>
               <p className="mx-auto max-w-[420px] text-[15px] leading-relaxed" style={{ color: 'var(--secondary-text)' }}>
-                Subscribe once, and every practice, game, and last-minute change shows up on your phone automatically.
+                Subscribe once, and every practice, game, and last-minute change shows up on your device automatically.
               </p>
             </div>
           </div>
 
           <div className="flex flex-col gap-3.5">
             <SubscribeCard
-              icon={<GoogleCalendarIcon />}
+              icon={<img src="/images/icons/google-calendar.svg" alt="" width={24} height={24} />}
               title="Google Calendar"
               description="On the web, or the Google Calendar app on Android or iPhone."
             >
@@ -159,7 +129,7 @@ export default function CalendarPage() {
             </SubscribeCard>
 
             <SubscribeCard
-              icon={<PhoneIcon />}
+              icon={<img src="/images/icons/apple-calendar.svg" alt="" width={24} height={24} />}
               title="iPhone & Mac Calendar"
               description="Apple's built-in Calendar app, for families who don't use the Google Calendar app."
             >
@@ -208,12 +178,6 @@ export default function CalendarPage() {
                 loading="lazy"
               />
             </div>
-          </div>
-
-          <div className="flex flex-col items-center gap-1.5 pt-2">
-            <Link href="/info" className="text-[13px] underline" style={{ color: 'var(--secondary-text)' }}>
-              Back to Season Info
-            </Link>
           </div>
 
         </div>
