@@ -57,7 +57,7 @@ Seeding ignores `isNewSignupClosed`; it is an admin action.
 
 - `src/app/api/admin/final-forms/route.ts`: `GET` returns the preview (the plan, bucketed for display), the Buttondown blocked-subscriber count, and the outreach list; `POST` applies and returns the report. Report sections: seeded, joined, ambiguous, discrepancies, duplicate signups, unseedable, no-snapshot, recomputed count. Each entry carries PlayerID or SPS Student ID plus the display name, as the Backfill report does today.
 - Outreach list: rows with Seeded At set and Profile Complete not `TRUE`; Caretaker 1 and Caretaker 2 emails, lowercased, deduplicated, comma-joined. Available from `GET` so it needs no Apply.
-- `src/app/admin/final-forms/page.tsx`: Preview runs on load and on a button; Apply is a second button, disabled while running, that shows the report. Keep the blocked-subscriber warning box. The outreach list sits in a read-only textarea with a Copy button.
+- `src/app/admin/final-forms/page.tsx`: Preview runs on load and on a button; Apply is a second button, disabled while running, that shows the report. A third button, Sync Final Forms, calls the existing `/api/signup/finalforms-refresh` route (the same workflow dispatch the player page uses, single-flight guarded) so a fresh export can be pulled before a run. Keep the blocked-subscriber warning box. The outreach list sits in a read-only textarea with a Copy button.
 - Delete `src/app/admin/finalforms-backfill/`, `src/app/api/admin/finalforms-backfill/`, and `src/__tests__/admin-finalforms-backfill-route.test.ts`. No redirect.
 
 ## 7. Admin gate

@@ -24,8 +24,9 @@ interface ApplyResponse {
 export default function FinalFormsAdminPage() {
   const [previewData, setPreviewData] = useState<PreviewResponse | null>(null)
   const [applied, setApplied] = useState<AppliedSummary | null>(null)
-  const [loading, setLoading] = useState<'preview' | 'apply' | null>(null)
+  const [loading, setLoading] = useState<'preview' | 'apply' | 'sync' | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [syncMessage, setSyncMessage] = useState<string | null>(null)
 
   const runPreview = useCallback(async () => {
     setLoading('preview')
@@ -55,6 +56,28 @@ export default function FinalFormsAdminPage() {
       if (!res.ok || !data.success) throw new Error(data.error || 'Apply failed')
       setApplied(data.applied)
       await runPreview()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    } finally {
+      setLoading(null)
+    }
+  }
+
+  // Same trigger the player page uses: dispatches the finalforms-export workflow (single-flight)
+  // and drops the in-memory snapshot, so the next Preview after the export lands reads it.
+  async function runSync() {
+    setLoading('sync')
+    setError(null)
+    setSyncMessage(null)
+    try {
+      const res = await fetch('/api/signup/finalforms-refresh', { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok || !data.success) throw new Error(data.error || 'Could not start a sync')
+      setSyncMessage(
+        data.status === 'already-running'
+          ? 'A sync is already underway. Give it a couple of minutes, then press Preview.'
+          : 'Sync started. The export takes a couple of minutes to land; then press Preview.'
+      )
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
@@ -124,7 +147,22 @@ export default function FinalFormsAdminPage() {
         >
           {loading === 'apply' ? 'Applying...' : 'Apply'}
         </button>
+        <button
+          onClick={runSync}
+          disabled={loading !== null}
+          className="px-4 py-2 rounded-lg disabled:opacity-50 ml-auto"
+          style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', color: 'var(--primary-text)' }}
+          title="Fetch a fresh export from Final Forms (same as the refresh link on a player page)"
+        >
+          {loading === 'sync' ? 'Requesting sync...' : 'Sync Final Forms'}
+        </button>
       </div>
+
+      {syncMessage && (
+        <p className="mb-6 text-sm" style={{ color: 'var(--secondary-text)' }}>
+          {syncMessage}
+        </p>
+      )}
 
       {error && <div className="mb-6" style={{ color: 'var(--availability-cant-make-text)' }}>Error: {error}</div>}
 
