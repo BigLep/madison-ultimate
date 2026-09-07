@@ -15,6 +15,21 @@ import {
 
 export type SignupRecord = Record<string, string>;
 
+/**
+ * Columns stored in the sheet as numbers. Everything else is written as text (RAW input
+ * option). Grade is numeric so it has one type no matter which source filled it: Final Forms
+ * exports are numeric, and a text "7" next to a numeric 7 in the Coach Sheets Roster breaks
+ * sorting, pivots, and equality checks. Reads are unaffected: the values API returns a
+ * numeric cell as its display string, which rowToRecord keeps as text.
+ */
+const NUMERIC_COLUMNS: ReadonlySet<string> = new Set([SIGNUPS_COLUMNS.GRADE]);
+
+/** Cell value to write for a column: a number for numeric columns holding an integer, else the text. */
+function toSheetCell(header: string, value: string): string | number {
+  if (NUMERIC_COLUMNS.has(header) && /^\d+$/.test(value.trim())) return Number(value);
+  return value;
+}
+
 interface SignupsSheetData {
   headerMap: Record<string, number>;
   headerRow: string[];
@@ -145,7 +160,7 @@ export async function createSignupRow(fields: Partial<SignupRecord>): Promise<Si
   record[SIGNUPS_COLUMNS.UPDATED_AT] = now;
   record[SIGNUPS_COLUMNS.PROFILE_COMPLETE] = profileCompleteCellValue(record);
 
-  const row = headerRow.map(header => record[header] ?? '');
+  const row = headerRow.map(header => toSheetCell(header, record[header] ?? ''));
 
   await appendSheetData(
     SIGNUPS_SHEET_CONFIG.SIGNUPS_SHEET_ID,
@@ -192,7 +207,7 @@ export async function updateSignupRow(
   }
   merged[SIGNUPS_COLUMNS.PROFILE_COMPLETE] = profileCompleteCellValue(merged);
 
-  const row = headerRow.map(header => merged[header] ?? existing.record[header] ?? '');
+  const row = headerRow.map(header => toSheetCell(header, merged[header] ?? existing.record[header] ?? ''));
 
   const lastColumnLetter = columnIndexToLetter(headerRow.length - 1);
   await updateSheetData(

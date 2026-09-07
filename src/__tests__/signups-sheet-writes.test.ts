@@ -65,6 +65,21 @@ describe('createSignupRow', () => {
     expect(created[SIGNUPS_COLUMNS.UPDATED_AT]).toBe('2026-09-07T13:00:00.000Z');
     expect(created[SIGNUPS_COLUMNS.SEEDED_AT]).toBe('2026-09-07T13:00:00.000Z');
   });
+
+  it('writes Grade as a number so the sheet cell matches the numeric Final Forms grade', async () => {
+    stubSheet();
+    const created = await createSignupRow({ [SIGNUPS_COLUMNS.GRADE]: '7' });
+    expect(created[SIGNUPS_COLUMNS.GRADE]).toBe('7'); // the record stays text
+    const appended = appendData.mock.calls[0][2][0];
+    expect(appended[col(SIGNUPS_COLUMNS.GRADE)]).toBe(7);
+  });
+
+  it('leaves an empty Grade as an empty cell rather than a zero', async () => {
+    stubSheet();
+    await createSignupRow({ [SIGNUPS_COLUMNS.LAST_NAME]: 'Newlast' });
+    const appended = appendData.mock.calls[0][2][0];
+    expect(appended[col(SIGNUPS_COLUMNS.GRADE)]).toBe('');
+  });
 });
 
 describe('updateSignupRow', () => {
@@ -84,6 +99,14 @@ describe('updateSignupRow', () => {
     expect(updated[SIGNUPS_COLUMNS.UPDATED_AT]).not.toBe('2026-09-01T00:00:00.000Z');
     const written = updateData.mock.calls[0][2][0];
     expect(written[col(SIGNUPS_COLUMNS.PROFILE_COMPLETE)]).toBe('TRUE');
+  });
+
+  it('writes Grade as a number on update, including a stored text grade that was not edited', async () => {
+    stubSheet(sheetRow({ [SIGNUPS_COLUMNS.PLAYER_ID]: 'p-1', [SIGNUPS_COLUMNS.GRADE]: '8' }));
+    await updateSignupRow('p-1', { [SIGNUPS_COLUMNS.HOPES]: 'Have fun' });
+    const written = updateData.mock.calls[0][2][0];
+    expect(written[col(SIGNUPS_COLUMNS.GRADE)]).toBe(8);
+    expect(written[col(SIGNUPS_COLUMNS.HOPES)]).toBe('Have fun');
   });
 
   it('leaves Updated At alone when told the write is system-only', async () => {
