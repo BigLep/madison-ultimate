@@ -102,6 +102,6 @@ The outreach email itself is Steve's to write. It links to `/signup`, asks famil
 
 ## 12. Deferred
 
-- Templated per-family outreach drafts (select signups, template with variables, generate Gmail drafts, send all with a delay), possibly in `madison-ultimate-admin`.
+- Templated per-family outreach drafts (select signups, template with variables, generate Gmail drafts, send all with a delay), possibly in `madison-ultimate-admin`. Designed 2026-09-07 as Signup Outreach, in the portal: ADR 0007 and `docs/fall-2026/signup-outreach-plan.md`; the BCC list in section 6 is superseded.
 - Seeding Gender Identification from the export's gender column.
 - Any scheduled run of seeding.

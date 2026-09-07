@@ -1,0 +1,17 @@
+Subject: Madison Ultimate: please finish {{preferredName}} {{lastName}}'s signup
+
+[Steve: replace every paragraph in this file with the wave-1 copy. Keep the Subject line first. Variables available anywhere: {{preferredName}}, {{lastName}}, {{caretaker1Name}}, {{caretaker2Name}}, {{portalUrl}}, {{statusRows}}. A paragraph that is only {{statusRows}} renders as the checklist.]
+
+Hello, family of {{preferredName}} {{lastName}},
+
+[Why this email: the signup for the fall season is not finished, and here is what is still open.]
+
+{{statusRows}}
+
+[The one ask: open the link below and finish the items marked Not done before the first practice on <date>.]
+
+{{portalUrl}}
+
+[If you have more than one player, you will get one of these per player. Reply to this email with any questions.]
+
+[Sign-off]

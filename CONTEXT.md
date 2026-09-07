@@ -50,6 +50,10 @@ _Avoid_: placeholder row, ghost signup, pre-registration
 A signup whose Player Info, Caretaker Info, and Photo Upload checklist items are all done, as the family sees them on their player page. Defined and written by the portal on every change to the row; the coach sheet passes it through and never computes its own. Volunteering answers and Final Forms Status never factor in.
 _Avoid_: registered, signed up, Signup Complete
 
+**Checklist Complete**:
+A signup whose every Signup Status checklist row is done: SPS Final Forms Status, Player Info, Photo Upload, Caretaker Info, Coach Volunteering, and Other Volunteering. Stricter than Profile Complete, which never counts Final Forms or volunteering; computed on demand from the row and the live Final Forms export, never stored.
+_Avoid_: fully signed up, all done
+
 **Ambiguous Match**:
 A Final Forms Backfill or seeding outcome: multiple twin candidates were found for a row but legal first name couldn't disambiguate them, so nothing was joined. Distinct from finding no candidate at all.
 
@@ -69,6 +73,16 @@ _Avoid_: mailing list (code, the retired Google Group, and coach-sheet columns m
 
 **WhatsApp Community**:
 The family WhatsApp community for questions, photos, carpools, and similar. Join via `/whatsapp`, which the server redirects to the invite. Linked only from signed-up player pages (`/player/$id`) and the player portal — not the public homepage. The invite URL lives in `WHATSAPP_COMMUNITY_JOIN_URL` (env only, never client code or git).
+
+### Outreach
+
+**Signup Outreach**:
+The per-player email to the caretakers (and, when known, the student) of a signup that is not Checklist Complete, listing the six checklist rows and linking the player's own page. Drafted by a tool from copy a coach writes; sent by a coach, never by the tool.
+_Avoid_: reminder blast, BCC email, nudge
+
+**Outreach Wave**:
+One run of Signup Outreach: the audience is recomputed from current rows each time, so a family drops out by finishing, and nothing records who was emailed except Gmail itself.
+_Avoid_: campaign, batch
 
 ### Final Forms data
 
