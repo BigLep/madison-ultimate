@@ -32,7 +32,20 @@ The district-wide student identifier from Final Forms (spsStudentId). Written on
 _Avoid_: StudentID (ambiguous about whose ID scheme)
 
 **Final Forms Join**:
-The one-time match from a signup row to its Final Forms record, on birthdate + last name, disambiguated by legal first name (twins). Succeeds once, then hands off to SPS Student ID. That first success is also the only moment Seeded Fields are copied onto the row (ADR 0004).
+The one-time match from a signup row to its Final Forms record, on birthdate + last name, disambiguated by legal first name (twins). Succeeds once, then hands off to SPS Student ID. That first success is also the only moment Seeded Fields are copied onto the row (ADR 0004). Attempted the same way regardless of what triggers it: a family visiting `/player`, or a Final Forms Backfill run.
+
+**Final Forms Backfill**:
+An admin-triggered, on-demand pass over every signup row missing SPS Student ID, attempting the Final Forms Join for each one, for players who never returned to `/player` after finishing Final Forms. Never overwrites a row that already has SPS Student ID.
+_Avoid_: backfill (bare, elsewhere in this glossary reserved as a contrast to Photo Carryover)
+
+**Ambiguous Match**:
+A Final Forms Backfill outcome: multiple twin candidates were found for a row but legal first name couldn't disambiguate them, so nothing was joined. Distinct from finding no candidate at all.
+
+**Match Discrepancy**:
+A Final Forms Backfill outcome: the row already has an SPS Student ID, but a fresh Final Forms Join would have produced a different one. Surfaced for manual review; never auto-corrected, since SPS Student ID is authoritative once set.
+
+**Possible Match**:
+Surfaced alongside an unmatched Final Forms Backfill row: a Final Forms record sharing the row's last name but not its birthdate. The usual cause is a wrong Date of Birth on one side, not two unrelated people; never joined automatically, only shown so a human can compare and fix the signup row's birthdate (or grab the PlayerID to investigate).
 
 **Caretaker**:
 An adult responsible for a player (parent, guardian, or otherwise). The signup collects up to two per player; their emails are the newsletter audience and their phone is the emergency contact.

@@ -110,6 +110,12 @@ export async function findNearMatches(query: SignupIdentity): Promise<SignupReco
   return matches;
 }
 
+/** Every signup row, for admin-side bulk operations like Final Forms Backfill (ADR 0005). */
+export async function listAllSignups(): Promise<SignupRecord[]> {
+  const { headerMap, rows } = await loadSignupsSheet();
+  return rows.map(row => rowToRecord(row, headerMap));
+}
+
 export async function findSignupByPlayerId(playerId: string): Promise<LookupResult | null> {
   const { headerMap, rows } = await loadSignupsSheet();
   const index = rows.findIndex(row => (row[headerMap[SIGNUPS_COLUMNS.PLAYER_ID]] || '') === playerId);

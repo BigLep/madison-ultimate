@@ -20,7 +20,7 @@ import { SIGNUPS_COLUMNS } from './signups-config';
 import { findTestFixture } from './final-forms-test-fixtures';
 import { carryOverPhotoFromLastSeason } from './photo-carryover';
 import { eligibleMailingEmails } from './mailing-eligibility';
-import { subscribeUnlessUnsubscribed } from './buttondown-api';
+import { subscribeUnlessUnsubscribed, getSubscriberStatus } from './buttondown-api';
 
 export interface FinalFormsRecord {
   studentId: string;
@@ -171,6 +171,59 @@ export interface FinalFormsJoinResult {
 }
 
 /**
+ * Outcome of matching a signup row against the Final Forms export by name + birthdate alone
+ * (never consulting an existing SPS Student ID). Distinguishes "found nothing" from "found
+ * twins we couldn't tell apart" so Final Forms Backfill can report an Ambiguous Match
+ * separately from an unmatched row; findFinalFormsMatch collapses both back to null since the
+ * per-player join has never needed the distinction.
+ */
+export type NameDobMatchOutcome =
+  | { kind: 'matched'; match: FinalFormsJoinResult }
+  | { kind: 'no-candidate' }
+  | { kind: 'ambiguous'; candidateCount: number };
+
+function matchByNameAndDob(signup: SignupRecord, snapshot: FinalFormsSnapshot): NameDobMatchOutcome {
+  const queryLast = normalizeName(signup[SIGNUPS_COLUMNS.LAST_NAME]);
+  const queryDob = normalizeDateOfBirth(signup[SIGNUPS_COLUMNS.DATE_OF_BIRTH]);
+  if (!queryLast || !queryDob) return { kind: 'no-candidate' };
+
+  const candidates = snapshot.records.filter(
+    r => normalizeName(r.lastName) === queryLast && normalizeDateOfBirth(r.dateOfBirth) === queryDob
+  );
+
+  if (candidates.length === 0) return { kind: 'no-candidate' };
+  if (candidates.length === 1) {
+    return { kind: 'matched', match: { record: candidates[0], dataAsOf: snapshot.fileTimestamp } };
+  }
+
+  // Disambiguate twins by legal first name (falls back to preferred first name if none given).
+  const legalFirst = normalizeName(signup[SIGNUPS_COLUMNS.LEGAL_FIRST_NAME] || signup[SIGNUPS_COLUMNS.PREFERRED_FIRST_NAME]);
+  const exact = candidates.find(r => normalizeName(r.legalFirstName) === legalFirst);
+  return exact
+    ? { kind: 'matched', match: { record: exact, dataAsOf: snapshot.fileTimestamp } }
+    : { kind: 'ambiguous', candidateCount: candidates.length };
+}
+
+/** A same-last-name Final Forms record found while ignoring birthdate, surfaced on an unmatched
+ *  Final Forms Backfill row so a human can tell whether the row's Date of Birth is simply wrong
+ *  (the usual case) rather than genuinely finding no one. Never used to join automatically.
+ *  dateOfBirth is normalized to YYYY-MM-DD (same shape the signup row stores) so the two can be
+ *  compared and pasted straight back into the sheet without reformatting. */
+export interface PossibleMatch {
+  studentId: string;
+  firstName: string;
+  dateOfBirth: string;
+}
+
+function possibleMatchesByLastNameOnly(signup: SignupRecord, snapshot: FinalFormsSnapshot): PossibleMatch[] {
+  const queryLast = normalizeName(signup[SIGNUPS_COLUMNS.LAST_NAME]);
+  if (!queryLast) return [];
+  return snapshot.records
+    .filter(r => normalizeName(r.lastName) === queryLast)
+    .map(r => ({ studentId: r.studentId, firstName: r.firstName, dateOfBirth: normalizeDateOfBirth(r.dateOfBirth) }));
+}
+
+/**
  * Join a signup row to its Final Forms record. If the row already has an SPS Student ID,
  * that match is authoritative. Otherwise, match on normalized last name + birthdate,
  * disambiguated by legal first name (twins); ambiguous matches return null rather than
@@ -191,21 +244,8 @@ export async function findFinalFormsMatch(signup: SignupRecord): Promise<FinalFo
     return record ? { record, dataAsOf: snapshot.fileTimestamp } : null;
   }
 
-  const queryLast = normalizeName(signup[SIGNUPS_COLUMNS.LAST_NAME]);
-  const queryDob = normalizeDateOfBirth(signup[SIGNUPS_COLUMNS.DATE_OF_BIRTH]);
-  if (!queryLast || !queryDob) return null;
-
-  const candidates = snapshot.records.filter(
-    r => normalizeName(r.lastName) === queryLast && normalizeDateOfBirth(r.dateOfBirth) === queryDob
-  );
-
-  if (candidates.length === 0) return null;
-  if (candidates.length === 1) return { record: candidates[0], dataAsOf: snapshot.fileTimestamp };
-
-  // Disambiguate twins by legal first name (falls back to preferred first name if none given).
-  const legalFirst = normalizeName(signup[SIGNUPS_COLUMNS.LEGAL_FIRST_NAME] || signup[SIGNUPS_COLUMNS.PREFERRED_FIRST_NAME]);
-  const exact = candidates.find(r => normalizeName(r.legalFirstName) === legalFirst);
-  return exact ? { record: exact, dataAsOf: snapshot.fileTimestamp } : null;
+  const outcome = matchByNameAndDob(signup, snapshot);
+  return outcome.kind === 'matched' ? outcome.match : null;
 }
 
 /**
@@ -258,6 +298,7 @@ export const SEEDABLE_FIELD_COLUMNS: Record<keyof ReturnType<typeof seededFields
 export interface FirstJoinOutcome {
   fieldsCopied: boolean;
   photoCarriedOver: boolean;
+  subscribedEmails: string[];
 }
 
 /**
@@ -321,12 +362,76 @@ export async function applyFirstJoinSideEffects(
 
   // First real join also subscribes eligible emails now on the row (copied or already saved),
   // unless they have opted out. Magic-name fixtures never hit the real list.
+  // subscribedEmails reports only emails that were newly added (status was 'absent' before this
+  // call and the subscribe call succeeded), never one already on the list (e.g. a coach who's a
+  // caretaker too) and never one whose subscribe attempt failed, so a Final Forms Backfill report
+  // can't misrepresent who was actually just added to the mailing list.
+  let subscribedEmails: string[] = [];
   if (isFirstRealJoin) {
     const merged = { ...existing, ...updates };
-    await Promise.all(
-      eligibleMailingEmails(merged).map(entry => subscribeUnlessUnsubscribed(entry.email))
-    );
+    const eligible = eligibleMailingEmails(merged);
+    const wasAbsent = await Promise.all(eligible.map(entry => getSubscriberStatus(entry.email)));
+    const succeeded = await Promise.all(eligible.map(entry => subscribeUnlessUnsubscribed(entry.email)));
+    subscribedEmails = eligible
+      .filter((_, i) => wasAbsent[i] === 'absent' && succeeded[i])
+      .map(entry => entry.email);
   }
 
-  return { fieldsCopied, photoCarriedOver };
+  return { fieldsCopied, photoCarriedOver, subscribedEmails };
+}
+
+/**
+ * Outcome of Final Forms Backfill for a single signup row: what would have happened, or did
+ * happen, when attempting a Final Forms Join outside the normal /player-visit trigger.
+ */
+export type FinalFormsBackfillOutcome =
+  | { kind: 'joined'; match: FinalFormsJoinResult; firstJoin: FirstJoinOutcome }
+  | { kind: 'unmatched'; possibleMatches: PossibleMatch[] }
+  | { kind: 'ambiguous'; candidateCount: number }
+  | { kind: 'already-joined-consistent' }
+  | { kind: 'already-joined-discrepancy'; storedStudentId: string; freshMatchStudentId: string }
+  | { kind: 'no-snapshot' };
+
+/**
+ * Attempt a Final Forms Join for one signup row on behalf of Final Forms Backfill (ADR 0005):
+ * never overwrites an existing SPS Student ID, but flags a Match Discrepancy when a fresh
+ * name+birthdate match disagrees with it. Otherwise behaves exactly like the per-player join
+ * (same matching, same applyFirstJoinSideEffects), just triggered in bulk instead of by a
+ * family visiting /player.
+ */
+export async function backfillFinalFormsJoin(playerId: string, signup: SignupRecord): Promise<FinalFormsBackfillOutcome> {
+  const existingStudentId = signup[SIGNUPS_COLUMNS.SPS_STUDENT_ID];
+  const fixture = findTestFixture(signup[SIGNUPS_COLUMNS.LAST_NAME]);
+
+  if (fixture !== undefined) {
+    if (existingStudentId) return { kind: 'already-joined-consistent' };
+    if (!fixture) return { kind: 'unmatched', possibleMatches: [] };
+    const match: FinalFormsJoinResult = { record: fixture, dataAsOf: FINAL_FORMS_FIXTURE_DATA_AS_OF, isTest: true };
+    const firstJoin = await applyFirstJoinSideEffects(playerId, signup, match);
+    return { kind: 'joined', match, firstJoin };
+  }
+
+  const snapshot = await loadSnapshot();
+  if (!snapshot) return { kind: 'no-snapshot' };
+
+  const fresh = matchByNameAndDob(signup, snapshot);
+
+  if (existingStudentId) {
+    if (fresh.kind === 'matched' && fresh.match.record.studentId !== existingStudentId) {
+      return {
+        kind: 'already-joined-discrepancy',
+        storedStudentId: existingStudentId,
+        freshMatchStudentId: fresh.match.record.studentId,
+      };
+    }
+    return { kind: 'already-joined-consistent' };
+  }
+
+  if (fresh.kind === 'no-candidate') {
+    return { kind: 'unmatched', possibleMatches: possibleMatchesByLastNameOnly(signup, snapshot) };
+  }
+  if (fresh.kind === 'ambiguous') return { kind: 'ambiguous', candidateCount: fresh.candidateCount };
+
+  const firstJoin = await applyFirstJoinSideEffects(playerId, signup, fresh.match);
+  return { kind: 'joined', match: fresh.match, firstJoin };
 }

@@ -33,12 +33,13 @@ vi.mock('@/lib/photo-carryover', () => ({
 
 vi.mock('@/lib/buttondown-api', () => ({
   subscribeUnlessUnsubscribed: vi.fn(),
+  getSubscriberStatus: vi.fn(),
 }));
 
 import { findSignupByPlayerId, updateSignupRow } from '@/lib/signups-sheet';
 import { findFinalFormsMatch } from '@/lib/final-forms';
 import { carryOverPhotoFromLastSeason } from '@/lib/photo-carryover';
-import { subscribeUnlessUnsubscribed } from '@/lib/buttondown-api';
+import { subscribeUnlessUnsubscribed, getSubscriberStatus } from '@/lib/buttondown-api';
 import { GET } from '@/app/api/signup/player/[playerId]/finalforms/route';
 
 const findSignup = vi.mocked(findSignupByPlayerId);
@@ -46,6 +47,7 @@ const updateRow = vi.mocked(updateSignupRow);
 const findMatch = vi.mocked(findFinalFormsMatch);
 const carryOverPhoto = vi.mocked(carryOverPhotoFromLastSeason);
 const subscribeUnlessUnsub = vi.mocked(subscribeUnlessUnsubscribed);
+const subscriberStatus = vi.mocked(getSubscriberStatus);
 
 const PLAYER_ID = 'testplayerid';
 const routeParams = { params: Promise.resolve({ playerId: PLAYER_ID }) };
@@ -83,6 +85,7 @@ describe('GET /api/signup/player/[playerId]/finalforms', () => {
     updateRow.mockImplementation(async (_id, fields) => signupRecord(fields));
     carryOverPhoto.mockResolvedValue(null);
     subscribeUnlessUnsub.mockResolvedValue(true);
+    subscriberStatus.mockResolvedValue('absent');
   });
 
   it('returns found: false when there is no join', async () => {
