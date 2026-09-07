@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { findSignupByPlayerId } from '../../../../../../lib/signups-sheet';
 import { findFinalFormsMatch, applyFirstJoinSideEffects, getFinalFormsDataAsOf } from '../../../../../../lib/final-forms';
+import { getClientIp } from '../../../../../../lib/request-ip';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ playerId: string }> }) {
   try {
@@ -21,7 +22,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     // Seeded Fields copy only on first join (ADR 0004); after that the row owns them, so a
     // family can clear a field and it stays empty on every later visit.
-    const { fieldsCopied, photoCarriedOver } = await applyFirstJoinSideEffects(playerId, existing.record, match);
+    // Forward the visitor's own IP for the Buttondown auto-subscribe below: without it Buttondown
+    // sees our server's shared/datacenter IP on every join and blocks the new subscriber.
+    const { fieldsCopied, photoCarriedOver } = await applyFirstJoinSideEffects(
+      playerId,
+      existing.record,
+      match,
+      getClientIp(request)
+    );
 
     return NextResponse.json({
       success: true,

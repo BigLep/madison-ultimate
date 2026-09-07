@@ -48,6 +48,21 @@ export default function FinalFormsBackfillPage() {
         but never returned to their player page. Never overwrites a row that already has an SPS Student ID.
       </p>
 
+      <div
+        className="rounded-lg p-4 border mb-6 text-sm"
+        style={{
+          background: 'var(--availability-unsure-bg)',
+          borderColor: 'var(--availability-unsure-border)',
+          color: 'var(--availability-unsure-text)',
+        }}
+      >
+        Heads up: this backfill auto-subscribes eligible emails to Buttondown, but it runs server-side with no
+        family IP to forward, so Buttondown may flag those subscribers as coming from a datacenter IP and mark them
+        blocked. Check the Buttondown subscriber list (filter by type = Blocked) after running this and unblock
+        anyone who should be receiving team updates. Signups made directly through /player are not affected; those
+        forward the family&apos;s own IP.
+      </div>
+
       <button
         onClick={runBackfill}
         disabled={running}

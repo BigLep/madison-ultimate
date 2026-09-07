@@ -133,9 +133,18 @@ describe('GET /api/signup/player/[playerId]/finalforms', () => {
     expect(data.photoCarriedOver).toBe(false);
     expect(data.fieldsCopied).toBe(true);
     expect(subscribeUnlessUnsub).toHaveBeenCalledTimes(3);
-    expect(subscribeUnlessUnsub).toHaveBeenCalledWith('player@example.com');
-    expect(subscribeUnlessUnsub).toHaveBeenCalledWith('ct1@example.com');
-    expect(subscribeUnlessUnsub).toHaveBeenCalledWith('ct2@example.com');
+    expect(subscribeUnlessUnsub).toHaveBeenCalledWith('player@example.com', undefined);
+    expect(subscribeUnlessUnsub).toHaveBeenCalledWith('ct1@example.com', undefined);
+    expect(subscribeUnlessUnsub).toHaveBeenCalledWith('ct2@example.com', undefined);
+  });
+
+  it('forwards the visitor\'s IP to the subscribe call so Buttondown does not see a datacenter IP', async () => {
+    findMatch.mockResolvedValue({ record: matchedRecord, dataAsOf: '2026-08-28' });
+    const request = new NextRequest(`http://localhost/api/signup/player/${PLAYER_ID}/finalforms`, {
+      headers: { 'x-forwarded-for': '203.0.113.5' },
+    });
+    await GET(request, routeParams);
+    expect(subscribeUnlessUnsub).toHaveBeenCalledWith('player@example.com', '203.0.113.5');
   });
 
   it('carries over last season\'s photo on the first real join and reports photoCarriedOver', async () => {
@@ -219,9 +228,9 @@ describe('GET /api/signup/player/[playerId]/finalforms', () => {
       [SIGNUPS_COLUMNS.CARETAKER_2_EMAIL]: 'ct2@example.com',
       [SIGNUPS_COLUMNS.CARETAKER_2_PHONE]: '555-0102',
     });
-    expect(subscribeUnlessUnsub).toHaveBeenCalledWith('player@example.com');
-    expect(subscribeUnlessUnsub).toHaveBeenCalledWith('ct1@example.com');
-    expect(subscribeUnlessUnsub).toHaveBeenCalledWith('ct2@example.com');
+    expect(subscribeUnlessUnsub).toHaveBeenCalledWith('player@example.com', undefined);
+    expect(subscribeUnlessUnsub).toHaveBeenCalledWith('ct1@example.com', undefined);
+    expect(subscribeUnlessUnsub).toHaveBeenCalledWith('ct2@example.com', undefined);
   });
 
   it('does not copy remaining empty seed fields on a fixture after any seed value exists', async () => {

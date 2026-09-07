@@ -311,7 +311,8 @@ export interface FirstJoinOutcome {
 export async function applyFirstJoinSideEffects(
   playerId: string,
   existing: SignupRecord,
-  match: FinalFormsJoinResult
+  match: FinalFormsJoinResult,
+  ipAddress?: string
 ): Promise<FirstJoinOutcome> {
   const allSeeded = seededFieldsFromFinalForms(match.record);
 
@@ -371,7 +372,9 @@ export async function applyFirstJoinSideEffects(
     const merged = { ...existing, ...updates };
     const eligible = eligibleMailingEmails(merged);
     const wasAbsent = await Promise.all(eligible.map(entry => getSubscriberStatus(entry.email)));
-    const succeeded = await Promise.all(eligible.map(entry => subscribeUnlessUnsubscribed(entry.email)));
+    const succeeded = await Promise.all(
+      eligible.map(entry => subscribeUnlessUnsubscribed(entry.email, ipAddress))
+    );
     subscribedEmails = eligible
       .filter((_, i) => wasAbsent[i] === 'absent' && succeeded[i])
       .map(entry => entry.email);
