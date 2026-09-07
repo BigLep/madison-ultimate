@@ -6,18 +6,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { listAllSignups } from '../../../../lib/signups-sheet';
 import { findFinalFormsMatch, getFinalFormsDataAsOf } from '../../../../lib/final-forms';
 import { buildOutreachEntry, selectAudience, sortForDisplay } from '../../../../lib/signup-outreach';
+import { PORTAL_PUBLIC_URL } from '../../../../lib/site-config';
 
 export async function GET(request: NextRequest) {
   try {
     const signups = await listAllSignups();
-    const baseUrl = new URL(request.url).origin;
 
     // findFinalFormsMatch is a pure read (by SPS Student ID, else name plus birthdate). The
     // family route's first-join side effects are deliberately not run here.
     const entries = await Promise.all(
       signups.map(async record => {
         const match = await findFinalFormsMatch(record);
-        return buildOutreachEntry(record, match ? { found: true, ...match.record } : null, baseUrl);
+        return buildOutreachEntry(record, match ? { found: true, ...match.record } : null, PORTAL_PUBLIC_URL);
       })
     );
 

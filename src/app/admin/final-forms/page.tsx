@@ -380,8 +380,8 @@ function OutreachSection({
                         {p.fullName || '(no name)'}
                       </a>
                     </td>
-                    <td className="font-mono text-xs" style={{ color: 'var(--secondary-text)' }}>
-                      {p.playerId}
+                    <td className="font-mono text-xs">
+                      <PlayerIdLink playerId={p.playerId} />
                     </td>
                     <td>{p.seeded ? 'seeded' : 'family'}</td>
                     {OUTREACH_CHECKLIST_ROWS.map(c => (
@@ -403,7 +403,7 @@ function OutreachSection({
             <ReportSection title={`Unreachable, no draft (${data.unreachable.length})`}>
               {data.unreachable.map(u => (
                 <li key={u.playerId}>
-                  {u.playerId} ({u.fullName || 'no name'}): {u.reason}
+                  <PlayerIdLink playerId={u.playerId} /> ({u.fullName || 'no name'}): {u.reason}
                 </li>
               ))}
             </ReportSection>
@@ -411,6 +411,15 @@ function OutreachSection({
         </>
       )}
     </div>
+  )
+}
+
+/** A PlayerID that opens the player's own page, so a coach can jump from the outreach list to what the family sees. */
+function PlayerIdLink({ playerId }: { playerId: string }) {
+  return (
+    <a href={`/player/${playerId}`} className="underline" target="_blank" rel="noreferrer" style={{ color: 'var(--secondary-text)' }}>
+      {playerId}
+    </a>
   )
 }
 

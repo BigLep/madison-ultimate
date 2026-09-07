@@ -56,7 +56,7 @@ describe('GET /api/admin/outreach', () => {
     dataAsOf.mockResolvedValue('2026-09-07T13:00:00Z');
   });
 
-  it('returns every row with its checklist, links built from the request origin, and counts, writing nothing', async () => {
+  it('returns every row with its checklist, public player links, and counts, writing nothing', async () => {
     const body = await (await GET(request('https://portal.example.test/api/admin/outreach'))).json();
 
     expect(body.success).toBe(true);
@@ -66,7 +66,7 @@ describe('GET /api/admin/outreach', () => {
     expect(body.players[0]).toMatchObject({
       playerId: 'p-forms',
       fullName: 'Ay Alpha',
-      portalUrl: 'https://portal.example.test/player/p-forms',
+      portalUrl: 'https://madisonultimate.org/player/p-forms',
       checklistComplete: false,
       checklist: expect.objectContaining({ finalForms: false, playerInfo: true }),
       finalFormsDetail: { found: false, parentSigned: false, studentSigned: false, physicalCleared: false },
@@ -103,7 +103,11 @@ describe('GET /api/admin/outreach', () => {
     dataAsOf.mockResolvedValue(undefined);
     const body = await (await GET(request('http://localhost:3001/api/admin/outreach'))).json();
     expect(body.dataAsOf).toBeNull();
-    expect(body.players[0].portalUrl).toBe('http://localhost:3001/player/p-forms');
+  });
+
+  it('links to the public portal address even when called on localhost', async () => {
+    const body = await (await GET(request('http://localhost:3001/api/admin/outreach'))).json();
+    expect(body.players[0].portalUrl).toBe('https://madisonultimate.org/player/p-forms');
   });
 
   it('returns a 500 with the message when the sheet read fails', async () => {

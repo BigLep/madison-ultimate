@@ -117,3 +117,12 @@ describe('renderDraft', () => {
     expect(rehearsal.subject).toBe("[TEST] Finish TestFirst O&Last's signup");
   });
 });
+
+describe('renderDraft: line breaks inside a paragraph', () => {
+  it('keeps a single newline as a line break in both parts (a sign-off on two lines)', () => {
+    const template = parseTemplate('Subject: s\n\nThanks,\nMadison Coaches');
+    const draft = renderDraft(template, entry);
+    expect(draft.text).toBe('Thanks,\nMadison Coaches');
+    expect(draft.html).toBe('<p>Thanks,<br>Madison Coaches</p>');
+  });
+});

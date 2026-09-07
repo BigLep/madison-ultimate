@@ -31,7 +31,7 @@ Pure functions over `SignupRecord` plus a Final Forms status, so the route stays
 
 ## 3. Route (`src/app/api/admin/outreach/route.ts`)
 
-- `GET` only. `listAllSignups()`, then for each row `findFinalFormsMatch(record)` (pure; it attempts the name-plus-birthdate join for rows without SPS Student ID but persists nothing; never call `applyFirstJoinSideEffects` here), then `buildOutreachEntry` with `baseUrl` from the request origin (`new URL(request.url).origin`), so production calls produce production links and local calls produce local ones.
+- `GET` only. `listAllSignups()`, then for each row `findFinalFormsMatch(record)` (pure; it attempts the name-plus-birthdate join for rows without SPS Student ID but persists nothing; never call `applyFirstJoinSideEffects` here), then `buildOutreachEntry` with `PORTAL_PUBLIC_URL` from `src/lib/site-config.ts` (`https://madisonultimate.org`), so a player link is the public address whether the route was called locally or in production (changed 2026-09-07 from the request origin, after the rehearsal produced localhost links).
 - Response: `{ success, dataAsOf, players: sorted entries, unreachable: [{ playerId, fullName, reason }], counts: { total, notChecklistComplete, unreachable } }`. `dataAsOf` from `getFinalFormsDataAsOf` on any joined row, or null when there is no export.
 - No caching beyond what `final-forms.ts` already does for the export. 107 rows against an in-memory export is well under a second.
 - Add `/api/admin/outreach` to the endpoint list in `AGENTS.md` and `CLAUDE.md`.
@@ -43,7 +43,7 @@ Run from the repo root with Node 20 or later (built-in `fetch`). Loads `.env.loc
 Arguments:
 
 - `--template <file>` (required): see section 6.
-- `--base-url <url>` (default `https://madison-ultimate.vercel.app`): where to fetch the route; the response's `portalUrl` values are used as returned.
+- `--base-url <url>` (default `https://madisonultimate.org`): where to fetch the route; the response's `portalUrl` values are used as returned and always carry the public address.
 - `--players <file>`: one PlayerID or Full Name per line; blank lines and `#` comments ignored. Narrows the audience per `selectAudience`.
 - `--to <email>`: rehearsal. Every draft's To becomes this one address and Cc is dropped; the body is the real content. Subject is prefixed `[TEST] ` so the duplicate check never confuses a rehearsal draft with a real one.
 - `--limit <n>`: stop after n drafts.
@@ -88,7 +88,7 @@ Rendering (`scripts/lib/outreach-template.mjs`):
 
 - `signup-outreach.test.ts`: `buildOutreachEntry` for a row with every section done and Final Forms cleared (Checklist Complete), a row missing only a volunteering answer, a row missing only Final Forms (with sub-detail), a seeded row; email trimming, lowercasing, dedupe, invalid-address drop with warning, SPS email never in Cc; unreachable reasons; `selectAudience` default, by PlayerID, by Full Name, unknown line throws, ambiguous Full Name throws, Checklist Complete entry skipped; `sortForDisplay` order.
 - `outreach-template.test.ts` (imports the `.mjs`): subject parsing, variable substitution in subject and body, unknown variable fails, status rows text and HTML for done, not done, and not found cases, HTML escaping of a name containing `&`, `--to` rehearsal prefixing `[TEST] `.
-- `admin-outreach-route.test.ts`: mocks `listAllSignups` and `findFinalFormsMatch`; asserts no write function is called, `portalUrl` uses the request origin, `dataAsOf` passes through, counts add up.
+- `admin-outreach-route.test.ts`: mocks `listAllSignups` and `findFinalFormsMatch`; asserts no write function is called, `portalUrl` uses the public address even on localhost, `dataAsOf` passes through, counts add up.
 - Update `admin-final-forms-route.test.ts` for the removed `outreachEmails`; delete `seeded-outreach.test.ts`; add the moved `isSeededAndIncomplete` cases to the checklist tests.
 
 ## 9. Rollout

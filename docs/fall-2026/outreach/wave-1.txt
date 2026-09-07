@@ -1,17 +1,16 @@
 Subject: Madison Ultimate: please finish {{preferredName}} {{lastName}}'s signup
 
-[Coach: replace every bracketed paragraph in this file with the wave-1 copy, and keep the Subject line first. Variables, written as a name inside double curly braces, may go anywhere: preferredName, lastName, caretaker1Name, caretaker2Name, portalUrl, statusRows. A paragraph that is only the statusRows variable renders as the checklist; the portalUrl variable renders as a link.]
-
 Hello, family of {{preferredName}} {{lastName}},
 
-[Why this email: the signup for the fall season is not finished, and here is what is still open.]
+In preparing for this season, we are checking over the signup information for each player. This is the signup status for {{preferredName}}:
 
 {{statusRows}}
 
-[The one ask: open the link below and finish the items marked Not done before the first practice on <date>.]
+Please open the link below and finish the items marked "Not done" before Wednesday's tryout, September 9.
 
 {{portalUrl}}
 
-[If you have more than one player, you will get one of these per player. Reply to this email with any questions.]
+Note: If you have more than one player, you will get one of these per player. 
 
-[Sign-off]
+Let us know if you have any questions,
+Madison Coaches

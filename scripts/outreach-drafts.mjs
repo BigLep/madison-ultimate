@@ -5,7 +5,9 @@
 //   node scripts/outreach-drafts.mjs --template docs/fall-2026/outreach/wave-1.txt [options]
 //
 // Options:
-//   --base-url <url>   Portal to fetch /api/admin/outreach from (default: production).
+//   --base-url <url>   Portal to fetch /api/admin/outreach from (default: production). Player
+//                      links in the drafts always use the public address the route returns,
+//                      whatever this points at.
 //   --players <file>   One PlayerID or Full Name per line; narrows the audience. Blank lines and
 //                      "#" comments are ignored. Any line matching nothing, or more than one row,
 //                      stops the run before a draft is created.
@@ -25,7 +27,7 @@ import { spawnSync } from 'node:child_process';
 import { parseTemplate, renderDraft, CHECKLIST_ROWS } from './lib/outreach-template.mjs';
 import { loadEnvLocal, repoRoot as root } from './lib/env.mjs';
 
-const DEFAULT_BASE_URL = 'https://madison-ultimate.vercel.app';
+const DEFAULT_BASE_URL = 'https://madisonultimate.org';
 
 function parseArgs(argv) {
   const args = { baseUrl: DEFAULT_BASE_URL, dryRun: false, limit: Infinity };
@@ -154,8 +156,8 @@ async function main() {
       console.log(`${player.playerId} ${player.fullName}: would draft to ${recipients} ("${draft.subject}")`);
       continue;
     }
-    // gog v0.39 `drafts create --json` echoes the Gmail Draft resource: { draft: { id, ... } }.
-    const draftId = result.draft?.id || result.id;
+    // gog v0.39 `drafts create --json` answers { draftId, message: { id, threadId }, ... }.
+    const draftId = result.draftId || result.draft?.id || result.id;
     if (!draftId) throw new Error(`Draft created for ${player.playerId} but no id in gog output:\n${JSON.stringify(result)}`);
     manifest.drafts.push({ playerId: player.playerId, fullName: player.fullName, subject: draft.subject, to, cc, draftId, createdAt: new Date().toISOString() });
     writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));

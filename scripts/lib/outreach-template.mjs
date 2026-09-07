@@ -99,7 +99,7 @@ export function renderDraft(template, entry, options = {}) {
     text
       .split(VARIABLE_PATTERN)
       .map((part, i) => {
-        if (i % 2 === 0) return escapeHtml(part);
+        if (i % 2 === 0) return escapeHtml(part).replace(/\n/g, '<br>');
         if (part === 'portalUrl') return `<a href="${escapeHtml(values.portalUrl)}">${escapeHtml(values.portalUrl)}</a>`;
         if (part === 'statusRows') return status.html;
         return escapeHtml(values[part]);
