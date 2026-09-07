@@ -71,6 +71,14 @@ export default function Home() {
             >
               <a href="/subscribe">📬 Join the Newsletter</a>
             </Button>
+            <Button
+              asChild
+              size="lg"
+              className={secondaryButtonClass}
+              style={secondaryButtonStyle}
+            >
+              <Link href="/calendar">📅 Team Calendar</Link>
+            </Button>
             {SHOW_CURRENT_PLAYERS_LOGIN && (
               <Button
                 size="lg"
