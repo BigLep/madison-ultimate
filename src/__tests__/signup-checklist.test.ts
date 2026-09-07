@@ -8,6 +8,8 @@ import {
   isOtherVolunteeringComplete,
   isPhotoComplete,
   isFinalFormsComplete,
+  isProfileComplete,
+  profileCompleteCellValue,
 } from '@/lib/signup-checklist';
 import { COMPLETE_PLAYER_INFO, signupRecord } from './fixtures/signup-record';
 
@@ -140,5 +142,26 @@ describe('isFinalFormsComplete', () => {
     expect(
       isFinalFormsComplete({ found: true, parentSigned: true, studentSigned: true, physicalCleared: true })
     ).toBe(true);
+  });
+});
+
+describe('isProfileComplete (ADR 0006)', () => {
+  const complete = {
+    ...COMPLETE_PLAYER_INFO,
+    [SIGNUPS_COLUMNS.CARETAKER_1_NAME]: 'Ct One',
+    [SIGNUPS_COLUMNS.CARETAKER_1_EMAIL]: 'ct1@example.com',
+    [SIGNUPS_COLUMNS.PHOTO_DRIVE_FILE_ID]: 'photo-1',
+  };
+
+  it('is true with Player Info, Caretaker Info, and Photo done, with volunteering untouched', () => {
+    expect(isProfileComplete(signupRecord(complete))).toBe(true);
+    expect(profileCompleteCellValue(signupRecord(complete))).toBe('TRUE');
+  });
+
+  it('is false when any of the three sections is missing', () => {
+    expect(isProfileComplete(signupRecord({ ...complete, [SIGNUPS_COLUMNS.HOPES]: '' }))).toBe(false);
+    expect(isProfileComplete(signupRecord({ ...complete, [SIGNUPS_COLUMNS.CARETAKER_1_EMAIL]: '' }))).toBe(false);
+    expect(isProfileComplete(signupRecord({ ...complete, [SIGNUPS_COLUMNS.PHOTO_DRIVE_FILE_ID]: '' }))).toBe(false);
+    expect(profileCompleteCellValue(signupRecord())).toBe('FALSE');
   });
 });

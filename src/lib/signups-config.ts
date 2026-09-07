@@ -59,6 +59,11 @@ export const SIGNUPS_COLUMNS = {
   // Joins
   SPS_STUDENT_ID: 'SPS Student ID',
   PHOTO_DRIVE_FILE_ID: 'Photo Drive File ID',
+
+  // Written by the portal, never by a family (ADR 0006). SEEDED_AT is set once, when Seed
+  // Signups from Final Forms creates the row; PROFILE_COMPLETE is recomputed on every write.
+  SEEDED_AT: 'Seeded At',
+  PROFILE_COMPLETE: 'Profile Complete',
 } as const;
 
 export type SignupsColumnKey = keyof typeof SIGNUPS_COLUMNS;

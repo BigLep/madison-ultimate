@@ -11,6 +11,7 @@ import { SignupRecord } from '@/lib/signups-sheet'
 import { SIGNUPS_COLUMNS } from '@/lib/signups-config'
 import { recordToFormValues, ProfileFormValues } from '@/lib/signup-form-schema'
 import { DeadlineBanner } from '@/components/DeadlineBanner'
+import { SeededSignupBanner } from '@/components/SeededSignupBanner'
 
 export default function PlayerPage() {
   const params = useParams<{ playerId: string }>()
@@ -100,6 +101,7 @@ export default function PlayerPage() {
 
           {status === 'ready' && record && (
             <>
+              <SeededSignupBanner record={record} />
               <PlayerDashboard record={record} finalFormsRefreshSignal={finalFormsRefreshSignal} />
 
               <Card style={{ background: 'var(--card-bg)', borderColor: 'var(--border)' }}>

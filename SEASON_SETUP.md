@@ -166,7 +166,7 @@ These behaviors are driven by values in the **Practice Info** and **Game Info** 
 - **`package.json` / `package-lock.json`** – npm updates; `engines.node` for the Active LTS (Vercel).
 - **`.github/workflows/test.yml`** – `node-version` matching that LTS; keep `actions/checkout` and `actions/setup-node` on versions that run on a supported Node action runtime.
 - **`@types/node`** – major matching the runtime, not Current.
-- **`.env.local`** – `ROSTER_SHEET_ID`, `SPS_FINAL_FORMS_FOLDER_ID`; optionally `TEAM_MAILING_LIST_FOLDER_ID`, `BUTTONDOWN_API_KEY`. Also `WHATSAPP_COMMUNITY_JOIN_URL` (and the same key on Vercel Production).
+- **`.env.local`** – `ROSTER_SHEET_ID`, `SPS_FINAL_FORMS_FOLDER_ID`, `ADMIN_SECRET` (also on Vercel; gates `/admin`); optionally `TEAM_MAILING_LIST_FOLDER_ID`, `BUTTONDOWN_API_KEY`. Also `WHATSAPP_COMMUNITY_JOIN_URL` (and the same key on Vercel Production).
 - **Sheets integration test sheet** – `SIGNUPS_SHEET_ID_TEST` needs a new test spreadsheet each season once the real Signups sheet's schema is finalized; see "Recreating the test sheet" in [docs/TEST_DESIGN.md](docs/TEST_DESIGN.md).
 - **`src/lib/sheet-config.ts`** – `ROSTER_FIRST_DATA_ROW` if your roster has more than one header row (e.g. first data row is not row 2).
 - **`src/app/player-portal/[portalId]/page.tsx`** – Season label, `MAILING_LIST_INFO_URL`, `SHOW_ADDITIONAL_INFO_FORM`.

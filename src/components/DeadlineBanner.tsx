@@ -2,7 +2,7 @@
 
 import { getDeadlineState, DEADLINE_COPY } from '@/lib/signup-deadlines'
 
-const BANNER_STYLE: Record<string, { background: string; border: string; color: string }> = {
+export const BANNER_STYLE: Record<string, { background: string; border: string; color: string }> = {
   open: { background: '#eff6ff', border: '#bfdbfe', color: '#1e40af' },
   late: { background: '#fefce8', border: '#fde68a', color: '#854d0e' },
   closed: { background: '#fef2f2', border: '#fecaca', color: '#991b1b' },

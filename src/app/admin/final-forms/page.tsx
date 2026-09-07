@@ -1,0 +1,330 @@
+'use client'
+
+import { useCallback, useEffect, useState } from 'react'
+import type { PlanSummary, AppliedSummary } from '@/lib/reconciliation-summary'
+import { formatLocalTimestamp } from '@/lib/date-formatters'
+
+interface PreviewResponse {
+  success: boolean
+  error?: string
+  blockedCount: number | null
+  noSnapshot: boolean
+  preview: PlanSummary | null
+  outreachEmails: string[]
+}
+
+interface ApplyResponse {
+  success: boolean
+  error?: string
+  noSnapshot: boolean
+  preview: PlanSummary | null
+  applied: AppliedSummary | null
+}
+
+export default function FinalFormsAdminPage() {
+  const [previewData, setPreviewData] = useState<PreviewResponse | null>(null)
+  const [applied, setApplied] = useState<AppliedSummary | null>(null)
+  const [loading, setLoading] = useState<'preview' | 'apply' | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const runPreview = useCallback(async () => {
+    setLoading('preview')
+    setError(null)
+    try {
+      const res = await fetch('/api/admin/final-forms')
+      const data: PreviewResponse = await res.json()
+      if (!res.ok || !data.success) throw new Error(data.error || 'Preview failed')
+      setPreviewData(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    } finally {
+      setLoading(null)
+    }
+  }, [])
+
+  useEffect(() => {
+    runPreview()
+  }, [runPreview])
+
+  async function runApply() {
+    setLoading('apply')
+    setError(null)
+    try {
+      const res = await fetch('/api/admin/final-forms', { method: 'POST' })
+      const data: ApplyResponse = await res.json()
+      if (!res.ok || !data.success) throw new Error(data.error || 'Apply failed')
+      setApplied(data.applied)
+      await runPreview()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    } finally {
+      setLoading(null)
+    }
+  }
+
+  const preview = previewData?.preview ?? null
+  const blockedCount = previewData?.blockedCount
+  const outreach = previewData?.outreachEmails ?? []
+
+  return (
+    <div className="container mx-auto px-4 py-8 max-w-3xl">
+      <h1 className="text-2xl font-bold mb-2" style={{ color: 'var(--page-title)' }}>
+        Seed Signups from Final Forms
+      </h1>
+      <p className="mb-6" style={{ color: 'var(--secondary-text)' }}>
+        Preview shows what a run would do and writes nothing. Apply joins every unjoined signup it can (Final Forms
+        Backfill), creates a Seeded Signup for every Final Forms student still without one, then recomputes Profile
+        Complete for every row. Safe to run again after every export.
+      </p>
+
+      <div
+        className="rounded-lg p-4 border mb-6 text-sm"
+        style={
+          blockedCount
+            ? {
+                background: 'var(--availability-cant-make-bg)',
+                borderColor: 'var(--availability-cant-make-border)',
+                color: 'var(--availability-cant-make-text)',
+              }
+            : {
+                background: 'var(--availability-unsure-bg)',
+                borderColor: 'var(--availability-unsure-border)',
+                color: 'var(--availability-unsure-text)',
+              }
+        }
+      >
+        <div className="font-semibold mb-1">
+          {previewData === null
+            ? 'Checking Buttondown for blocked subscribers…'
+            : blockedCount === null
+              ? 'Could not check Buttondown for blocked subscribers.'
+              : blockedCount === 0
+                ? 'No blocked subscribers on Buttondown right now.'
+                : `${blockedCount} subscriber${blockedCount === 1 ? '' : 's'} currently blocked on Buttondown.`}
+        </div>
+        Apply auto-subscribes eligible emails to Buttondown from the server, with no family IP to forward, so
+        Buttondown may mark those subscribers as blocked. After a run, check the Buttondown subscriber list (filter
+        by type = Blocked) and unblock anyone who should be receiving team updates.
+      </div>
+
+      <div className="flex gap-3 mb-6">
+        <button
+          onClick={runPreview}
+          disabled={loading !== null}
+          className="px-4 py-2 rounded-lg disabled:opacity-50"
+          style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', color: 'var(--primary-text)' }}
+        >
+          {loading === 'preview' ? 'Previewing...' : 'Preview'}
+        </button>
+        <button
+          onClick={runApply}
+          disabled={loading !== null || !preview}
+          className="px-4 py-2 rounded-lg disabled:opacity-50"
+          style={{ background: 'var(--accent)', color: '#ffffff' }}
+        >
+          {loading === 'apply' ? 'Applying...' : 'Apply'}
+        </button>
+      </div>
+
+      {error && <div className="mb-6" style={{ color: 'var(--availability-cant-make-text)' }}>Error: {error}</div>}
+
+      {previewData?.noSnapshot && (
+        <Notice>Could not load the Final Forms export (Drive/export unavailable). Nothing to preview or apply.</Notice>
+      )}
+
+      {applied && (
+        <div className="mb-8 space-y-6">
+          <h2 className="text-xl font-semibold" style={{ color: 'var(--page-title)' }}>Last run</h2>
+          <ReportSection title={`Seeded (${applied.seeded.length})`}>
+            {applied.seeded.map(item => (
+              <li key={item.playerId}>
+                {item.playerId} ({item.firstName} {item.lastName}) ← SPS Student ID {item.studentId}
+                {item.photoCarriedOver && <span style={{ color: 'var(--secondary-text)' }}> · photo carried over</span>}
+                {item.subscribedEmails.length > 0 && (
+                  <span style={{ color: 'var(--secondary-text)' }}> · subscribed: {item.subscribedEmails.join(', ')}</span>
+                )}
+              </li>
+            ))}
+          </ReportSection>
+          <ReportSection title={`Joined (${applied.joined.length})`}>
+            {applied.joined.map(item => (
+              <li key={item.playerId}>
+                {item.playerId} ({item.firstName} {item.lastName}) → SPS Student ID {item.studentId}
+                {item.subscribedEmails.length > 0 && (
+                  <span style={{ color: 'var(--secondary-text)' }}> · subscribed: {item.subscribedEmails.join(', ')}</span>
+                )}
+              </li>
+            ))}
+          </ReportSection>
+          <p className="text-sm" style={{ color: 'var(--secondary-text)' }}>
+            Profile Complete recomputed on {applied.recomputedProfileComplete} row
+            {applied.recomputedProfileComplete === 1 ? '' : 's'}.
+          </p>
+        </div>
+      )}
+
+      {preview && (
+        <div className="space-y-8">
+          <p className="text-sm" style={{ color: 'var(--secondary-text)' }}>
+            Final Forms export as of {formatLocalTimestamp(preview.dataAsOf)}. {preview.skipped} student{preview.skipped === 1 ? '' : 's'} already
+            joined.
+          </p>
+
+          <ReportSection title={`Would seed (${preview.seed.length})`}>
+            {preview.seed.map(s => (
+              <li key={s.studentId}>
+                {s.firstName} {s.lastName} · grade {s.grade || '?'} · DOB {s.dateOfBirth} · SPS Student ID {s.studentId}
+              </li>
+            ))}
+          </ReportSection>
+
+          <ReportSection title={`Would join an existing signup (${preview.join.length})`}>
+            {preview.join.map(j => (
+              <li key={j.studentId}>
+                {j.playerId} ({j.preferredFirstName} {j.lastName}) → SPS Student ID {j.studentId} ({j.firstName})
+              </li>
+            ))}
+          </ReportSection>
+
+          <ReportSection title={`Ambiguous twins, nothing done (${preview.ambiguous.length})`}>
+            {preview.ambiguous.map((a, i) => (
+              <li key={i}>
+                Final Forms: {a.students.map(s => `${s.firstName} ${s.lastName} (${s.studentId})`).join(', ')} · signups:{' '}
+                {a.playerIds.join(', ')}. Add the legal first name to each signup, then run again.
+              </li>
+            ))}
+          </ReportSection>
+
+          <ReportSection title={`Suspected duplicate signups, nothing done (${preview.duplicateSignups.length})`}>
+            {preview.duplicateSignups.map(d => (
+              <li key={d.studentId}>
+                {d.firstName} {d.lastName} ({d.studentId}) matches signups {d.playerIds.join(', ')}. Remove the extra row,
+                then run again.
+              </li>
+            ))}
+          </ReportSection>
+
+          <ReportSection title={`Match Discrepancies, nothing done (${preview.discrepancies.length})`}>
+            {preview.discrepancies.map(d => (
+              <li key={d.studentId}>
+                {d.firstName} {d.lastName} ({d.studentId}) shares a name and birthdate with {d.playerId}, which is joined to{' '}
+                {d.storedStudentId}.
+              </li>
+            ))}
+          </ReportSection>
+
+          <ReportSection title={`Unseedable, fix in Final Forms (${preview.unseedable.length})`}>
+            {preview.unseedable.map(u => (
+              <li key={u.studentId}>
+                {u.firstName} {u.lastName} ({u.studentId}): {u.reason}
+              </li>
+            ))}
+          </ReportSection>
+
+          <ReportSection title={`Signups still unmatched (${preview.unmatchedSignups.length})`}>
+            {preview.unmatchedSignups.map(item => (
+              <li key={item.playerId}>
+                {item.playerId}: {item.preferredFirstName} {item.lastName} · signup DOB {item.signupDateOfBirth || '(none)'}
+                {item.possibleMatches.map(m => (
+                  <div key={m.studentId} className="mt-1" style={{ color: 'var(--secondary-text)' }}>
+                    <div>
+                      Possible match (birthdate doesn&apos;t match, check it): {m.firstName} {item.lastName} · SPS Student ID{' '}
+                      {m.studentId} · Final Forms DOB {m.dateOfBirth}
+                    </div>
+                    <div className="flex items-start gap-2 mt-1">
+                      <pre className="whitespace-pre-wrap p-2 rounded flex-1" style={{ background: 'var(--primary-bg)' }}>
+                        {fixDobInstruction(item, m)}
+                      </pre>
+                      <CopyButton text={fixDobInstruction(item, m)} />
+                    </div>
+                  </div>
+                ))}
+              </li>
+            ))}
+          </ReportSection>
+
+          <div>
+            <h2 className="text-lg font-semibold mb-2" style={{ color: 'var(--secondary-header)' }}>
+              Outreach BCC list ({outreach.length})
+            </h2>
+            <p className="text-sm mb-2" style={{ color: 'var(--secondary-text)' }}>
+              Caretaker emails of seeded signups the family has not finished. Paste into BCC.
+            </p>
+            <div className="flex items-start gap-2">
+              <textarea
+                readOnly
+                value={outreach.join(', ')}
+                rows={4}
+                className="w-full p-2 rounded text-sm font-mono border"
+                style={{ background: 'var(--card-bg)', borderColor: 'var(--border)', color: 'var(--primary-text)' }}
+              />
+              <CopyButton text={outreach.join(', ')} />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function fixDobInstruction(
+  item: { playerId: string; preferredFirstName: string; lastName: string; signupDateOfBirth: string },
+  match: { studentId: string; dateOfBirth: string }
+): string {
+  return `Update signup PlayerID ${item.playerId} (${item.preferredFirstName} ${item.lastName}): Date of Birth is currently ${item.signupDateOfBirth || '(blank)'}, but Final Forms has ${match.dateOfBirth} for a same-last-name student (SPS Student ID ${match.studentId}). Change the signup's Date of Birth to ${match.dateOfBirth}.`
+}
+
+function Notice({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="rounded-lg p-4 border mb-6"
+      style={{
+        background: 'var(--availability-unsure-bg)',
+        borderColor: 'var(--availability-unsure-border)',
+        color: 'var(--availability-unsure-text)',
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false)
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      // Clipboard access can be denied by the browser; the text is still selectable/visible.
+    }
+  }
+
+  return (
+    <button
+      onClick={copy}
+      className="px-2 py-1 rounded text-xs shrink-0"
+      style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', color: 'var(--primary-text)' }}
+    >
+      {copied ? 'Copied!' : 'Copy'}
+    </button>
+  )
+}
+
+function ReportSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <h2 className="text-lg font-semibold mb-2" style={{ color: 'var(--secondary-header)' }}>
+        {title}
+      </h2>
+      <ul
+        className="rounded-lg text-sm font-mono border [&>li]:px-4 [&>li]:py-2 [&>li:not(:last-child)]:border-b [&>li]:border-[var(--border)]"
+        style={{ background: 'var(--card-bg)', borderColor: 'var(--border)', color: 'var(--primary-text)' }}
+      >
+        {children}
+      </ul>
+    </div>
+  )
+}

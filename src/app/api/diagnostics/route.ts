@@ -4,6 +4,7 @@ import * as path from 'path';
 import { getSheetData, getMostRecentFileInfoFromFolder } from '../../../lib/google-api';
 import { getDriveFolderName } from '../../../lib/google-oauth-drive';
 import { SHEET_CONFIG } from '../../../lib/sheet-config';
+import { SIGNUPS_COLUMNS, SIGNUPS_SHEET_CONFIG } from '../../../lib/signups-config';
 import { probeButtondownPermissions } from '../../../lib/buttondown-api';
 
 interface DiagnosticResult {
@@ -41,6 +42,7 @@ export async function GET(request: NextRequest) {
     'SPS_FINAL_FORMS_FOLDER_ID',
     'ADDITIONAL_QUESTIONNAIRE_SHEET_ID',
     'SIGNUPS_SHEET_ID',
+    'ADMIN_SECRET',
   ];
 
   requiredEnvVars.forEach(envVar => {
@@ -182,6 +184,19 @@ export async function GET(request: NextRequest) {
       } else {
         addResult('Sheets Access', 'Signups Sheet', 'warning',
           'Sheet accessible but no data found in A1:D2 range');
+      }
+
+      // Every SIGNUPS_COLUMNS header must exist in the live tab: an appended row only carries the
+      // columns the header row has, so a missing header silently drops that field on every write.
+      const signupsHeader = await getSheetData(signupsSheetId, `'${SIGNUPS_SHEET_CONFIG.SIGNUPS_SHEET_NAME}'!1:1`);
+      const headerNames = new Set((signupsHeader[0] || []).map(h => (h || '').toString().trim()));
+      const missingHeaders = Object.values(SIGNUPS_COLUMNS).filter(name => !headerNames.has(name));
+      if (missingHeaders.length === 0) {
+        addResult('Sheets Access', 'Signups Headers', 'pass',
+          `All ${Object.values(SIGNUPS_COLUMNS).length} expected headers present`);
+      } else {
+        addResult('Sheets Access', 'Signups Headers', 'fail',
+          `Missing headers: ${missingHeaders.join(', ')}`, { missingHeaders });
       }
     }
   } catch (error) {

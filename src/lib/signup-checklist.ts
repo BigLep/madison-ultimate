@@ -40,6 +40,23 @@ export function isPhotoComplete(record: SignupRecord): boolean {
   return Boolean(record[SIGNUPS_COLUMNS.PHOTO_DRIVE_FILE_ID]);
 }
 
+/**
+ * Profile Complete (ADR 0006): Player Info, Caretaker Info, and Photo Upload all done. The single
+ * definition; the sheet layer writes it as a column on every row write and the coach sheet passes
+ * it through. Volunteering answers and Final Forms Status never factor in.
+ */
+export function isProfileComplete(record: SignupRecord): boolean {
+  return isPlayerInfoComplete(record) && isCaretakerInfoComplete(record) && isPhotoComplete(record);
+}
+
+/** The exact cell text the Profile Complete column stores; the coach sheet compares against it. */
+export const PROFILE_COMPLETE_TRUE = 'TRUE';
+export const PROFILE_COMPLETE_FALSE = 'FALSE';
+
+export function profileCompleteCellValue(record: SignupRecord): string {
+  return isProfileComplete(record) ? PROFILE_COMPLETE_TRUE : PROFILE_COMPLETE_FALSE;
+}
+
 /** Final Forms checklist row: done only when found and all three status flags are true. */
 export function isFinalFormsComplete(status: {
   found?: boolean;

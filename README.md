@@ -217,6 +217,7 @@ GOOGLE_SERVICE_ACCOUNT_KEY=<full-json-content-as-string>
 # Resource IDs
 ROSTER_SHEET_ID=<sheet-id>
 SPS_FINAL_FORMS_FOLDER_ID=<folder-id>
+ADMIN_SECRET=<long-random-string>   # Basic Auth password for /admin and /api/admin
 TEAM_MAILING_LIST_FOLDER_ID=<folder-id>
 ADDITIONAL_QUESTIONNAIRE_SHEET_ID=<sheet-id>
 ```

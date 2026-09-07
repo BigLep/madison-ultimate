@@ -15,7 +15,7 @@ import { getMostRecentFileInfoFromFolder, downloadCsvFromDrive } from './google-
 import { SHEET_CONFIG } from './sheet-config';
 import { parseCsvString } from './data-processing';
 import { normalizeName, normalizeDateOfBirth } from './player-identity';
-import { SignupRecord, updateSignupRow } from './signups-sheet';
+import { SignupRecord, UpdateSignupRowOptions, updateSignupRow, createSignupRow, recomputeProfileCompleteForAllRows } from './signups-sheet';
 import { SIGNUPS_COLUMNS } from './signups-config';
 import { findTestFixture } from './final-forms-test-fixtures';
 import { carryOverPhotoFromLastSeason } from './photo-carryover';
@@ -215,7 +215,7 @@ export interface PossibleMatch {
   dateOfBirth: string;
 }
 
-function possibleMatchesByLastNameOnly(signup: SignupRecord, snapshot: FinalFormsSnapshot): PossibleMatch[] {
+function possibleMatchesByLastNameOnly(signup: SignupRecord, snapshot: { records: FinalFormsRecord[] }): PossibleMatch[] {
   const queryLast = normalizeName(signup[SIGNUPS_COLUMNS.LAST_NAME]);
   if (!queryLast) return [];
   return snapshot.records
@@ -312,7 +312,8 @@ export async function applyFirstJoinSideEffects(
   playerId: string,
   existing: SignupRecord,
   match: FinalFormsJoinResult,
-  ipAddress?: string
+  ipAddress?: string,
+  options?: UpdateSignupRowOptions
 ): Promise<FirstJoinOutcome> {
   const allSeeded = seededFieldsFromFinalForms(match.record);
 
@@ -358,7 +359,8 @@ export async function applyFirstJoinSideEffects(
   }
 
   if (Object.keys(updates).length > 0) {
-    await updateSignupRow(playerId, updates);
+    if (options) await updateSignupRow(playerId, updates, options);
+    else await updateSignupRow(playerId, updates);
   }
 
   // First real join also subscribes eligible emails now on the row (copied or already saved),
@@ -384,57 +386,233 @@ export async function applyFirstJoinSideEffects(
 }
 
 /**
- * Outcome of Final Forms Backfill for a single signup row: what would have happened, or did
- * happen, when attempting a Final Forms Join outside the normal /player-visit trigger.
+ * Seed Signups from Final Forms (ADR 0006). The plan is pure so Preview is exactly Apply minus
+ * the writes, and so every last-name-plus-birthdate group rule can be unit-tested without Drive.
+ *
+ * Both sides are grouped by normalized last name plus birthdate. Per group, seeding never creates
+ * a row where a human still has to decide: twins the legal first name cannot tell apart, several
+ * unjoined signups for one student, or a row already joined to a different SPS Student ID all
+ * become report entries instead.
  */
-export type FinalFormsBackfillOutcome =
-  | { kind: 'joined'; match: FinalFormsJoinResult; firstJoin: FirstJoinOutcome }
-  | { kind: 'unmatched'; possibleMatches: PossibleMatch[] }
-  | { kind: 'ambiguous'; candidateCount: number }
-  | { kind: 'already-joined-consistent' }
-  | { kind: 'already-joined-discrepancy'; storedStudentId: string; freshMatchStudentId: string }
-  | { kind: 'no-snapshot' };
+export type ReconciliationEntry =
+  | { kind: 'skip'; record: FinalFormsRecord; playerId: string }
+  | { kind: 'join'; record: FinalFormsRecord; playerId: string; signup: SignupRecord }
+  | { kind: 'seed'; record: FinalFormsRecord }
+  | { kind: 'ambiguous'; records: FinalFormsRecord[]; playerIds: string[] }
+  | { kind: 'duplicate-signups'; record: FinalFormsRecord; playerIds: string[] }
+  | { kind: 'discrepancy'; record: FinalFormsRecord; playerId: string; storedStudentId: string }
+  | { kind: 'unseedable'; record: FinalFormsRecord; reason: string }
+  | { kind: 'unmatched-signup'; playerId: string; signup: SignupRecord; possibleMatches: PossibleMatch[] };
+
+export interface ReconciliationPlan {
+  entries: ReconciliationEntry[];
+  dataAsOf: string;
+}
+
+function groupKey(lastName: string, dateOfBirth: string): string | null {
+  const last = normalizeName(lastName);
+  const dob = normalizeDateOfBirth(dateOfBirth);
+  return last && dob ? `${last}|${dob}` : null;
+}
+
+function pushTo<T>(map: Map<string, T[]>, key: string, value: T): void {
+  const list = map.get(key);
+  if (list) list.push(value);
+  else map.set(key, [value]);
+}
+
+export function planFinalFormsReconciliation(
+  signups: SignupRecord[],
+  snapshot: { records: FinalFormsRecord[]; fileTimestamp: string }
+): ReconciliationPlan {
+  const entries: ReconciliationEntry[] = [];
+
+  const joinedByStudentId = new Map<string, SignupRecord>();
+  const joinedByKey = new Map<string, SignupRecord[]>();
+  const unjoinedByKey = new Map<string, SignupRecord[]>();
+  for (const signup of signups) {
+    if (!signup[SIGNUPS_COLUMNS.PLAYER_ID]) continue;
+    const studentId = (signup[SIGNUPS_COLUMNS.SPS_STUDENT_ID] || '').trim();
+    const key = groupKey(signup[SIGNUPS_COLUMNS.LAST_NAME], signup[SIGNUPS_COLUMNS.DATE_OF_BIRTH]);
+    if (studentId) {
+      joinedByStudentId.set(studentId, signup);
+      if (key) pushTo(joinedByKey, key, signup);
+    } else if (key) {
+      pushTo(unjoinedByKey, key, signup);
+    }
+  }
+
+  const recordsByKey = new Map<string, FinalFormsRecord[]>();
+  for (const record of snapshot.records) {
+    if (!record.studentId.trim()) {
+      entries.push({ kind: 'unseedable', record, reason: 'no SPS Student ID in Final Forms' });
+      continue;
+    }
+    const key = groupKey(record.lastName, record.dateOfBirth);
+    if (!key) {
+      entries.push({
+        kind: 'unseedable',
+        record,
+        reason: !record.lastName.trim() ? 'no last name in Final Forms' : 'no usable birthdate in Final Forms',
+      });
+      continue;
+    }
+    pushTo(recordsByKey, key, record);
+  }
+
+  for (const [key, group] of recordsByKey) {
+    const groupIds = new Set(group.map(r => r.studentId));
+    const remaining: FinalFormsRecord[] = [];
+    for (const record of group) {
+      const joined = joinedByStudentId.get(record.studentId);
+      if (joined) entries.push({ kind: 'skip', record, playerId: joined[SIGNUPS_COLUMNS.PLAYER_ID] });
+      else remaining.push(record);
+    }
+    // Rows in this group already joined to an ID outside the group (the old Backfill's
+    // already-joined-discrepancy): a human has to look, so nothing in the group is joined or
+    // seeded. Reported even when every record here is already claimed by ID.
+    const foreignJoined = (joinedByKey.get(key) || []).filter(
+      row => !groupIds.has((row[SIGNUPS_COLUMNS.SPS_STUDENT_ID] || '').trim())
+    );
+    if (foreignJoined.length > 0) {
+      for (const row of foreignJoined) {
+        for (const record of remaining.length > 0 ? remaining : [group[0]]) {
+          entries.push({
+            kind: 'discrepancy',
+            record,
+            playerId: row[SIGNUPS_COLUMNS.PLAYER_ID],
+            storedStudentId: (row[SIGNUPS_COLUMNS.SPS_STUDENT_ID] || '').trim(),
+          });
+        }
+      }
+      continue;
+    }
+    if (remaining.length === 0) continue;
+
+    const unjoined = unjoinedByKey.get(key) || [];
+
+    if (group.length === 1) {
+      const record = remaining[0];
+      if (unjoined.length === 0) entries.push({ kind: 'seed', record });
+      else if (unjoined.length === 1) {
+        entries.push({ kind: 'join', record, playerId: unjoined[0][SIGNUPS_COLUMNS.PLAYER_ID], signup: unjoined[0] });
+      } else {
+        entries.push({ kind: 'duplicate-signups', record, playerIds: unjoined.map(u => u[SIGNUPS_COLUMNS.PLAYER_ID]) });
+      }
+      continue;
+    }
+
+    // Twins: every unjoined signup must resolve by legal first name (falling back to preferred,
+    // exactly as the per-player join does) to a distinct, still-unjoined record.
+    const claimed = new Map<string, SignupRecord>();
+    let ambiguous = false;
+    for (const signup of unjoined) {
+      const legalFirst = normalizeName(signup[SIGNUPS_COLUMNS.LEGAL_FIRST_NAME] || signup[SIGNUPS_COLUMNS.PREFERRED_FIRST_NAME]);
+      const matches = group.filter(r => normalizeName(r.legalFirstName) === legalFirst);
+      const match = matches.length === 1 ? matches[0] : undefined;
+      if (!match || !remaining.includes(match) || claimed.has(match.studentId)) {
+        ambiguous = true;
+        break;
+      }
+      claimed.set(match.studentId, signup);
+    }
+    if (ambiguous) {
+      entries.push({ kind: 'ambiguous', records: remaining, playerIds: unjoined.map(u => u[SIGNUPS_COLUMNS.PLAYER_ID]) });
+      continue;
+    }
+    for (const record of remaining) {
+      const signup = claimed.get(record.studentId);
+      if (signup) entries.push({ kind: 'join', record, playerId: signup[SIGNUPS_COLUMNS.PLAYER_ID], signup });
+      else entries.push({ kind: 'seed', record });
+    }
+  }
+
+  // Unjoined signups no Final Forms record shares a group with: the old Backfill's "still
+  // unmatched" list, with Possible Matches so a wrong birthdate on either side is easy to spot.
+  for (const [key, group] of unjoinedByKey) {
+    if (recordsByKey.has(key)) continue;
+    for (const signup of group) {
+      entries.push({
+        kind: 'unmatched-signup',
+        playerId: signup[SIGNUPS_COLUMNS.PLAYER_ID],
+        signup,
+        possibleMatches: possibleMatchesByLastNameOnly(signup, snapshot),
+      });
+    }
+  }
+
+  const sortKey = (e: ReconciliationEntry): string => {
+    if (e.kind === 'unmatched-signup') {
+      return `${normalizeName(e.signup[SIGNUPS_COLUMNS.LAST_NAME])}|${normalizeName(e.signup[SIGNUPS_COLUMNS.PREFERRED_FIRST_NAME])}`;
+    }
+    const r = 'record' in e ? e.record : e.records[0];
+    return `${normalizeName(r.lastName)}|${normalizeName(r.firstName)}`;
+  };
+  entries.sort((a, b) => sortKey(a).localeCompare(sortKey(b)));
+
+  return { entries, dataAsOf: snapshot.fileTimestamp };
+}
+
+/** Load the newest export and plan against the given rows; null when the export is unavailable. */
+export async function previewFinalFormsReconciliation(signups: SignupRecord[]): Promise<ReconciliationPlan | null> {
+  const snapshot = await loadSnapshot();
+  if (!snapshot) return null;
+  return planFinalFormsReconciliation(signups, snapshot);
+}
+
+/** One row the run wrote to, whether by seeding it or joining it. */
+export interface AppliedRowOutcome {
+  playerId: string;
+  studentId: string;
+  firstJoin: FirstJoinOutcome;
+}
 
 /**
- * Attempt a Final Forms Join for one signup row on behalf of Final Forms Backfill (ADR 0005):
- * never overwrites an existing SPS Student ID, but flags a Match Discrepancy when a fresh
- * name+birthdate match disagrees with it. Otherwise behaves exactly like the per-player join
- * (same matching, same applyFirstJoinSideEffects), just triggered in bulk instead of by a
- * family visiting /player.
+ * Create a Seeded Signup: identity from Final Forms (Preferred First Name equal to the legal
+ * first name, Legal First Name blank), Seeded At, then the very same first-join write the portal
+ * performs for a family-created row, on a row whose cells are all still empty (ADR 0004 amended
+ * by ADR 0006). Two writes, no new join code.
  */
-export async function backfillFinalFormsJoin(playerId: string, signup: SignupRecord): Promise<FinalFormsBackfillOutcome> {
-  const existingStudentId = signup[SIGNUPS_COLUMNS.SPS_STUDENT_ID];
-  const fixture = findTestFixture(signup[SIGNUPS_COLUMNS.LAST_NAME]);
+export async function seedSignupFromFinalForms(record: FinalFormsRecord, dataAsOf: string): Promise<AppliedRowOutcome> {
+  const now = new Date().toISOString();
+  const created = await createSignupRow({
+    [SIGNUPS_COLUMNS.PREFERRED_FIRST_NAME]: record.firstName.trim(),
+    [SIGNUPS_COLUMNS.LAST_NAME]: record.lastName.trim(),
+    [SIGNUPS_COLUMNS.DATE_OF_BIRTH]: normalizeDateOfBirth(record.dateOfBirth) || record.dateOfBirth.trim(),
+    [SIGNUPS_COLUMNS.CREATED_AT]: now,
+    [SIGNUPS_COLUMNS.SEEDED_AT]: now,
+  });
+  const playerId = created[SIGNUPS_COLUMNS.PLAYER_ID];
+  // The second write is still the seed doing its work, so Updated At stays equal to Seeded At.
+  const firstJoin = await applyFirstJoinSideEffects(playerId, created, { record, dataAsOf }, undefined, { touchUpdatedAt: false });
+  return { playerId, studentId: record.studentId, firstJoin };
+}
 
-  if (fixture !== undefined) {
-    if (existingStudentId) return { kind: 'already-joined-consistent' };
-    if (!fixture) return { kind: 'unmatched', possibleMatches: [] };
-    const match: FinalFormsJoinResult = { record: fixture, dataAsOf: FINAL_FORMS_FIXTURE_DATA_AS_OF, isTest: true };
-    const firstJoin = await applyFirstJoinSideEffects(playerId, signup, match);
-    return { kind: 'joined', match, firstJoin };
-  }
+export interface ReconciliationReport {
+  seeded: AppliedRowOutcome[];
+  joined: AppliedRowOutcome[];
+  recomputedProfileComplete: number;
+}
 
-  const snapshot = await loadSnapshot();
-  if (!snapshot) return { kind: 'no-snapshot' };
+/** Apply a plan: joins, then seeds, then the Profile Complete recompute over every row. */
+export async function applyFinalFormsReconciliation(plan: ReconciliationPlan): Promise<ReconciliationReport> {
+  const report: ReconciliationReport = { seeded: [], joined: [], recomputedProfileComplete: 0 };
 
-  const fresh = matchByNameAndDob(signup, snapshot);
-
-  if (existingStudentId) {
-    if (fresh.kind === 'matched' && fresh.match.record.studentId !== existingStudentId) {
-      return {
-        kind: 'already-joined-discrepancy',
-        storedStudentId: existingStudentId,
-        freshMatchStudentId: fresh.match.record.studentId,
-      };
+  for (const entry of plan.entries) {
+    if (entry.kind === 'join') {
+      const firstJoin = await applyFirstJoinSideEffects(entry.playerId, entry.signup, {
+        record: entry.record,
+        dataAsOf: plan.dataAsOf,
+      });
+      report.joined.push({ playerId: entry.playerId, studentId: entry.record.studentId, firstJoin });
     }
-    return { kind: 'already-joined-consistent' };
+  }
+  for (const entry of plan.entries) {
+    if (entry.kind === 'seed') {
+      report.seeded.push(await seedSignupFromFinalForms(entry.record, plan.dataAsOf));
+    }
   }
 
-  if (fresh.kind === 'no-candidate') {
-    return { kind: 'unmatched', possibleMatches: possibleMatchesByLastNameOnly(signup, snapshot) };
-  }
-  if (fresh.kind === 'ambiguous') return { kind: 'ambiguous', candidateCount: fresh.candidateCount };
-
-  const firstJoin = await applyFirstJoinSideEffects(playerId, signup, fresh.match);
-  return { kind: 'joined', match: fresh.match, firstJoin };
+  report.recomputedProfileComplete = await recomputeProfileCompleteForAllRows();
+  return report;
 }

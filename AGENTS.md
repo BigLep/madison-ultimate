@@ -48,6 +48,7 @@ Install a real `node_modules` with `npm ci`. A `node_modules` symlink makes Turb
 - `/api/diagnostics` - Comprehensive system health check (environment variables, credentials, API access)
 - `/api/team-updates` - Fetch recent team updates from Buttondown newsletter RSS
 - `/api/auth/callback` - OAuth callback handler (for setup only)
+- `/admin/final-forms` and `/api/admin/final-forms` - Seed Signups from Final Forms (Preview and Apply); everything under `/admin` and `/api/admin` needs Basic Auth with `ADMIN_SECRET` (any username)
 
 ## Troubleshooting
 

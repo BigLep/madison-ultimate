@@ -35,9 +35,11 @@ Signup routes go through `@/lib/signups-sheet`, `@/lib/buttondown-api`, and (for
 | `@/lib/signups-sheet` (`findSignupByIdentity`, `findSignupByPlayerId`, `createSignupRow`, `updateSignupRow`) | lookup, mailing, profile-save, finalforms route | Avoids the real Signups spreadsheet. (Layer 2 integration covers the real sheet.) |
 | `@/lib/buttondown-api` (`isSubscriber`, `subscribeEmail`, `unsubscribeEmail`, `subscribeUnlessUnsubscribed`, `probeButtondownPermissions`) | mailing, profile-save, finalforms | Avoids the real newsletter API. The permission probe is unit-tested with mocked fetch (404 = write, 403 = read-only). |
 | `@/lib/google-api` (`getMostRecentFileInfoFromFolder`, `downloadCsvFromDrive`) plus `SHEET_CONFIG.SPS_FINAL_FORMS_FOLDER_ID` | Final Forms join | Feeds a canned CSV into `findFinalFormsMatch` without Drive. `google-api` must be mocked in any file that loads `final-forms.ts`, because that module initializes auth on import. |
+| `@/lib/final-forms` (`previewFinalFormsReconciliation`, `applyFinalFormsReconciliation`) | admin final-forms route | The route only shapes the report; the planner is pure and tested directly in `final-forms-reconciliation.test.ts`, with `createSignupRow`/`updateSignupRow`/`recomputeProfileCompleteForAllRows` mocked for the apply path. |
+| `@/lib/google-api` (`getSheetData`, `appendSheetData`, `updateSheetData`) | signups-sheet writes | The one place the sheet layer itself is exercised (Profile Complete column, Updated At rule, recompute pass) against an in-memory header row built from `SIGNUPS_COLUMNS`. |
 | `@/lib/signup-deadlines.getDeadlineState` | lookup route | Lets lookup tests pin open vs closed without depending on today's date. Deadlines themselves are tested by passing an explicit `Date` into `getDeadlineState`. |
 
-Pure functions (`player-identity`, `signup-checklist`, `signup-deadlines`, `signup-form-schema`, `eligibleMailingEmails`, `seededFieldsFromFinalForms`) take no I/O and need no mocks.
+Pure functions (`player-identity`, `signup-checklist`, `signup-deadlines`, `signup-form-schema`, `eligibleMailingEmails`, `seededFieldsFromFinalForms`, `planFinalFormsReconciliation`, `seeded-outreach`, `admin-auth`) take no I/O and need no mocks.
 
 ## When we reset
 
