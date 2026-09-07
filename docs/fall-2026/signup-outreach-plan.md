@@ -64,6 +64,7 @@ Flow:
 
 - Usage: `GOG_GMAIL_NO_SEND= node scripts/send-outreach-drafts.mjs tmp/outreach-2026-09-08.json [--pace-seconds 5]`.
 - Refuses to start when `GOG_GMAIL_NO_SEND` is set to anything non-empty, printing the exact prefix to use. The script never modifies the environment itself; this keeps the profile's rule that the agent cannot send.
+- Every gog call in both scripts passes `--account madisonultimate@gmail.com` (`scripts/lib/gog.mjs`), so the scripts do not depend on `GOG_ACCOUNT` in the shell that runs them. Added 2026-09-07 after the first send attempt from the coach's own shell resolved to a different signed-in account and Gmail answered 404 for every draft. Before sending, the script fetches the first pending draft as a pre-flight and stops with a plain message if it is not in the coach account's Drafts.
 - Iterates the manifest's drafts without `sentAt`, runs `gog gmail drafts send <draftId> --json`, on success writes `sentAt` back to the manifest immediately, then sleeps `--pace-seconds` (default 5). On any non-zero exit it prints the draft id, subject, and error and stops; re-running resumes after the last success.
 - Prints a final count of sent and remaining.
 

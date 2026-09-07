@@ -5,10 +5,11 @@
 //
 //   GOG_GMAIL_NO_SEND= node scripts/send-outreach-drafts.mjs tmp/outreach-2026-09-08.json [--pace-seconds 5]
 //
+// Every gog call runs as the coach account (scripts/lib/gog.mjs), whatever the shell has set.
 // Re-running resumes after the last draft marked sent in the manifest.
 
 import { readFileSync, writeFileSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
+import { gogRaw, gogJson, COACH_ACCOUNT } from './lib/gog.mjs';
 import { setTimeout as sleep } from 'node:timers/promises';
 
 function parseArgs(argv) {
@@ -38,11 +39,24 @@ async function main() {
   const manifest = JSON.parse(readFileSync(args.manifest, 'utf8'));
   const pending = manifest.drafts.filter(d => !d.sentAt);
   const alreadySent = manifest.drafts.length - pending.length;
-  console.log(`${pending.length} draft${pending.length === 1 ? '' : 's'} to send (${alreadySent} already sent), one every ${args.paceSeconds}s.`);
+  console.log(`${pending.length} draft${pending.length === 1 ? '' : 's'} to send as ${COACH_ACCOUNT} (${alreadySent} already sent), one every ${args.paceSeconds}s.`);
+  if (pending.length === 0) return;
+
+  // Pre-flight: the first pending draft must be visible in the coach account before anything
+  // is sent, so a wrong account or a deleted draft fails here with a plain explanation.
+  try {
+    gogJson(['gmail', 'drafts', 'get', pending[0].draftId]);
+  } catch (err) {
+    throw new Error(
+      `Draft ${pending[0].draftId} (${pending[0].playerId} ${pending[0].fullName}) is not in ${COACH_ACCOUNT}'s Drafts. ` +
+        'It may have been deleted or already sent from Gmail; remove it from the manifest or re-run the draft script.\n' +
+        err.message
+    );
+  }
 
   let sent = 0;
   for (const draft of pending) {
-    const result = spawnSync('gog', ['gmail', 'drafts', 'send', draft.draftId, '--json'], { encoding: 'utf8' });
+    const result = gogRaw(['gmail', 'drafts', 'send', draft.draftId, '--json']);
     if (result.error || result.status !== 0) {
       console.error(`\nStopped: could not send draft ${draft.draftId} (${draft.playerId} ${draft.fullName}, "${draft.subject}")`);
       console.error(result.error ? result.error.message : result.stderr || result.stdout);

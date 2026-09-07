@@ -16,6 +16,7 @@
 //   --limit <n>        Stop after n drafts.
 //   --dry-run          Print what would be created (gog --dry-run); write no manifest.
 //
+// Every gog call runs as the coach account (scripts/lib/gog.mjs), whatever the shell has set.
 // Reads ADMIN_SECRET from .env.local. The route does the audience selection (see
 // src/lib/signup-outreach.ts); this script renders and calls gog. Writes
 // tmp/outreach-<date>.json (gitignored) listing every draft created, which
@@ -23,9 +24,9 @@
 
 import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { spawnSync } from 'node:child_process';
 import { parseTemplate, renderDraft, CHECKLIST_ROWS } from './lib/outreach-template.mjs';
 import { loadEnvLocal, repoRoot as root } from './lib/env.mjs';
+import { gogJson as gog, COACH_ACCOUNT } from './lib/gog.mjs';
 
 const DEFAULT_BASE_URL = 'https://madisonultimate.org';
 
@@ -50,15 +51,6 @@ function parseArgs(argv) {
   return args;
 }
 
-function gog(argv) {
-  const result = spawnSync('gog', argv, { encoding: 'utf8' });
-  if (result.error) throw new Error(`Could not run gog: ${result.error.message}`);
-  if (result.status !== 0) {
-    throw new Error(`gog ${argv.slice(0, 3).join(' ')} failed (exit ${result.status}):\n${result.stderr || result.stdout}`);
-  }
-  return JSON.parse(result.stdout || '{}');
-}
-
 /**
  * Subjects of every unsent draft in the account, for the duplicate check. gog v0.39 shapes:
  * `drafts list --json` gives { drafts: [{ id }] } (no subject), and `drafts get <id> --json`
@@ -66,8 +58,8 @@ function gog(argv) {
  */
 function existingDraftSubjects() {
   const subjects = new Set();
-  for (const { id } of gog(['gmail', 'drafts', 'list', '--all', '--json']).drafts || []) {
-    const headers = gog(['gmail', 'drafts', 'get', id, '--json']).draft?.message?.payload?.headers || [];
+  for (const { id } of gog(['gmail', 'drafts', 'list', '--all']).drafts || []) {
+    const headers = gog(['gmail', 'drafts', 'get', id]).draft?.message?.payload?.headers || [];
     const subject = headers.find(h => h.name?.toLowerCase() === 'subject')?.value;
     if (subject) subjects.add(subject);
   }
@@ -117,7 +109,7 @@ async function main() {
   const byId = new Map(data.players.map(p => [p.playerId, p]));
   const selected = data.audience.selectedPlayerIds.map(id => byId.get(id));
 
-  console.log(`Signup Outreach audience: ${selected.length} of ${data.counts.total} rows (Final Forms export as of ${data.dataAsOf || 'unknown'})\n`);
+  console.log(`Signup Outreach audience: ${selected.length} of ${data.counts.total} rows (Final Forms export as of ${data.dataAsOf || 'unknown'}); drafting as ${COACH_ACCOUNT}\n`);
   printAudience(selected, data.audience.skipped, playerLines ? [] : data.unreachable);
   console.log('');
 
@@ -146,7 +138,7 @@ async function main() {
     const htmlPath = join(bodiesDir, `${player.playerId}.html`);
     writeFileSync(textPath, draft.text);
     writeFileSync(htmlPath, draft.html);
-    const argv = ['gmail', 'drafts', 'create', '--to', to.join(','), '--subject', draft.subject, '--body-file', textPath, '--body-html-file', htmlPath, '--json'];
+    const argv = ['gmail', 'drafts', 'create', '--to', to.join(','), '--subject', draft.subject, '--body-file', textPath, '--body-html-file', htmlPath];
     if (cc.length > 0) argv.push('--cc', cc.join(','));
     if (args.dryRun) argv.push('--dry-run');
     const result = gog(argv);
