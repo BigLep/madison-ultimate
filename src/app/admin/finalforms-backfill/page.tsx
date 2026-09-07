@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 interface BackfillReport {
   joined: { playerId: string; studentId: string; subscribedEmails: string[] }[]
@@ -20,6 +20,16 @@ export default function FinalFormsBackfillPage() {
   const [report, setReport] = useState<BackfillReport | null>(null)
   const [running, setRunning] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [blockedCount, setBlockedCount] = useState<number | null | undefined>(undefined)
+
+  function refreshBlockedCount() {
+    fetch('/api/admin/finalforms-backfill')
+      .then(res => res.json())
+      .then(result => setBlockedCount(result.success ? result.blockedCount : null))
+      .catch(() => setBlockedCount(null))
+  }
+
+  useEffect(refreshBlockedCount, [])
 
   async function runBackfill() {
     setRunning(true)
@@ -31,6 +41,7 @@ export default function FinalFormsBackfillPage() {
         throw new Error(result.error || 'Backfill failed')
       }
       setReport(result.report)
+      refreshBlockedCount()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
@@ -50,17 +61,34 @@ export default function FinalFormsBackfillPage() {
 
       <div
         className="rounded-lg p-4 border mb-6 text-sm"
-        style={{
-          background: 'var(--availability-unsure-bg)',
-          borderColor: 'var(--availability-unsure-border)',
-          color: 'var(--availability-unsure-text)',
-        }}
+        style={
+          blockedCount
+            ? {
+                background: 'var(--availability-cant-make-bg)',
+                borderColor: 'var(--availability-cant-make-border)',
+                color: 'var(--availability-cant-make-text)',
+              }
+            : {
+                background: 'var(--availability-unsure-bg)',
+                borderColor: 'var(--availability-unsure-border)',
+                color: 'var(--availability-unsure-text)',
+              }
+        }
       >
-        Heads up: this backfill auto-subscribes eligible emails to Buttondown, but it runs server-side with no
-        family IP to forward, so Buttondown may flag those subscribers as coming from a datacenter IP and mark them
-        blocked. Check the Buttondown subscriber list (filter by type = Blocked) after running this and unblock
-        anyone who should be receiving team updates. Signups made directly through /player are not affected; those
-        forward the family&apos;s own IP.
+        <div className="font-semibold mb-1">
+          {blockedCount === undefined
+            ? 'Checking Buttondown for blocked subscribers…'
+            : blockedCount === null
+              ? 'Could not check Buttondown for blocked subscribers.'
+              : blockedCount === 0
+                ? 'No blocked subscribers on Buttondown right now.'
+                : `${blockedCount} subscriber${blockedCount === 1 ? '' : 's'} currently blocked on Buttondown.`}
+        </div>
+        This backfill auto-subscribes eligible emails to Buttondown, but it runs server-side with no family IP to
+        forward, so Buttondown may flag those subscribers as coming from a datacenter IP and mark them blocked.
+        Check the Buttondown subscriber list (filter by type = Blocked) and unblock anyone who should be receiving
+        team updates. Signups made directly through /player are not affected; those forward the family&apos;s own
+        IP.
       </div>
 
       <button

@@ -12,12 +12,36 @@ vi.mock('@/lib/final-forms', () => ({
   backfillFinalFormsJoin: vi.fn(),
 }));
 
+vi.mock('@/lib/buttondown-api', () => ({
+  getBlockedSubscriberCount: vi.fn(),
+}));
+
 import { listAllSignups } from '@/lib/signups-sheet';
 import { backfillFinalFormsJoin } from '@/lib/final-forms';
-import { POST } from '@/app/api/admin/finalforms-backfill/route';
+import { getBlockedSubscriberCount } from '@/lib/buttondown-api';
+import { GET, POST } from '@/app/api/admin/finalforms-backfill/route';
 
 const listSignups = vi.mocked(listAllSignups);
 const backfill = vi.mocked(backfillFinalFormsJoin);
+const blockedCount = vi.mocked(getBlockedSubscriberCount);
+
+describe('GET /api/admin/finalforms-backfill', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('reports the blocked subscriber count from Buttondown', async () => {
+    blockedCount.mockResolvedValue(3);
+    const res = await GET();
+    expect(await res.json()).toEqual({ success: true, blockedCount: 3 });
+  });
+
+  it('reports null when Buttondown cannot be checked', async () => {
+    blockedCount.mockResolvedValue(null);
+    const res = await GET();
+    expect(await res.json()).toEqual({ success: true, blockedCount: null });
+  });
+});
 
 describe('POST /api/admin/finalforms-backfill', () => {
   beforeEach(() => {

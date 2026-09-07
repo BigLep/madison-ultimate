@@ -7,6 +7,14 @@ import { NextResponse } from 'next/server';
 import { listAllSignups } from '../../../../lib/signups-sheet';
 import { backfillFinalFormsJoin, PossibleMatch } from '../../../../lib/final-forms';
 import { SIGNUPS_COLUMNS } from '../../../../lib/signups-config';
+import { getBlockedSubscriberCount } from '../../../../lib/buttondown-api';
+
+// Surfaced on page load so the "backfill can get subscribers blocked" risk is visible without
+// running a backfill first (see the note in the admin page).
+export async function GET() {
+  const blockedCount = await getBlockedSubscriberCount();
+  return NextResponse.json({ success: true, blockedCount });
+}
 
 export async function POST() {
   try {

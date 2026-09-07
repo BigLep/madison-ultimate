@@ -89,6 +89,31 @@ function invalidateSubscriberCache(): void {
   subscriberCache = null;
 }
 
+/**
+ * Count of subscribers Buttondown's spam firewall has auto-blocked (e.g. our server's own
+ * datacenter IP getting flagged on an auto-subscribe that couldn't forward a real visitor IP;
+ * see the Final Forms Backfill admin note). Returns null if the API key is missing or the
+ * request fails, so callers can distinguish "couldn't check" from "zero blocked".
+ */
+export async function getBlockedSubscriberCount(): Promise<number | null> {
+  const apiKey = process.env.BUTTONDOWN_API_KEY;
+  if (!apiKey) return null;
+
+  try {
+    const res = await fetch(`${API_BASE}/subscribers?type=blocked&page_size=1`, {
+      headers: { Authorization: `Token ${apiKey}` },
+      next: { revalidate: 0 },
+    });
+    if (!res.ok) return null;
+
+    const data: { count?: number } = await res.json();
+    return data.count ?? 0;
+  } catch (error) {
+    console.error('Error counting blocked Buttondown subscribers:', error);
+    return null;
+  }
+}
+
 async function logFailedWrite(action: string, res: Response): Promise<void> {
   const text = await res.text();
   let suffix = '';
