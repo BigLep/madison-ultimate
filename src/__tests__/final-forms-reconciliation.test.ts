@@ -173,6 +173,22 @@ describe('planFinalFormsReconciliation', () => {
     ]);
   });
 
+  it('flags a discrepancy instead of seeding the free twin when a row is joined to the wrong twin', () => {
+    // The row says Blake but was joined to Alex's ID (Blake was not in the export at join time).
+    const wrong = signupRecord({
+      [SIGNUPS_COLUMNS.PLAYER_ID]: 'p-blake',
+      [SIGNUPS_COLUMNS.PREFERRED_FIRST_NAME]: 'Blake',
+      [SIGNUPS_COLUMNS.SPS_STUDENT_ID]: 'FF-ALEX',
+      [SIGNUPS_COLUMNS.LAST_NAME]: 'Twinlast',
+      [SIGNUPS_COLUMNS.DATE_OF_BIRTH]: '2014-03-15',
+    });
+    const { entries } = plan([wrong], [twinA, twinB]);
+    expect(entries).toEqual([
+      { kind: 'skip', record: twinA, playerId: 'p-blake' },
+      { kind: 'discrepancy', record: twinB, playerId: 'p-blake', storedStudentId: 'FF-ALEX' },
+    ]);
+  });
+
   it('flags a discrepancy instead of seeding when the group holds a row joined to an outside ID', () => {
     const { entries } = plan([
       signupRecord({

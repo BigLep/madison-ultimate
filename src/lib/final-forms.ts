@@ -487,6 +487,28 @@ export function planFinalFormsReconciliation(
       }
       continue;
     }
+    // Twins where a row is joined to one twin but its first name (legal, else preferred) names
+    // the other: the per-player join matched before both twins were in the export, and seeding
+    // the "free" twin now would duplicate the row that is really theirs. Report, write nothing.
+    if (group.length > 1) {
+      const wrongTwin = (joinedByKey.get(key) || []).find(row => {
+        const storedId = (row[SIGNUPS_COLUMNS.SPS_STUDENT_ID] || '').trim();
+        const first = normalizeName(row[SIGNUPS_COLUMNS.LEGAL_FIRST_NAME] || row[SIGNUPS_COLUMNS.PREFERRED_FIRST_NAME]);
+        const named = group.filter(r => normalizeName(r.legalFirstName) === first);
+        return named.length === 1 && named[0].studentId !== storedId;
+      });
+      if (wrongTwin) {
+        for (const record of remaining.length > 0 ? remaining : [group[0]]) {
+          entries.push({
+            kind: 'discrepancy',
+            record,
+            playerId: wrongTwin[SIGNUPS_COLUMNS.PLAYER_ID],
+            storedStudentId: (wrongTwin[SIGNUPS_COLUMNS.SPS_STUDENT_ID] || '').trim(),
+          });
+        }
+        continue;
+      }
+    }
     if (remaining.length === 0) continue;
 
     const unjoined = unjoinedByKey.get(key) || [];
