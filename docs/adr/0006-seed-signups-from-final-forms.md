@@ -1,0 +1,30 @@
+# Seed Signups from Final Forms: coach-created rows, portal-owned Profile Complete, gated admin routes
+
+Status: accepted (2026-09-07)
+
+Coaches need to plan around every student registered for fall ultimate in Final Forms, but through the first two weeks of signups about 38 registered students had no signup row, and nothing reached those families except the school. We decided three related things. First, an admin action, **Seed Signups from Final Forms**, creates a Signups row (a **Seeded Signup**) for every Final Forms student who has no signup: it mints a PlayerID, writes the identity fields and SPS Student ID from Final Forms (Preferred First Name equal to the legal first name, Legal First Name left blank), stamps Seeded At, and then applies exactly the first-join write the portal already performs (Seeded Fields per ADR 0004, Photo Carryover per ADR 0003, newsletter auto-subscribe). The run performs Final Forms Backfill first, so an existing unjoined row is joined rather than duplicated, and it never creates a row in any last-name-plus-birthdate group where a human still has to decide (Ambiguous Match, suspected duplicate signups, Match Discrepancy). Second, **Profile Complete** is defined once, by the portal, as Player Info, Caretaker Info, and Photo Upload all done, and written as a column on the row on every change; the coach sheet passes it through instead of computing its own, and Include In Generated Rosters no longer references it (every row is included unless Extra Player Info says otherwise). Third, `/admin` and `/api/admin` are gated by HTTP Basic Auth with a single `ADMIN_SECRET`, reversing the no-gate choice in ADR 0005 now that an admin route creates rows and subscribes emails.
+
+## Considered options
+
+- **Seed from the coach sheet (Apps Script) instead of the portal.** Rejected for the reason in ADR 0005: the matching and row-write logic live only in `madison-ultimate`, and a second implementation of "match a Final Forms student to a signup" is exactly what the Backfill decision avoided.
+- **Keep reporting the unmatched students in Analyze Signups and wait for families.** Rejected: tryouts and practice planning need every potential player visible now, and families who never started a signup are the ones the outreach has not reached.
+- **Seed even when a group is unresolved (twins the join cannot tell apart, suspected duplicate signups, a row joined to a different SPS Student ID).** Rejected: a wrongly seeded row is a duplicate a human must later find and merge by hand; a skipped one just shows up in the report.
+- **Keep the coach sheet's Profile Complete formula (Grade, Date of Birth, Caretaker 1 Email).** Rejected: seeding fills all three from Final Forms, so every seeded row would be "complete" the moment it was created and the column would stop meaning anything.
+- **Two states, a lenient "Profile Complete" for rosters and a strict "Signup Complete" for chasing families.** Rejected as too complicated. One state, and the roster decision is decoupled by defaulting Include In Generated Rosters to TRUE instead.
+- **A "Profile Missing" column listing the missing fields.** Rejected: the coach can read the row; keep it simple.
+- **Per-family personalized outreach emails with `/player/$playerId` links.** Deferred: for now the admin page produces a copyable BCC list of caretaker emails and the email points at `/signup`, where Player Lookup on last name plus birthdate finds the seeded row. A templated draft generator (possibly in `madison-ultimate-admin`) can come later.
+- **Captcha or honeypot on the admin routes.** Rejected: those defend public forms against bots that are meant to be there; an admin route has one legitimate caller, so it needs authentication, not bot detection.
+- **Purging seeded rows whose families never engage at season end.** Rejected: no delete tooling; the rows carry no family-entered data, the sheet is per-season, and Extra Player Info can exclude them from rosters.
+
+## Consequences
+
+- A Seeded Signup is indistinguishable from a family-created row to every downstream consumer except by Seeded At. Player Lookup finds it from last name plus birthdate; the family then owns it exactly as if they had created it, including changing Preferred First Name away from the legal name. Twins whose preferred name shares no leading letters with their legal name will not be found by lookup and see the near-match warning; the outreach copy asks for the legal first name.
+- A seeded row already has SPS Student ID, so a family's first visit runs no first-join side effects; Seeded Fields the family clears stay cleared, as ADR 0004 intends. ADR 0004 is amended to say the first join may be the moment the row is created.
+- Seeded rows whose families never engage stay in the sheet, appear on generated rosters until a coach sets Include In Generated Rosters to FALSE, and are listed by the coach sheet's Analyze Signups as seeded and not Profile Complete.
+- Updated At now means "last change by a family, or a seed or join that did meaningful work on the row". Recomputing Profile Complete across rows never bumps it.
+- Auto-subscribing caretaker emails from the server carries the known Buttondown datacenter-IP risk (blocked subscribers); the admin page keeps surfacing the blocked count.
+- The run is idempotent and safe after every nightly export. Late Final Forms registrants are seeded even after the family-facing close date, since seeding is an admin decision.
+- ADR 0005 is amended: Final Forms Backfill is now the first pass of this action rather than its own page, and the admin routes are no longer unauthenticated.
+- Spring seasons have no Final Forms, so nothing is seeded and the Profile Complete column is written from family input alone; the row shape is unchanged.
+
+Glossary: `CONTEXT.md` (Seeded Signup, Seed Signups from Final Forms, Profile Complete). Decision record: `docs/fall-2026/seed-signups-grill.md`. Plan: `docs/fall-2026/seed-signups-plan.md`. Coach sheet side: `../madison-ultimate-admin/coach-sheet-apps-script/CONTEXT.md` (Profile Complete, Include In Generated Rosters, Analyze Signups).

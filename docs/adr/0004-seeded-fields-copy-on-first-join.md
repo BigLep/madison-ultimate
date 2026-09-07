@@ -1,10 +1,10 @@
 # Seeded fields copy into the signup row on first Final Forms join, without Save
 
-Status: accepted (2026-08-29)
+Status: accepted (2026-08-29); amended 2026-09-07 by ADR 0006
 
 The Signups sheet is the system of record for profile and contact info (ADR 0002). Final Forms still has useful values for those fields at the moment we first match a player, and a family should not have to click “Use it” or Save to keep them. We decided: **on first Final Forms join only**, copy every empty Seeded Field (grade, student personal/SPS email, student cell phone, caretaker 1 and 2 name/email/phone) into the signup row immediately, in the same write as `spsStudentId` (and Photo Carryover, ADR 0003). The family can edit or clear any copied value afterward. After the join is established we never copy those fields again, even if a cell is later empty. We never overwrite a cell that already has a value.
 
-A real join is established by writing `spsStudentId` onto the row. Magic-name test fixtures never write `spsStudentId`, so “every seed column is still empty” stands in for first join.
+A real join is established by writing `spsStudentId` onto the row. The first join may also be the moment the row is created: Seed Signups from Final Forms (ADR 0006) creates the row and applies this same first-join write, with every cell still empty, so the never-overwrite rule holds trivially and the family's later visits behave exactly as they do for a family-created row. Magic-name test fixtures never write `spsStudentId`, so “every seed column is still empty” stands in for first join.
 
 ## Considered options
 

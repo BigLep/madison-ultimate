@@ -32,17 +32,29 @@ The district-wide student identifier from Final Forms (spsStudentId). Written on
 _Avoid_: StudentID (ambiguous about whose ID scheme)
 
 **Final Forms Join**:
-The one-time match from a signup row to its Final Forms record, on birthdate + last name, disambiguated by legal first name (twins). Succeeds once, then hands off to SPS Student ID. That first success is also the only moment Seeded Fields are copied onto the row (ADR 0004). Attempted the same way regardless of what triggers it: a family visiting `/player`, or a Final Forms Backfill run.
+The one-time match from a signup row to its Final Forms record, on birthdate + last name, disambiguated by legal first name (twins). Succeeds once, then hands off to SPS Student ID. That first success is also the only moment Seeded Fields are copied onto the row (ADR 0004). Attempted the same way regardless of what triggers it: a family visiting `/player`, a Final Forms Backfill run, or Seed Signups from Final Forms (where the row is created in the same run).
 
 **Final Forms Backfill**:
-An admin-triggered, on-demand pass over every signup row missing SPS Student ID, attempting the Final Forms Join for each one, for players who never returned to `/player` after finishing Final Forms. Never overwrites a row that already has SPS Student ID.
+An admin-triggered, on-demand pass over every signup row missing SPS Student ID, attempting the Final Forms Join for each one, for players who never returned to `/player` after finishing Final Forms. Never overwrites a row that already has SPS Student ID. Runs as the first pass of Seed Signups from Final Forms.
 _Avoid_: backfill (bare, elsewhere in this glossary reserved as a contrast to Photo Carryover)
 
+**Seed Signups from Final Forms**:
+The admin action that creates a Seeded Signup for every Final Forms student with no signup, after first running Final Forms Backfill so an existing unjoined row is joined rather than duplicated. Creates nothing in a last-name-plus-birthdate group where a human still has to decide (Ambiguous Match, suspected duplicate signups, Match Discrepancy). Idempotent; safe to re-run after every export.
+_Avoid_: import, sync, pre-populate
+
+**Seeded Signup**:
+A signup row created by Seed Signups from Final Forms rather than by a family at step 0: identity fields and SPS Student ID come from Final Forms, Preferred First Name starts equal to the legal first name, Legal First Name starts blank, and Seeded At records the moment. From then on the family owns the row exactly as if they had created it.
+_Avoid_: placeholder row, ghost signup, pre-registration
+
+**Profile Complete**:
+A signup whose Player Info, Caretaker Info, and Photo Upload checklist items are all done, as the family sees them on their player page. Defined and written by the portal on every change to the row; the coach sheet passes it through and never computes its own. Volunteering answers and Final Forms Status never factor in.
+_Avoid_: registered, signed up, Signup Complete
+
 **Ambiguous Match**:
-A Final Forms Backfill outcome: multiple twin candidates were found for a row but legal first name couldn't disambiguate them, so nothing was joined. Distinct from finding no candidate at all.
+A Final Forms Backfill or seeding outcome: multiple twin candidates were found for a row but legal first name couldn't disambiguate them, so nothing was joined. Distinct from finding no candidate at all.
 
 **Match Discrepancy**:
-A Final Forms Backfill outcome: the row already has an SPS Student ID, but a fresh Final Forms Join would have produced a different one. Surfaced for manual review; never auto-corrected, since SPS Student ID is authoritative once set.
+A Final Forms Backfill or seeding outcome: the row already has an SPS Student ID, but a fresh Final Forms Join would have produced a different one (or, when seeding, a Final Forms record matches a row already joined to a different ID). Surfaced for manual review; never auto-corrected, since SPS Student ID is authoritative once set.
 
 **Possible Match**:
 Surfaced alongside an unmatched Final Forms Backfill row: a Final Forms record sharing the row's last name but not its birthdate. The usual cause is a wrong Date of Birth on one side, not two unrelated people; never joined automatically, only shown so a human can compare and fix the signup row's birthdate (or grab the PlayerID to investigate).
@@ -65,7 +77,7 @@ The registration-progress facts (parent signed, student signed, cleared, physica
 _Avoid_: storing or caching these on the signup row
 
 **Seeded Field**:
-A profile or contact field (grade, student email/phone, parent names/emails/phones) copied from Final Forms into an empty signup-row cell on first join, without waiting for Save, then owned by the signup row. Never overwrites a value the family already saved; never copied again after the join is established, even if the family later clears the field. See ADR 0004.
+A profile or contact field (grade, student email/phone, parent names/emails/phones) copied from Final Forms into an empty signup-row cell on first join, without waiting for Save, then owned by the signup row. Never overwrites a value the family already saved; never copied again after the join is established, even if the family later clears the field. Identity fields on a Seeded Signup come from Final Forms at creation but are not Seeded Fields. See ADR 0004.
 _Avoid_: prefill (ambiguous about ownership after the copy)
 
 ### Photos and media

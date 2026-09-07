@@ -1,5 +1,7 @@
 # Final Forms Backfill lives in madison-ultimate, unauthenticated, reusing per-player join logic
 
+Status: accepted (2026-09-06); amended 2026-09-07 by ADR 0006: Final Forms Backfill now runs as the first pass of Seed Signups from Final Forms, and `/admin` and `/api/admin` are gated by Basic Auth (the rejected auth-gate option below was reversed once an admin route began creating rows and subscribing emails).
+
 Players who finish Final Forms but never return to `/player` never get their Final Forms Join, since that join only ever ran as a side effect of a family visiting their player page. We considered building a catch-up tool in `madison-ultimate-admin` (the separate repo for coach/admin tooling, which already owns the nightly Final Forms CSV export), but the actual matching logic (`findFinalFormsMatch`) and the signup-row write path (`applyFirstJoinSideEffects`, `updateSignupRow`) live in `madison-ultimate` and nowhere else; `madison-ultimate-admin`'s existing tools (photo-mapper, `FullNameDiff.gs`) each already reimplement their own name matching rather than share one, and we didn't want a fourth reimplementation of "match a player by name." So Final Forms Backfill is a `madison-ultimate` admin route that reuses `findFinalFormsMatch` and `applyFirstJoinSideEffects` unchanged, runs unauthenticated like this repo's other admin routes (`/api/diagnostics`, `/api/admin/cache`), and is bulk-only with no forced cache refresh: it's a rare, admin-only, start-of-season action, not something worth extra infrastructure for.
 
 ## Considered Options
