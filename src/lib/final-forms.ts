@@ -192,12 +192,24 @@ function matchByNameAndDob(signup: SignupRecord, snapshot: FinalFormsSnapshot): 
   );
 
   if (candidates.length === 0) return { kind: 'no-candidate' };
-  if (candidates.length === 1) {
-    return { kind: 'matched', match: { record: candidates[0], dataAsOf: snapshot.fileTimestamp } };
-  }
 
   // Disambiguate twins by legal first name (falls back to preferred first name if none given).
   const legalFirst = normalizeName(signup[SIGNUPS_COLUMNS.LEGAL_FIRST_NAME] || signup[SIGNUPS_COLUMNS.PREFERRED_FIRST_NAME]);
+
+  if (candidates.length === 1) {
+    // A single Final Forms record sharing last name + birthdate does not mean this signup is
+    // that person: a twin's own record can simply not have synced into the export yet, and the
+    // sibling's record left alone in the group looks identical to an only child (this is exactly
+    // how the Wilcox mismatch happened - Zoë's signup was joined to her twin brother Caleb's
+    // Final Forms record because his was the only Wilcox record in the export at the time). Only
+    // skip the name check when the signup has not given us a name to check against yet.
+    const candidateFirst = normalizeName(candidates[0].legalFirstName);
+    if (!legalFirst || !candidateFirst || legalFirst[0] === candidateFirst[0]) {
+      return { kind: 'matched', match: { record: candidates[0], dataAsOf: snapshot.fileTimestamp } };
+    }
+    return { kind: 'ambiguous', candidateCount: candidates.length };
+  }
+
   const exact = candidates.find(r => normalizeName(r.legalFirstName) === legalFirst);
   return exact
     ? { kind: 'matched', match: { record: exact, dataAsOf: snapshot.fileTimestamp } }
@@ -407,7 +419,7 @@ export type ReconciliationEntry =
   | { kind: 'join'; record: FinalFormsRecord; playerId: string; signup: SignupRecord }
   | { kind: 'seed'; record: FinalFormsRecord }
   | { kind: 'ambiguous'; records: FinalFormsRecord[]; playerIds: string[] }
-  | { kind: 'duplicate-signups'; record: FinalFormsRecord; playerIds: string[] }
+  | { kind: 'duplicate-signups'; record: FinalFormsRecord; playerIds: string[]; joinedPlayerId?: string }
   | { kind: 'discrepancy'; record: FinalFormsRecord; playerId: string; storedStudentId: string }
   | { kind: 'unseedable'; record: FinalFormsRecord; reason: string }
   | { kind: 'unmatched-signup'; playerId: string; signup: SignupRecord; possibleMatches: PossibleMatch[] };
@@ -517,9 +529,26 @@ export function planFinalFormsReconciliation(
         continue;
       }
     }
-    if (remaining.length === 0) continue;
-
     const unjoined = unjoinedByKey.get(key) || [];
+
+    // Every record here is already claimed by ID, yet an unjoined row shares the group's last
+    // name and birthdate: a family row created after the seed, or a birthdate fixed after it.
+    // Report it as a suspected duplicate of the joined row rather than dropping it silently.
+    if (remaining.length === 0) {
+      for (const signup of unjoined) {
+        const first = normalizeName(signup[SIGNUPS_COLUMNS.LEGAL_FIRST_NAME] || signup[SIGNUPS_COLUMNS.PREFERRED_FIRST_NAME]);
+        const named = group.filter(r => normalizeName(r.legalFirstName) === first);
+        const record = group.length === 1 ? group[0] : named.length === 1 ? named[0] : group[0];
+        const joinedPlayerId = joinedByStudentId.get(record.studentId)![SIGNUPS_COLUMNS.PLAYER_ID];
+        entries.push({
+          kind: 'duplicate-signups',
+          record,
+          playerIds: [joinedPlayerId, signup[SIGNUPS_COLUMNS.PLAYER_ID]],
+          joinedPlayerId,
+        });
+      }
+      continue;
+    }
 
     if (group.length === 1) {
       const record = remaining[0];

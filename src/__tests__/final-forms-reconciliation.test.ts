@@ -95,6 +95,22 @@ describe('planFinalFormsReconciliation', () => {
     expect(entries).toEqual([{ kind: 'duplicate-signups', record: solo, playerIds: ['p-1', 'p-2'] }]);
   });
 
+  it('reports an unjoined row that shares a name and birthdate with an already-joined row as a suspected duplicate, never dropping it', () => {
+    // A family created their own row after the student was seeded (or the birthdate was fixed
+    // after the seed): the record is claimed by ID, the family row shares its key.
+    const { entries } = plan(
+      [
+        signupRecord({ [SIGNUPS_COLUMNS.PLAYER_ID]: 'p-seeded', [SIGNUPS_COLUMNS.SPS_STUDENT_ID]: 'FF-SOLO', [SIGNUPS_COLUMNS.LAST_NAME]: 'Sololast', [SIGNUPS_COLUMNS.DATE_OF_BIRTH]: '2013-05-01' }),
+        signupRecord({ [SIGNUPS_COLUMNS.PLAYER_ID]: 'p-family', [SIGNUPS_COLUMNS.LAST_NAME]: 'Sololast', [SIGNUPS_COLUMNS.DATE_OF_BIRTH]: '2013-05-01' }),
+      ],
+      [solo]
+    );
+    expect(entries).toEqual([
+      { kind: 'skip', record: solo, playerId: 'p-seeded' },
+      { kind: 'duplicate-signups', record: solo, playerIds: ['p-seeded', 'p-family'], joinedPlayerId: 'p-seeded' },
+    ]);
+  });
+
   it('seeds both twins when neither has a signup', () => {
     const { entries } = plan([], [twinA, twinB]);
     expect(entries).toEqual([

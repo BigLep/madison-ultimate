@@ -281,9 +281,20 @@ export default function FinalFormsAdminPage() {
 
           <ReportSection title={`Suspected duplicate signups, nothing done (${preview.duplicateSignups.length})`}>
             {preview.duplicateSignups.map(d => (
-              <li key={d.studentId}>
-                {d.firstName} {d.lastName} ({d.studentId}) matches signups {d.playerIds.join(', ')}. Remove the extra row,
-                then run again.
+              <li key={`${d.studentId}-${d.playerIds.join('-')}`}>
+                {d.joinedPlayerId ? (
+                  <>
+                    {d.firstName} {d.lastName} ({d.studentId}) is already joined to {d.joinedPlayerId}, and{' '}
+                    {d.playerIds.filter(id => id !== d.joinedPlayerId).join(', ')} shares the same name and birthdate. Keep
+                    one row (the family&apos;s, if they created it), copy the SPS Student ID, Grade, and Photo Drive File
+                    ID onto it, delete the other, then run again.
+                  </>
+                ) : (
+                  <>
+                    {d.firstName} {d.lastName} ({d.studentId}) matches signups {d.playerIds.join(', ')}. Remove the extra
+                    row, then run again.
+                  </>
+                )}
               </li>
             ))}
           </ReportSection>
@@ -313,7 +324,8 @@ export default function FinalFormsAdminPage() {
                   <div key={m.studentId} className="mt-1" style={{ color: 'var(--secondary-text)' }}>
                     <div>
                       Possible match (birthdate doesn&apos;t match, check it): {m.firstName} {item.lastName} · SPS Student ID{' '}
-                      {m.studentId} · Final Forms DOB {m.dateOfBirth}
+                      {m.studentId} · Final Forms DOB {m.dateOfBirth}. Fix the birthdate and Preview again before you Apply;
+                      Apply first would seed a second row for this student.
                     </div>
                     <div className="flex items-start gap-2 mt-1">
                       <pre className="whitespace-pre-wrap p-2 rounded flex-1" style={{ background: 'var(--primary-bg)' }}>
@@ -450,7 +462,7 @@ function fixDobInstruction(
   item: { playerId: string; preferredFirstName: string; lastName: string; signupDateOfBirth: string },
   match: { studentId: string; dateOfBirth: string }
 ): string {
-  return `Update signup PlayerID ${item.playerId} (${item.preferredFirstName} ${item.lastName}): Date of Birth is currently ${item.signupDateOfBirth || '(blank)'}, but Final Forms has ${match.dateOfBirth} for a same-last-name student (SPS Student ID ${match.studentId}). Change the signup's Date of Birth to ${match.dateOfBirth}.`
+  return `Update signup PlayerID ${item.playerId} (${item.preferredFirstName} ${item.lastName}): Date of Birth is currently ${item.signupDateOfBirth || '(blank)'}, but Final Forms has ${match.dateOfBirth} for a same-last-name student (SPS Student ID ${match.studentId}). Change the signup's Date of Birth to ${match.dateOfBirth}, press Preview again, and confirm the row appears under "Would join an existing signup" before you Apply. Applying first seeds a second row for the same student.`
 }
 
 function Notice({ children }: { children: React.ReactNode }) {

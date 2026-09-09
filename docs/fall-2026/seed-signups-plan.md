@@ -52,6 +52,7 @@ A `discrepancy` blocks the whole group, joins included, not only seeding: a huma
 - A missing export (`no-snapshot`) stops the run before any write, as the Backfill route does today.
 
 Seeding ignores `isNewSignupClosed`; it is an admin action.
+- Added 2026-09-09: when every Final Forms record in a last-name-plus-birthdate group is already joined by ID and an unjoined signup still shares the group's key (a family row created after the seed, or a birthdate corrected after it), the plan reports a `duplicate-signups` entry carrying `joinedPlayerId`, instead of dropping the row silently as it did before. The admin page tells the coach to keep one row, copy SPS Student ID, Grade, and Photo Drive File ID onto it, delete the other, and run again; the Possible Match instruction now says to fix the birthdate and Preview again before Apply, since Apply first seeds a second row.
 
 ## 6. Admin route and page
 

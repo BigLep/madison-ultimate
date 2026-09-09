@@ -156,6 +156,32 @@ describe('findFinalFormsMatch — live export join', () => {
     expect(result?.record.studentSigned).toBe(true);
   });
 
+  it('does not blind-join the single Final Forms record in a group when the signup names someone else (the twin whose own record has not synced yet)', async () => {
+    // The Wilcox case: only one twin's Final Forms record was in the export when their sibling's
+    // signup was checked, and the sibling's own name did not match it at all.
+    await stubSnapshot();
+    const result = await findFinalFormsMatch(
+      signupRecord({
+        [SIGNUPS_COLUMNS.LAST_NAME]: 'Sololast',
+        [SIGNUPS_COLUMNS.DATE_OF_BIRTH]: '2013-05-01',
+        [SIGNUPS_COLUMNS.PREFERRED_FIRST_NAME]: 'Morgan',
+      })
+    );
+    expect(result).toBeNull();
+  });
+
+  it('still matches the single Final Forms record in a group when the signup names the same person, even by nickname', async () => {
+    await stubSnapshot();
+    const result = await findFinalFormsMatch(
+      signupRecord({
+        [SIGNUPS_COLUMNS.LAST_NAME]: 'Sololast',
+        [SIGNUPS_COLUMNS.DATE_OF_BIRTH]: '2013-05-01',
+        [SIGNUPS_COLUMNS.PREFERRED_FIRST_NAME]: 'Cas', // nickname for Final Forms legal name "Casey"
+      })
+    );
+    expect(result?.record.studentId).toBe('FF-CASEY');
+  });
+
   it('disambiguates twins by legal first name', async () => {
     await stubSnapshot();
     const result = await findFinalFormsMatch(

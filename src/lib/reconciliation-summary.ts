@@ -11,7 +11,7 @@ export interface PlanSummary {
   seed: StudentSummary[];
   join: Array<StudentSummary & { playerId: string; preferredFirstName: string }>;
   ambiguous: Array<{ students: StudentSummary[]; playerIds: string[] }>;
-  duplicateSignups: Array<StudentSummary & { playerIds: string[] }>;
+  duplicateSignups: Array<StudentSummary & { playerIds: string[]; joinedPlayerId?: string }>;
   discrepancies: Array<StudentSummary & { playerId: string; storedStudentId: string }>;
   unseedable: Array<StudentSummary & { reason: string }>;
   unmatchedSignups: Array<{
@@ -80,7 +80,11 @@ export function summarizePlan(plan: ReconciliationPlan): PlanSummary {
         summary.ambiguous.push({ students: entry.records.map(studentSummary), playerIds: entry.playerIds });
         break;
       case 'duplicate-signups':
-        summary.duplicateSignups.push({ ...studentSummary(entry.record), playerIds: entry.playerIds });
+        summary.duplicateSignups.push({
+          ...studentSummary(entry.record),
+          playerIds: entry.playerIds,
+          ...(entry.joinedPlayerId ? { joinedPlayerId: entry.joinedPlayerId } : {}),
+        });
         break;
       case 'discrepancy':
         summary.discrepancies.push({ ...studentSummary(entry.record), playerId: entry.playerId, storedStudentId: entry.storedStudentId });
