@@ -196,6 +196,23 @@ export default function FinalFormsAdminPage() {
       {applied && (
         <div className="mb-8 space-y-6">
           <h2 className="text-xl font-semibold" style={{ color: 'var(--page-title)' }}>Last run</h2>
+          {applied.subscribeFailures > 0 && (
+            <div
+              className="rounded-lg p-4 border text-sm"
+              style={{
+                background: 'var(--availability-cant-make-bg)',
+                borderColor: 'var(--availability-cant-make-border)',
+                color: 'var(--availability-cant-make-text)',
+              }}
+            >
+              <div className="font-semibold mb-1">
+                Newsletter subscribe failed for {applied.subscribeFailures} address{applied.subscribeFailures === 1 ? '' : 'es'}.
+              </div>
+              Buttondown did not answer or answered with an error, so those addresses are not on the newsletter. They
+              are listed on the rows below. The next time the family saves their profile the subscribe is retried, or
+              add them in Buttondown by hand.
+            </div>
+          )}
           <ReportSection title={`Seeded (${applied.seeded.length})`}>
             {applied.seeded.map(item => (
               <li key={item.playerId}>
@@ -203,6 +220,9 @@ export default function FinalFormsAdminPage() {
                 {item.photoCarriedOver && <span style={{ color: 'var(--secondary-text)' }}> · photo carried over</span>}
                 {item.subscribedEmails.length > 0 && (
                   <span style={{ color: 'var(--secondary-text)' }}> · subscribed: {item.subscribedEmails.join(', ')}</span>
+                )}
+                {item.subscribeFailed.length > 0 && (
+                  <span style={{ color: 'var(--availability-cant-make-text)' }}> · subscribe failed: {item.subscribeFailed.join(', ')}</span>
                 )}
               </li>
             ))}
@@ -213,6 +233,9 @@ export default function FinalFormsAdminPage() {
                 {item.playerId} ({item.firstName} {item.lastName}) → SPS Student ID {item.studentId}
                 {item.subscribedEmails.length > 0 && (
                   <span style={{ color: 'var(--secondary-text)' }}> · subscribed: {item.subscribedEmails.join(', ')}</span>
+                )}
+                {item.subscribeFailed.length > 0 && (
+                  <span style={{ color: 'var(--availability-cant-make-text)' }}> · subscribe failed: {item.subscribeFailed.join(', ')}</span>
                 )}
               </li>
             ))}

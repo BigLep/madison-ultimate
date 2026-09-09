@@ -736,6 +736,8 @@ See [docs/adr/0004-seeded-fields-copy-on-first-join.md](docs/adr/0004-seeded-fie
 
 **Why not just try the real write and see.** Probing against a real family's email would risk actually subscribing or unsubscribing them as a side effect of running diagnostics. Probing against a guaranteed-nonexistent address makes every diagnostics run a no-op against real data.
 
+**Timeouts and visible failures (2026-09-09).** Every Buttondown request carries a 10-second `AbortSignal.timeout` (`BUTTONDOWN_TIMEOUT_MS` overrides it, mainly for tests). Before this, a Buttondown outage that answered 500 or 502 after minutes made Seed Signups from Final Forms look hung, since each auto-subscribe waited on the upstream without limit; the sheet writes were done long before. A timed-out request is reported like any failed one (null status, false subscribe) and never throws to a caller. The first-join outcome now lists `subscribeFailed` (eligible addresses the newsletter did not take), the Apply report totals them as `subscribeFailures`, and the admin page shows a warning with the addresses per row, so an outage costs seconds and leaves a record instead of silently dropping subscribers. The family's next profile save retries the subscribe.
+
 ## Development Best Practices
 
 ### Sheet Data Column Mapping

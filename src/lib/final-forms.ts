@@ -299,6 +299,8 @@ export interface FirstJoinOutcome {
   fieldsCopied: boolean;
   photoCarriedOver: boolean;
   subscribedEmails: string[];
+  /** Eligible emails the newsletter did not take: the status lookup or the subscribe call failed (Buttondown down, key rejected). */
+  subscribeFailed: string[];
 }
 
 /**
@@ -370,6 +372,7 @@ export async function applyFirstJoinSideEffects(
   // caretaker too) and never one whose subscribe attempt failed, so a Final Forms Backfill report
   // can't misrepresent who was actually just added to the mailing list.
   let subscribedEmails: string[] = [];
+  let subscribeFailed: string[] = [];
   if (isFirstRealJoin) {
     const merged = { ...existing, ...updates };
     const eligible = eligibleMailingEmails(merged);
@@ -380,9 +383,14 @@ export async function applyFirstJoinSideEffects(
     subscribedEmails = eligible
       .filter((_, i) => wasAbsent[i] === 'absent' && succeeded[i])
       .map(entry => entry.email);
+    // A null status means the lookup itself failed; subscribeUnlessUnsubscribed then returns
+    // false too. Either way the address is not on the list and someone should know.
+    subscribeFailed = eligible
+      .filter((_, i) => wasAbsent[i] === null || (wasAbsent[i] === 'absent' && !succeeded[i]))
+      .map(entry => entry.email);
   }
 
-  return { fieldsCopied, photoCarriedOver, subscribedEmails };
+  return { fieldsCopied, photoCarriedOver, subscribedEmails, subscribeFailed };
 }
 
 /**

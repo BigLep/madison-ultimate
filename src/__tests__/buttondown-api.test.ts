@@ -150,3 +150,38 @@ describe('probeButtondownPermissions', () => {
     });
   });
 });
+
+describe('Buttondown request timeout', () => {
+  const originalKey = process.env.BUTTONDOWN_API_KEY;
+  const originalTimeout = process.env.BUTTONDOWN_TIMEOUT_MS;
+
+  beforeEach(() => {
+    process.env.BUTTONDOWN_API_KEY = 'test-key';
+    process.env.BUTTONDOWN_TIMEOUT_MS = '20';
+    vi.stubGlobal('fetch', vi.fn());
+  });
+
+  afterEach(() => {
+    process.env.BUTTONDOWN_API_KEY = originalKey;
+    if (originalTimeout === undefined) delete process.env.BUTTONDOWN_TIMEOUT_MS;
+    else process.env.BUTTONDOWN_TIMEOUT_MS = originalTimeout;
+    vi.unstubAllGlobals();
+  });
+
+  it('gives up on a request Buttondown never answers, reporting failure instead of hanging', async () => {
+    const fetchMock = vi.mocked(fetch);
+    // A fetch that only settles when the caller's signal aborts, like a stalled upstream.
+    fetchMock.mockImplementation(
+      (_url, init) =>
+        new Promise((_, reject) => {
+          const signal = (init as RequestInit).signal;
+          signal?.addEventListener('abort', () => reject(signal.reason));
+        })
+    );
+
+    const started = Date.now();
+    expect(await subscribeUnlessUnsubscribed(EMAIL)).toBe(false);
+    expect(Date.now() - started).toBeLessThan(2000);
+    expect((fetchMock.mock.calls[0][1] as RequestInit).signal).toBeInstanceOf(AbortSignal);
+  });
+});

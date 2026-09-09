@@ -119,8 +119,8 @@ describe('POST /api/admin/final-forms (Apply)', () => {
   it('applies the plan and reports seeded and joined rows plus the recompute count', async () => {
     preview.mockResolvedValue(PLAN);
     apply.mockResolvedValue({
-      seeded: [{ playerId: 'p-new', studentId: 'FF-SOLO', firstJoin: { fieldsCopied: true, photoCarriedOver: true, subscribedEmails: ['ct1@example.com'] } }],
-      joined: [{ playerId: 'p-join', studentId: 'FF-A', firstJoin: { fieldsCopied: true, photoCarriedOver: false, subscribedEmails: [] } }],
+      seeded: [{ playerId: 'p-new', studentId: 'FF-SOLO', firstJoin: { fieldsCopied: true, photoCarriedOver: true, subscribedEmails: ['ct1@example.com'], subscribeFailed: [] } }],
+      joined: [{ playerId: 'p-join', studentId: 'FF-A', firstJoin: { fieldsCopied: true, photoCarriedOver: false, subscribedEmails: [], subscribeFailed: ['ct2@example.com'] } }],
       recomputedProfileComplete: 3,
     });
 
@@ -128,9 +128,10 @@ describe('POST /api/admin/final-forms (Apply)', () => {
     expect(body.success).toBe(true);
     expect(apply).toHaveBeenCalledWith(PLAN);
     expect(body.applied).toEqual({
-      seeded: [{ playerId: 'p-new', studentId: 'FF-SOLO', firstName: 'Casey', lastName: 'Sololast', grade: '8', dateOfBirth: '2013-05-01', subscribedEmails: ['ct1@example.com'], photoCarriedOver: true }],
-      joined: [{ playerId: 'p-join', studentId: 'FF-A', firstName: 'Alex', lastName: 'Twinlast', grade: '7', dateOfBirth: '2014-05-12', subscribedEmails: [], photoCarriedOver: false }],
+      seeded: [{ playerId: 'p-new', studentId: 'FF-SOLO', firstName: 'Casey', lastName: 'Sololast', grade: '8', dateOfBirth: '2013-05-01', subscribedEmails: ['ct1@example.com'], subscribeFailed: [], photoCarriedOver: true }],
+      joined: [{ playerId: 'p-join', studentId: 'FF-A', firstName: 'Alex', lastName: 'Twinlast', grade: '7', dateOfBirth: '2014-05-12', subscribedEmails: [], subscribeFailed: ['ct2@example.com'], photoCarriedOver: false }],
       recomputedProfileComplete: 3,
+      subscribeFailures: 1,
     });
     expect(body.preview.seed).toHaveLength(1);
   });

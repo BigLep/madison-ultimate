@@ -6,6 +6,24 @@
 const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
 const API_BASE = 'https://api.buttondown.com/v1';
 
+/**
+ * Every Buttondown request gives up after this long. Buttondown outages (500s and 502s that take
+ * minutes to arrive) once made Seed Signups from Final Forms look hung, since each subscribe
+ * waited on the upstream with no limit. A timed-out request is reported exactly like any other
+ * failed one (null status, false subscribe); nothing here ever throws to a caller.
+ * BUTTONDOWN_TIMEOUT_MS overrides the default, mainly for tests.
+ */
+const DEFAULT_TIMEOUT_MS = 10 * 1000;
+
+function requestTimeoutMs(): number {
+  const configured = Number(process.env.BUTTONDOWN_TIMEOUT_MS);
+  return Number.isFinite(configured) && configured > 0 ? configured : DEFAULT_TIMEOUT_MS;
+}
+
+function buttondownFetch(url: string, init: RequestInit & { next?: { revalidate: number } } = {}): Promise<Response> {
+  return fetch(url, { ...init, signal: AbortSignal.timeout(requestTimeoutMs()) });
+}
+
 interface CacheEntry {
   emails: Set<string>;
   timestamp: number;
@@ -43,7 +61,7 @@ export async function getSubscriberEmails(): Promise<Set<string>> {
   let requestCount = 0;
 
   while (url && requestCount < 50) {
-    const res = await fetch(url, {
+    const res = await buttondownFetch(url, {
       headers: { Authorization: `Token ${apiKey}` },
       next: { revalidate: 0 },
     });
@@ -100,7 +118,7 @@ export async function getBlockedSubscriberCount(): Promise<number | null> {
   if (!apiKey) return null;
 
   try {
-    const res = await fetch(`${API_BASE}/subscribers?type=blocked&page_size=1`, {
+    const res = await buttondownFetch(`${API_BASE}/subscribers?type=blocked&page_size=1`, {
       headers: { Authorization: `Token ${apiKey}` },
       next: { revalidate: 0 },
     });
@@ -139,7 +157,7 @@ export async function getSubscriberStatus(email: string): Promise<SubscriberStat
   if (!apiKey) return null;
 
   try {
-    const res = await fetch(`${API_BASE}/subscribers/${encodeURIComponent(trimmed)}`, {
+    const res = await buttondownFetch(`${API_BASE}/subscribers/${encodeURIComponent(trimmed)}`, {
       headers: { Authorization: `Token ${apiKey}` },
       next: { revalidate: 0 },
     });
@@ -200,7 +218,7 @@ async function performSubscribe(
   try {
     const res =
       status === 'unsubscribed'
-        ? await fetch(`${API_BASE}/subscribers/${encodeURIComponent(trimmed)}`, {
+        ? await buttondownFetch(`${API_BASE}/subscribers/${encodeURIComponent(trimmed)}`, {
             method: 'PATCH',
             headers: {
               Authorization: `Token ${apiKey}`,
@@ -209,7 +227,7 @@ async function performSubscribe(
             body: JSON.stringify({ type: 'regular' }),
             next: { revalidate: 0 },
           })
-        : await fetch(`${API_BASE}/subscribers`, {
+        : await buttondownFetch(`${API_BASE}/subscribers`, {
             method: 'POST',
             headers: {
               Authorization: `Token ${apiKey}`,
@@ -271,7 +289,7 @@ export async function probeButtondownPermissions(): Promise<ButtondownPermission
   const headers = { Authorization: `Token ${apiKey}` };
 
   try {
-    const listRes = await fetch(`${API_BASE}/subscribers?page_size=1`, {
+    const listRes = await buttondownFetch(`${API_BASE}/subscribers?page_size=1`, {
       headers,
       next: { revalidate: 0 },
     });
@@ -294,7 +312,7 @@ export async function probeButtondownPermissions(): Promise<ButtondownPermission
       };
     }
 
-    const writeRes = await fetch(
+    const writeRes = await buttondownFetch(
       `${API_BASE}/subscribers/${encodeURIComponent(BUTTONDOWN_WRITE_PROBE_EMAIL)}`,
       {
         method: 'PATCH',
@@ -351,7 +369,7 @@ export async function unsubscribeEmail(email: string): Promise<boolean> {
   if (!apiKey || !trimmed) return false;
 
   try {
-    const res = await fetch(`${API_BASE}/subscribers/${encodeURIComponent(trimmed)}`, {
+    const res = await buttondownFetch(`${API_BASE}/subscribers/${encodeURIComponent(trimmed)}`, {
       method: 'PATCH',
       headers: {
         Authorization: `Token ${apiKey}`,

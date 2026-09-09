@@ -27,6 +27,7 @@ export interface PlanSummary {
 export interface AppliedRowSummary extends StudentSummary {
   playerId: string;
   subscribedEmails: string[];
+  subscribeFailed: string[];
   photoCarriedOver: boolean;
 }
 
@@ -34,6 +35,8 @@ export interface AppliedSummary {
   seeded: AppliedRowSummary[];
   joined: AppliedRowSummary[];
   recomputedProfileComplete: number;
+  /** Total addresses across seeded and joined rows the newsletter did not take; the page warns when non-zero. */
+  subscribeFailures: number;
 }
 
 export function studentSummary(record: FinalFormsRecord): StudentSummary {
@@ -111,12 +114,16 @@ export function summarizeApplied(plan: ReconciliationPlan, report: Reconciliatio
       ...(record ? studentSummary(record) : { studentId: outcome.studentId, firstName: '', lastName: '', grade: '', dateOfBirth: '' }),
       playerId: outcome.playerId,
       subscribedEmails: outcome.firstJoin.subscribedEmails,
+      subscribeFailed: outcome.firstJoin.subscribeFailed,
       photoCarriedOver: outcome.firstJoin.photoCarriedOver,
     };
   };
+  const seeded = report.seeded.map(row);
+  const joined = report.joined.map(row);
   return {
-    seeded: report.seeded.map(row),
-    joined: report.joined.map(row),
+    seeded,
+    joined,
     recomputedProfileComplete: report.recomputedProfileComplete,
+    subscribeFailures: [...seeded, ...joined].reduce((n, r) => n + r.subscribeFailed.length, 0),
   };
 }

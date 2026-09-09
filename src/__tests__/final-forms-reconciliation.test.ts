@@ -290,6 +290,18 @@ describe('seedSignupFromFinalForms', () => {
     expect(updates[SIGNUPS_COLUMNS.PHOTO_DRIVE_FILE_ID]).toBe('photo-file-1');
     expect(outcome.firstJoin.photoCarriedOver).toBe(true);
     expect(outcome.firstJoin.subscribedEmails).toEqual(['ct1@example.com', 'player@example.com']);
+    expect(outcome.firstJoin.subscribeFailed).toEqual([]);
+  });
+
+  it('reports every eligible email the newsletter could not take, so a Buttondown outage is visible in the run report', async () => {
+    // Status lookup fails for one address (null) and the subscribe itself fails for the other.
+    subscriberStatus.mockImplementation(async email => (email === 'ct1@example.com' ? null : 'absent'));
+    subscribeUnlessUnsub.mockImplementation(async email => email !== 'player@example.com');
+    const record = finalFormsRecord({ studentId: 'FF-10', firstName: 'Casey', lastName: 'Outagelast', dateOfBirth: '5/1/2013' });
+    const outcome = await seedSignupFromFinalForms(record, DATA_AS_OF);
+
+    expect(outcome.firstJoin.subscribedEmails).toEqual([]);
+    expect(outcome.firstJoin.subscribeFailed).toEqual(['ct1@example.com', 'player@example.com']);
   });
 });
 
