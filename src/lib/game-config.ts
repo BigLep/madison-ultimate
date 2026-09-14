@@ -22,6 +22,8 @@ export const GAME_CONFIG = {
     GAME_NOTE: "Game Note",
     OPPONENT: "Opponent",
     OPPONENT_TEAM_PAGE: "Oponent Team Page", // sheet column name as-is
+    // Fall 2026: one Game Info row per team-game; blank Team means every team (grill Q25).
+    TEAM: "Team",
   },
 
   // Fields sheet column names (lookup by Field Name for Google Map URL, etc.)

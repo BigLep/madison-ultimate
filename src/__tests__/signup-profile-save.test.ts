@@ -9,6 +9,11 @@ vi.mock('@/lib/signups-sheet', () => ({
   updateSignupRow: vi.fn(),
 }));
 
+// The player GET reads Team from the coach workbook; keep the test off Google auth.
+vi.mock('@/lib/roster-team', () => ({
+  getTeamForPlayerId: vi.fn(async () => ''),
+}));
+
 vi.mock('@/lib/buttondown-api', () => ({
   subscribeEmail: vi.fn(),
   subscribeUnlessUnsubscribed: vi.fn(),

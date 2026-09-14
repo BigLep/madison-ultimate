@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { findGameColumns } from '@/lib/game-availability-helper';
-import { GET as gameGet } from '@/app/api/game/[portalId]/route';
+import { GET as gameGet } from '@/app/api/player/[playerId]/game/route';
 import { getPlayerGameAvailability } from '@/lib/game-availability-helper';
 import { getCachedSheetData } from '@/lib/sheet-cache';
 
@@ -128,8 +128,8 @@ vi.mock('@/lib/google-api', () => ({
   getHeaderRowWithNotes: vi.fn(async () => []),
 }));
 
-vi.mock('@/lib/portal-cache', () => ({
-  findPortalEntryByPortalId: vi.fn(async () => ({ lookupKey: 'TestPlayer' })),
+vi.mock('@/lib/portal-player', () => ({
+  loadPortalPlayer: vi.fn(async () => ({ playerId: 'p123', fullName: 'TestPlayer', team: '', record: {} })),
 }));
 
 const GAME_INFO_MOCK = [
@@ -157,13 +157,13 @@ vi.mock('@/lib/game-availability-helper', async (importOriginal) => {
       // Full Name, Grade, Gender Identification, 4/25 Availability, 4/25 Activation Status,
       // 4/25 Can Carpool There?, 4/25 Need Carpool There, 4/25 Note
       headerRow: [
-        'Full Name', 'Grade', 'Gender Identification',
+        'Full Name', 'PlayerID', 'Grade', 'Gender Identification',
         '4/25 Availability', '4/25 Activation Status',
         '4/25 Can Carpool There?', '4/25 Need Carpool There',
         '4/25 Note',
       ],
       playerRow: [
-        'TestPlayer', '8', 'Bx',
+        'TestPlayer', 'p123', '8', 'Bx',
         '👍 Planning to be there', 'Active',
         'Yes, 2 seats', '',
         'See you there!',
@@ -174,10 +174,10 @@ vi.mock('@/lib/game-availability-helper', async (importOriginal) => {
   };
 });
 
-describe('GET /api/game – extraFields in response', () => {
+describe('GET /api/player/[playerId]/game – extraFields in response', () => {
   it('returns extraFields with correct labels, notes, and player values', async () => {
-    const req = new NextRequest('http://localhost/api/game/p123');
-    const res = await gameGet(req, { params: Promise.resolve({ portalId: 'p123' }) });
+    const req = new NextRequest('http://localhost/api/player/p123/game');
+    const res = await gameGet(req, { params: Promise.resolve({ playerId: 'p123' }) });
     expect(res.status).toBe(200);
 
     const data = await res.json();
@@ -205,14 +205,14 @@ describe('GET /api/game – extraFields in response', () => {
 
   it('returns empty extraFields array for games with no extra columns', async () => {
     vi.mocked(getPlayerGameAvailability).mockResolvedValueOnce({
-      headerRow: ['Full Name', 'Grade', 'Gender Identification', '4/25', '4/25 Note', '4/25 Activation Status'],
-      playerRow: ['TestPlayer', '8', 'Bx', '👍 Planning to be there', '', 'Active'],
+      headerRow: ['Full Name', 'PlayerID', 'Grade', 'Gender Identification', '4/25', '4/25 Note', '4/25 Activation Status'],
+      playerRow: ['TestPlayer', 'p123', '8', 'Bx', '👍 Planning to be there', '', 'Active'],
       rowIndex: 2,
       columnMapping: {},
     });
 
-    const req = new NextRequest('http://localhost/api/game/p123');
-    const res = await gameGet(req, { params: Promise.resolve({ portalId: 'p123' }) });
+    const req = new NextRequest('http://localhost/api/player/p123/game');
+    const res = await gameGet(req, { params: Promise.resolve({ playerId: 'p123' }) });
     const data = await res.json();
 
     expect(data.success).toBe(true);

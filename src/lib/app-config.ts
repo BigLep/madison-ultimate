@@ -8,7 +8,10 @@ export const APP_CONFIG = {
   // External Links
   /** Season / "Learn more" Notion page. Used on landing page and player portal home. */
   SEASON_INFO_URL: 'https://madisonultimate.notion.site/2026-Fall-Madison-Ultimate-3bdc4da46f758073930af31f3af0cc4c',
-  PLAYER_PORTAL_DOCUMENTATION: 'https://madisonultimate.notion.site/Player-Portal-276c4da46f7580f2b431dab687ef5f01',
+  /** Season label shown on the Player Portal home tab. Update each season (SEASON_SETUP.md). */
+  SEASON_LABEL: 'Fall 2026 Season',
+  /** Player Portal Guide (Notion). Re-check after any portal change; the login step changed for Fall 2026. */
+  PLAYER_PORTAL_DOCUMENTATION: 'https://madisonultimate.notion.site/Player-Portal-345c4da46f758323926e01c5aec75afc',
   /** Buttondown newsletter subscribe/archive page. */
   MAILING_LIST_JOIN_URL: 'https://buttondown.com/madisonultimate',
 

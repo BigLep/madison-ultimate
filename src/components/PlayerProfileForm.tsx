@@ -43,6 +43,8 @@ export function PlayerProfileForm({
   onPhotoUploaded,
   refreshSignal,
   onSave,
+  onSaved,
+  onCancel,
 }: {
   playerId: string
   defaultValues: ProfileFormValues
@@ -51,6 +53,10 @@ export function PlayerProfileForm({
   /** Bumped after each save so mailing-status widgets re-fetch against the just-saved emails. */
   refreshSignal?: number
   onSave: (values: ProfileFormValues) => Promise<void>
+  /** Called after a successful save; the Player Portal returns to the read-only view (grill Q15). */
+  onSaved?: () => void
+  /** When given, a Cancel button sits beside Save and discards edits without confirmation (grill Q15). */
+  onCancel?: () => void
 }) {
   const {
     register,
@@ -102,6 +108,7 @@ export function PlayerProfileForm({
       await onSave(values)
       reset(values)
       setJustSaved(true)
+      onSaved?.()
     } catch {
       setSaveError('Could not save. Please try again.')
     }
@@ -526,14 +533,21 @@ export function PlayerProfileForm({
               {saveError}
             </div>
           )}
-          <Button
-            type="submit"
-            className={`w-full text-white font-semibold ${justSaved ? 'bg-green-800' : 'bg-[var(--accent)]'}`}
-            disabled={isSubmitting}
-            aria-live="polite"
-          >
-            {isSubmitting ? 'Saving...' : justSaved ? '✓ Saved' : 'Save'}
-          </Button>
+          <div className="flex gap-2">
+            {onCancel && (
+              <Button type="button" variant="outline" className="min-h-[44px]" disabled={isSubmitting} onClick={onCancel}>
+                Cancel
+              </Button>
+            )}
+            <Button
+              type="submit"
+              className={`flex-1 min-h-[44px] text-white font-semibold ${justSaved ? 'bg-green-800' : 'bg-[var(--accent)]'}`}
+              disabled={isSubmitting}
+              aria-live="polite"
+            >
+              {isSubmitting ? 'Saving...' : justSaved ? '✓ Saved' : 'Save'}
+            </Button>
+          </div>
         </div>
       </div>
     </form>

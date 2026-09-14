@@ -1,6 +1,6 @@
 import { getBatchSheetData } from './google-api';
 import { getCachedSheetData, forceRefreshSheetCache } from './sheet-cache';
-import { SHEET_CONFIG } from './sheet-config';
+import { SHEET_CONFIG, AVAILABILITY_COLUMN_NAMES } from './sheet-config';
 
 /**
  * Shared availability helper for both practice and game availability
@@ -18,65 +18,54 @@ export interface ColumnIndices {
   noteColumn: number;
 }
 
+function headerIndex(headerRow: any[], name: string): number {
+  return headerRow.findIndex(h => (h ?? '').toString().trim() === name);
+}
+
+function findPlayerRowIndex(data: any[][], playerId: string): { rowIndex: number; playerIdIndex: number } | null {
+  if (!data || data.length < 1) return null;
+  const playerIdIndex = headerIndex(data[0], AVAILABILITY_COLUMN_NAMES.PLAYER_ID);
+  if (playerIdIndex === -1) return null;
+  for (let i = 1; i < data.length; i++) {
+    if ((data[i][playerIdIndex] ?? '').toString().trim() === playerId) {
+      return { rowIndex: i + 1, playerIdIndex }; // 1-based sheet row
+    }
+  }
+  return null;
+}
+
 /**
- * Get player availability data from a specific sheet
+ * This player's row in an availability tab, matched by the PlayerID column (located by header
+ * name, per docs/fall-2026/player-portal-grill.md Q12), never by Full Name: a family can edit
+ * their preferred name on the profile, and that must not redirect availability writes.
+ *
+ * Returns null when the tab has no PlayerID column yet (not built this season) or no row for this
+ * player (not rostered); the caller shows the schedule read-only in both cases.
  */
 export async function getPlayerAvailabilityData(
-  playerFullName: string,
+  playerId: string,
   playerCacheKey: 'PRACTICE_AVAILABILITY_PLAYERS' | 'GAME_AVAILABILITY_PLAYERS',
   sheetName: string,
-  playerNameColumnIndex: number = 0
+  retried = false
 ): Promise<AvailabilityResult | null> {
   try {
-    // Get cached player name list (column A only)
-    const playerData = await getCachedSheetData(playerCacheKey);
+    let cached = await getCachedSheetData(playerCacheKey);
+    let located = findPlayerRowIndex(cached, playerId);
 
-    if (!playerData || playerData.length < 2) {
-      throw new Error(`No ${playerCacheKey.toLowerCase()} data found`);
-    }
-
-    // Find the player's row index (skip header row)
-    let playerRowIndex = -1;
-    for (let i = 1; i < playerData.length; i++) {
-      const playerName = playerData[i][0]?.toString().trim();
-      if (playerName === playerFullName) {
-        playerRowIndex = i + 1; // Convert to 1-based row index
-        break;
-      }
-    }
-
-    if (playerRowIndex === -1) {
-      console.log(`Player "${playerFullName}" not found in cached ${playerCacheKey}, refreshing cache...`);
-
-      // Refresh the player cache and try again
+    if (!located) {
+      // The row may have been added since the cache was filled; refresh once before giving up.
       await forceRefreshSheetCache(playerCacheKey);
-      const refreshedPlayerData = await getCachedSheetData(playerCacheKey);
-
-      // Try to find the player again
-      if (refreshedPlayerData) {
-        for (let i = 1; i < refreshedPlayerData.length; i++) {
-          const playerName = refreshedPlayerData[i][0]?.toString().trim();
-          if (playerName === playerFullName) {
-            playerRowIndex = i + 1; // Convert to 1-based row index
-            break;
-          }
-        }
-      }
-
-      if (playerRowIndex === -1) {
-        console.log(`Player "${playerFullName}" not found after cache refresh`);
+      cached = await getCachedSheetData(playerCacheKey);
+      located = findPlayerRowIndex(cached, playerId);
+      if (!located) {
+        console.log(`[availability] no PlayerID row for ${playerId} in ${sheetName}`);
         return null;
       }
     }
 
-    // Fetch header row (row 1) and player row in a single batch request
-    const ranges = [
-      `'${sheetName}'!1:1`, // Header row
-      `'${sheetName}'!${playerRowIndex}:${playerRowIndex}` // Player row
-    ];
-
+    // Fetch header row (row 1) and player row fresh in a single batch request
+    const ranges = [`'${sheetName}'!1:1`, `'${sheetName}'!${located.rowIndex}:${located.rowIndex}`];
     const batchResponse = await getBatchSheetData(SHEET_CONFIG.ROSTER_SHEET_ID, ranges);
-
     if (!batchResponse || batchResponse.length < 2) {
       throw new Error('Failed to fetch header and player rows');
     }
@@ -84,20 +73,21 @@ export async function getPlayerAvailabilityData(
     const headerRow = batchResponse[0]?.[0] || [];
     const playerRow = batchResponse[1]?.[0] || [];
 
-    // Verify we got the right player
-    const fetchedPlayerName = playerRow[playerNameColumnIndex]?.toString().trim();
-
-    if (fetchedPlayerName !== playerFullName) {
-      console.log(`Row mismatch: expected "${playerFullName}", got "${fetchedPlayerName}". Refreshing cache...`);
-
-      // Refresh cache and try once more
+    // Verify the live row still belongs to this player (rows may have been sorted since caching)
+    const livePlayerIdIndex = headerIndex(headerRow, AVAILABILITY_COLUMN_NAMES.PLAYER_ID);
+    const fetchedPlayerId = livePlayerIdIndex === -1 ? '' : (playerRow[livePlayerIdIndex] ?? '').toString().trim();
+    if (fetchedPlayerId !== playerId) {
+      if (retried) {
+        console.log(`[availability] row mismatch for ${playerId} in ${sheetName} after refresh`);
+        return null;
+      }
+      console.log(`[availability] row mismatch for ${playerId} in ${sheetName}, refreshing cache...`);
       await forceRefreshSheetCache(playerCacheKey);
-      return await getPlayerAvailabilityData(playerFullName, playerCacheKey, sheetName, playerNameColumnIndex);
+      return await getPlayerAvailabilityData(playerId, playerCacheKey, sheetName, true);
     }
 
-    // Create column mapping from header row
     const columnMapping: Record<string, number> = {};
-    headerRow.forEach((header, index) => {
+    headerRow.forEach((header: unknown, index: number) => {
       if (header) {
         columnMapping[header.toString().trim()] = index;
       }
@@ -106,10 +96,9 @@ export async function getPlayerAvailabilityData(
     return {
       headerRow,
       playerRow,
-      rowIndex: playerRowIndex,
-      columnMapping
+      rowIndex: located.rowIndex,
+      columnMapping,
     };
-
   } catch (error) {
     console.error('Error fetching player availability:', error);
     throw error;

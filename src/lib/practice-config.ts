@@ -12,24 +12,15 @@ export const PRACTICE_CONFIG = {
   // UI Configuration
   NOTE_DEBOUNCE_DELAY: 2500, // Milliseconds to wait before auto-saving notes
 
-  // Practice Info sheet columns (0-indexed): Date, Field Name, Field Location, Start, End, Duration, Note, Google Calendar Event ID
-  PRACTICE_INFO_COLUMNS: {
-    DATE: 0,
-    FIELD_NAME: 1,
-    FIELD_LOCATION: 2,
-    START: 3,
-    END: 4,
-    NOTE: 6,
-  },
-
-  // Practice Availability sheet columns
-  AVAILABILITY_COLUMNS: {
-    FULL_NAME: 0,                    // "Full Name"
-    GRADE: 1,                        // "Grade"
-    GENDER_IDENTIFICATION: 2,        // "Gender Identification"
-    // Practice columns start at index 3
-    // Each practice has 2 columns: availability and note
-    // Pattern: [date], [date + " Note"], [next date], [next date + " Note"], etc.
+  // Practice Info sheet columns, discovered by header name (never by position, per AGENTS.md).
+  // Full header: Date, Field Name, Field Location, Start, End, Duration, Note, Google Calendar Event ID
+  PRACTICE_INFO_COLUMN_NAMES: {
+    DATE: 'Date',
+    FIELD_NAME: 'Field Name',
+    FIELD_LOCATION: 'Field Location',
+    START: 'Start',
+    END: 'End',
+    NOTE: 'Note',
   },
 
   // Valid availability values (what players can select)

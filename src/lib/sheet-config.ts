@@ -25,6 +25,21 @@ export const SHEET_CONFIG = {
   FALL_2025_ROSTER_SHEET_ID: process.env.FALL_2025_ROSTER_SHEET_ID,
 } as const;
 
+// Coach workbook Roster tab headers the portal reads (docs/fall-2026/player-portal-grill.md Q6/Q11):
+// keyed by PlayerID, and only Team is read from it; everything family-authored comes from Signups.
+export const ROSTER_COLUMN_NAMES = {
+  PLAYER_ID: 'PlayerID',
+  TEAM: 'Team',
+} as const;
+
+// Availability tabs (Practice Availability, Game Availability): the portal finds a player's row by
+// the PlayerID column, located by header name (Q12). Full Name stays column A for the coach's
+// prep sheets, but the portal never matches on it.
+export const AVAILABILITY_COLUMN_NAMES = {
+  PLAYER_ID: 'PlayerID',
+  FULL_NAME: 'Full Name',
+} as const;
+
 // Helper function to get a metadata range for any sheet
 export function getMetadataRange(maxColumn: string = 'Z'): string {
   return `A1:${maxColumn}${SHEET_CONFIG.METADATA_ROWS}`;

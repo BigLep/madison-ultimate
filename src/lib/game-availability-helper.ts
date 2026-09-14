@@ -1,16 +1,9 @@
 import { getPlayerAvailabilityData, AvailabilityResult } from './availability-helper';
 import { GAME_CONFIG } from './game-config';
 
-/**
- * Get fresh game availability data for a specific player using cached player mappings
- */
-export async function getPlayerGameAvailability(playerFullName: string): Promise<AvailabilityResult | null> {
-  return getPlayerAvailabilityData(
-    playerFullName,
-    'GAME_AVAILABILITY_PLAYERS',
-    GAME_CONFIG.GAME_AVAILABILITY_SHEET,
-    0 // Assuming Full Name is in column A for games
-  );
+/** This player's Game Availability row (by PlayerID), or null when the tab has no row for them. */
+export async function getPlayerGameAvailability(playerId: string): Promise<AvailabilityResult | null> {
+  return getPlayerAvailabilityData(playerId, 'GAME_AVAILABILITY_PLAYERS', GAME_CONFIG.GAME_AVAILABILITY_SHEET);
 }
 
 /** A non-standard column prefixed with the game date (e.g. "4/25 Can Carpool There?") */

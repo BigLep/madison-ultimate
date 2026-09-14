@@ -200,3 +200,25 @@ export function formatRelativeHighestUnit(value: string, now: Date | number = Da
   if (minutes >= 1) return unit(minutes, 'minute');
   return 'just now';
 }
+
+/**
+ * Family-facing birthdate from the sheet's YYYY-MM-DD (or M/D/YYYY): "May 12, 2013". No weekday,
+ * since the day a birthday fell on is not what a family is checking, and never the raw ISO string.
+ * Returns the input untouched when it cannot be parsed.
+ */
+export function formatBirthdate(value: string): string {
+  const trimmed = (value || '').trim();
+  const iso = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const us = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  let year: number, month: number, day: number;
+  if (iso) {
+    [year, month, day] = [Number(iso[1]), Number(iso[2]), Number(iso[3])];
+  } else if (us) {
+    [month, day, year] = [Number(us[1]), Number(us[2]), Number(us[3])];
+  } else {
+    return trimmed;
+  }
+  const date = new Date(year, month - 1, day);
+  if (isNaN(date.getTime())) return trimmed;
+  return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+}

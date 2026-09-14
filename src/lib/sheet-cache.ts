@@ -31,17 +31,17 @@ export const SHEET_CACHE_CONFIG: Record<string, SheetCacheConfig> = {
     sheetName: SHEET_CONFIG.FIELDS_SHEET_NAME,
     cacheTTL: 5 * 60 * 1000, // 5 minutes
   },
+  // Whole tab, not just column A: the portal finds a player's row by the PlayerID column, which
+  // is located by header name (docs/fall-2026/player-portal-grill.md Q12), so it needs the header.
   PRACTICE_AVAILABILITY_PLAYERS: {
     sheetId: SHEET_CONFIG.ROSTER_SHEET_ID,
     sheetName: SHEET_CONFIG.PRACTICE_AVAILABILITY_SHEET_NAME,
     cacheTTL: 5 * 60 * 1000, // 5 minutes - player list changes infrequently
-    range: 'A:A', // Only cache the player name column
   },
   GAME_AVAILABILITY_PLAYERS: {
     sheetId: SHEET_CONFIG.ROSTER_SHEET_ID,
     sheetName: SHEET_CONFIG.GAME_AVAILABILITY_SHEET_NAME,
     cacheTTL: 5 * 60 * 1000, // 5 minutes - player list changes infrequently
-    range: 'A:A', // Only cache the player name column
   }
 };
 

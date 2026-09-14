@@ -76,3 +76,22 @@ export function isFinalFormsComplete(status: {
 export function isSeededAndIncomplete(record: SignupRecord): boolean {
   return Boolean(record[SIGNUPS_COLUMNS.SEEDED_AT]) && record[SIGNUPS_COLUMNS.PROFILE_COMPLETE] !== PROFILE_COMPLETE_TRUE;
 }
+
+/**
+ * Checklist Complete (CONTEXT.md): every Signup Status row done, including the live Final Forms
+ * status. Drives the collapsed "Signup Status ✅" card and hides the deadline banner on the
+ * Player Portal (docs/fall-2026/player-portal-grill.md Q19, Q23). Never stored.
+ */
+export function isChecklistComplete(
+  record: SignupRecord,
+  finalFormsStatus: Parameters<typeof isFinalFormsComplete>[0]
+): boolean {
+  return (
+    isFinalFormsComplete(finalFormsStatus) &&
+    isPlayerInfoComplete(record) &&
+    isPhotoComplete(record) &&
+    isCaretakerInfoComplete(record) &&
+    isCoachVolunteeringComplete(record) &&
+    isOtherVolunteeringComplete(record)
+  );
+}

@@ -4,6 +4,7 @@ import { profileFormSchema, formValuesToRecord } from '../../../../../lib/signup
 import { eligibleMailingEmails } from '../../../../../lib/mailing-eligibility';
 import { subscribeUnlessUnsubscribed } from '../../../../../lib/buttondown-api';
 import { getClientIp } from '../../../../../lib/request-ip';
+import { getTeamForPlayerId } from '../../../../../lib/roster-team';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ playerId: string }> }) {
   try {
@@ -14,7 +15,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ success: false, error: 'Player not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, record: existing.record });
+    // Team is the one fact only the coach workbook knows (player-portal-grill.md Q11); it fails soft.
+    const team = await getTeamForPlayerId(playerId);
+    return NextResponse.json({ success: true, record: existing.record, team });
   } catch (error) {
     console.error('Error fetching signup player:', error);
     return NextResponse.json(
