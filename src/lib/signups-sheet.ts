@@ -83,15 +83,22 @@ export interface LookupResult {
   rowNumber: number; // 1-indexed sheet row, for updates
 }
 
-/** Player Lookup: normalized last name + full birthdate match exactly; preferred name disambiguates twins. */
-export async function findSignupByIdentity(query: SignupIdentity): Promise<LookupResult | null> {
+/**
+ * Player Lookup candidates: every row whose normalized last name and full birthdate match
+ * exactly, in sheet order. The Portal Login shows these for the family to pick from when
+ * there is more than one (twins, or a duplicate signup); /signup disambiguates by preferred
+ * name instead because it also has to decide whether to create a row.
+ */
+export async function findSignupsByLastNameAndBirthdate(
+  query: Pick<SignupIdentity, 'lastName' | 'dateOfBirth'>
+): Promise<LookupResult[]> {
   const { headerMap, rows } = await loadSignupsSheet();
 
   const queryLast = normalizeName(query.lastName);
   const queryDob = normalizeDateOfBirth(query.dateOfBirth);
-  if (!queryLast || !queryDob) return null;
+  if (!queryLast || !queryDob) return [];
 
-  const candidates: Array<{ record: SignupRecord; rowNumber: number }> = [];
+  const candidates: LookupResult[] = [];
   rows.forEach((row, i) => {
     const record = rowToRecord(row, headerMap);
     const identity = recordIdentity(record);
@@ -99,7 +106,12 @@ export async function findSignupByIdentity(query: SignupIdentity): Promise<Looku
       candidates.push({ record, rowNumber: i + 2 }); // +1 header, +1 for 1-indexing
     }
   });
+  return candidates;
+}
 
+/** Player Lookup for /signup: last name + birthdate candidates, then preferred name disambiguates twins. */
+export async function findSignupByIdentity(query: SignupIdentity): Promise<LookupResult | null> {
+  const candidates = await findSignupsByLastNameAndBirthdate(query);
   if (candidates.length === 0) return null;
 
   const index = disambiguateByPreferredName(

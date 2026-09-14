@@ -10,9 +10,18 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push }),
 }));
 
+// Season phase (player-portal-grill.md Q20) decides where "another player" goes; pin it so the
+// tests don't depend on today's date.
+const seasonPhase = vi.fn<() => 'signup' | 'portal'>(() => 'signup');
+vi.mock('@/lib/signup-deadlines', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/signup-deadlines')>();
+  return { ...actual, getSeasonPhase: () => seasonPhase() };
+});
+
 beforeEach(() => {
   window.localStorage.clear();
   push.mockClear();
+  seasonPhase.mockReturnValue('signup');
 });
 
 describe('PlayerSwitcher — chooser variant (/signup)', () => {
@@ -114,7 +123,7 @@ describe('PlayerSwitcher — header variant (/player/[playerId])', () => {
     expect(screen.queryByRole('menu')).not.toBeInTheDocument();
   });
 
-  it('removing the current player requires confirmation, then forgets it and returns to /signup', async () => {
+  it('removing the current player requires confirmation, then forgets it and returns to /signup during signup season', async () => {
     const user = userEvent.setup();
     rememberPlayer({ playerId: 'p1', displayName: 'TestFirst One' });
     render(<PlayerSwitcher variant="header" currentPlayerId="p1" />);
@@ -126,6 +135,37 @@ describe('PlayerSwitcher — header variant (/player/[playerId])', () => {
     await user.click(screen.getByRole('button', { name: 'Confirm removing TestFirst One from this device' }));
 
     expect(push).toHaveBeenCalledWith('/signup');
+  });
+
+  it('shows a team and grade subtitle under the name when given one', () => {
+    rememberPlayer({ playerId: 'p1', displayName: 'TestFirst One' });
+    render(<PlayerSwitcher variant="header" currentPlayerId="p1" subtitle="🟦 Blue | Grade 7" />);
+
+    expect(screen.getByText('🟦 Blue | Grade 7')).toBeInTheDocument();
+  });
+
+  it('offers "Sign up another player" to /signup during signup season', async () => {
+    const user = userEvent.setup();
+    rememberPlayer({ playerId: 'p1', displayName: 'TestFirst One' });
+    render(<PlayerSwitcher variant="header" currentPlayerId="p1" />);
+
+    await user.click(screen.getByRole('button', { name: 'Player menu for TestFirst One' }));
+
+    expect(screen.getByRole('menuitem', { name: /Sign up another player/ })).toHaveAttribute('href', '/signup');
+  });
+
+  it('offers "Add another player" to /player once the season is in portal phase, and removing the current player lands there too', async () => {
+    seasonPhase.mockReturnValue('portal');
+    const user = userEvent.setup();
+    rememberPlayer({ playerId: 'p1', displayName: 'TestFirst One' });
+    render(<PlayerSwitcher variant="header" currentPlayerId="p1" />);
+
+    await user.click(screen.getByRole('button', { name: 'Player menu for TestFirst One' }));
+    expect(screen.getByRole('menuitem', { name: /Add another player/ })).toHaveAttribute('href', '/player');
+
+    await user.click(screen.getByRole('button', { name: 'Remove TestFirst One from this device' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm removing TestFirst One from this device' }));
+    expect(push).toHaveBeenCalledWith('/player');
   });
 
   it('removing another remembered player from the menu also requires confirmation', async () => {

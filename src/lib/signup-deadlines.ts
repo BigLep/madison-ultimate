@@ -26,3 +26,21 @@ export const DEADLINE_COPY: Record<DeadlineState, string> = {
 export function isNewSignupClosed(state: DeadlineState): boolean {
   return state === 'closed';
 }
+
+export type SeasonPhase = 'signup' | 'portal';
+
+/**
+ * Season phase (docs/fall-2026/player-portal-grill.md Q20): while new signups can still be
+ * created (`open` or `late`) the site drives families to /signup; once `closed`, to the Portal
+ * Login at /player. Derived from the deadline dates so there is no second switch to drift.
+ */
+export function getSeasonPhase(now: Date = new Date()): SeasonPhase {
+  return getDeadlineState(now) === 'closed' ? 'portal' : 'signup';
+}
+
+/** Where "another player" links go in this phase, and what they say. */
+export function anotherPlayerLink(phase: SeasonPhase): { href: string; label: string } {
+  return phase === 'portal'
+    ? { href: '/player', label: 'Add another player' }
+    : { href: '/signup', label: 'Sign up another player' };
+}

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getDeadlineState, isNewSignupClosed } from '@/lib/signup-deadlines';
+import { getDeadlineState, isNewSignupClosed, getSeasonPhase, anotherPlayerLink } from '@/lib/signup-deadlines';
 
 function utcDate(isoDate: string): Date {
   return new Date(`${isoDate}T12:00:00.000Z`);
@@ -26,5 +26,20 @@ describe('isNewSignupClosed', () => {
     expect(isNewSignupClosed('open')).toBe(false);
     expect(isNewSignupClosed('late')).toBe(false);
     expect(isNewSignupClosed('closed')).toBe(true);
+  });
+});
+
+describe('getSeasonPhase', () => {
+  it('is signup season while new signups can still be created, portal season once closed', () => {
+    expect(getSeasonPhase(utcDate('2026-09-01'))).toBe('signup');
+    expect(getSeasonPhase(utcDate('2026-09-18'))).toBe('signup');
+    expect(getSeasonPhase(utcDate('2026-09-19'))).toBe('portal');
+  });
+});
+
+describe('anotherPlayerLink', () => {
+  it('drives to /signup in signup season and to the Portal Login in portal season', () => {
+    expect(anotherPlayerLink('signup')).toEqual({ href: '/signup', label: 'Sign up another player' });
+    expect(anotherPlayerLink('portal')).toEqual({ href: '/player', label: 'Add another player' });
   });
 });
