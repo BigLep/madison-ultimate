@@ -6,19 +6,16 @@ import {
   getSheetCacheStats,
   SHEET_CACHE_CONFIG
 } from '../../../../lib/sheet-cache';
-import { forceRefreshPortalCache, getPortalCacheStats } from '../../../../lib/portal-cache';
 
 export async function GET(request: NextRequest) {
   try {
     const sheetStats = getSheetCacheStats();
-    const portalStats = getPortalCacheStats();
 
     return NextResponse.json({
       success: true,
       timestamp: new Date().toISOString(),
       caches: {
         sheets: sheetStats,
-        portal: portalStats
       },
       configuration: SHEET_CACHE_CONFIG
     });
@@ -70,13 +67,6 @@ export async function POST(request: NextRequest) {
           message: `Sheet cache refreshed: ${sheetType}${range ? `:${range}` : ''}`
         });
 
-      case 'refresh-portal':
-        await forceRefreshPortalCache();
-        return NextResponse.json({
-          success: true,
-          message: 'Portal cache refreshed'
-        });
-
       case 'refresh-all':
         // Clear and refresh all caches
         clearAllSheetCaches();
@@ -89,7 +79,6 @@ export async function POST(request: NextRequest) {
           forceRefreshSheetCache('FIELDS'),
           forceRefreshSheetCache('PRACTICE_AVAILABILITY_PLAYERS'),
           forceRefreshSheetCache('GAME_AVAILABILITY_PLAYERS'),
-          forceRefreshPortalCache()
         ]);
 
         return NextResponse.json({
@@ -100,7 +89,7 @@ export async function POST(request: NextRequest) {
       default:
         return NextResponse.json({
           success: false,
-          error: `Unknown action: ${action}. Valid actions: clear-all, clear-sheet, refresh-sheet, refresh-portal, refresh-all`
+          error: `Unknown action: ${action}. Valid actions: clear-all, clear-sheet, refresh-sheet, refresh-all`
         }, { status: 400 });
     }
   } catch (error) {

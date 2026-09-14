@@ -31,6 +31,18 @@ const nextConfig = {
         destination: 'https://buttondown.com/madisonultimate/archive/',
         permanent: false,
       },
+      // Fall 2026: the legacy portal is gone (docs/fall-2026/player-portal-grill.md Q7). Old
+      // bookmarks land on the Portal Login; remembered players on that device are one tap away.
+      {
+        source: '/player-portal',
+        destination: '/player',
+        permanent: true,
+      },
+      {
+        source: '/player-portal/:path*',
+        destination: '/player',
+        permanent: true,
+      },
       {
         source: '/merch',
         destination: 'https://madisonultimate.notion.site/3dac4da46f758033bc9ed19f171f9e4c',
