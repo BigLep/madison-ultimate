@@ -21,11 +21,19 @@ export const APP_CONFIG = {
   WHATSAPP_JOIN_PATH: '/whatsapp',
   /** Notion (or other) URL to learn more about the WhatsApp community. */
   WHATSAPP_LEARN_MORE_URL: 'https://madisonultimate.notion.site/More-Season-Info-982c4da46f75826db2fd81b6a02568e1#76fc4da46f7582c9899b01109ade6891',
-  /** Notion (or other) URL for game snack signup. */
-  GAME_SNACK_SIGNUP_URL: 'https://madisonultimate.notion.site/More-Season-Info-982c4da46f75826db2fd81b6a02568e1#c13c4da46f758327ad9c01ee675abb68',
+  /** Notion (or other) URL for game snack signup. Empty string = the snack line is not shown. */
+  GAME_SNACK_SIGNUP_URL: '',
+
+  // Season features (SEASON_SETUP.md): decide at the start of each season.
   /**
-   * Notion (or other) URL explaining Activation Status on practice/game cards.
-   * Empty string = label only, no link. Set when this season has a heading for it.
+   * Whether coaches set a per-game Activation Status (Active / Inactive / TBD) in Game Availability
+   * that the Games tab should show. Fall 2026: off. When off, the pill and the
+   * "assuming activated" wording never appear, whatever the sheet holds.
+   */
+  HAS_ACTIVATION_STATUS: false,
+  /**
+   * Notion (or other) URL explaining Activation Status on game cards, used only when
+   * HAS_ACTIVATION_STATUS is true. Empty string = label only, no link.
    */
   ACTIVATION_STATUS_INFO_URL: '',
 

@@ -16,30 +16,39 @@ const primaryButtonStyle = { background: 'var(--accent)' } as const
 
 // Landing page actions follow the season phase (docs/fall-2026/player-portal-grill.md Q13, Q20):
 // Sign Up leads while new signups can still be created; once they close, the Player Portal leads
-// and Sign Up stays as a secondary door (it shows the closed copy and the coach email).
+// and Sign Up is greyed out with a "check back next season" hint. /signup itself stays reachable
+// (it shows the closed copy and still finds existing players) via the Portal Login's not-found link.
 export function LandingActions() {
   const portalSeason = getSeasonPhase() === 'portal'
 
-  const signUp = (
-    <Button asChild size="lg" className={portalSeason ? secondaryButtonClass : primaryButtonClass} style={portalSeason ? secondaryButtonStyle : primaryButtonStyle}>
-      <Link href="/signup">🏁 Sign Up</Link>
-    </Button>
-  )
-  const portal = (
-    <Button asChild size="lg" className={portalSeason ? primaryButtonClass : secondaryButtonClass} style={portalSeason ? primaryButtonStyle : secondaryButtonStyle}>
-      <Link href="/player">🥏 Player Portal</Link>
-    </Button>
-  )
+  if (portalSeason) {
+    return (
+      <>
+        <Button asChild size="lg" className={primaryButtonClass} style={primaryButtonStyle}>
+          <Link href="/player">🥏 Player Portal</Link>
+        </Button>
+        <Button
+          size="lg"
+          disabled
+          aria-disabled="true"
+          title="Signups are closed for this season. Check back next season."
+          className="font-semibold cursor-not-allowed opacity-60"
+          style={secondaryButtonStyle}
+        >
+          🏁 Sign Up (closed)
+        </Button>
+      </>
+    )
+  }
 
-  return portalSeason ? (
+  return (
     <>
-      {portal}
-      {signUp}
-    </>
-  ) : (
-    <>
-      {signUp}
-      {portal}
+      <Button asChild size="lg" className={primaryButtonClass} style={primaryButtonStyle}>
+        <Link href="/signup">🏁 Sign Up</Link>
+      </Button>
+      <Button asChild size="lg" className={secondaryButtonClass} style={secondaryButtonStyle}>
+        <Link href="/player">🥏 Player Portal</Link>
+      </Button>
     </>
   )
 }

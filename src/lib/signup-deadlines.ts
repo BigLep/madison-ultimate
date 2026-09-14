@@ -4,7 +4,7 @@
 export type DeadlineState = 'open' | 'late' | 'closed';
 
 const DEADLINE_DATE = '2026-09-08'; // EOD Tuesday, September 8
-const CLOSE_DATE = '2026-09-18'; // ~a week after tryouts; new-player creation closes
+const CLOSE_DATE = '2026-09-13'; // signups closed after tryouts (Steve, 2026-09-14); new-player creation closes
 
 export function getDeadlineState(now: Date = new Date()): DeadlineState {
   const today = now.toISOString().slice(0, 10);

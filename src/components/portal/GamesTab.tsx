@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { AvailabilityCard } from '@/components/availability-card'
 import { AvailabilitySummary } from '@/components/availability-summary'
 import { AvailabilityNotOpenNotice } from '@/components/portal/PracticesTab'
+import { APP_CONFIG } from '@/lib/app-config'
 
 interface ExtraField {
   columnName: string
@@ -159,7 +160,7 @@ export function GamesTab({ playerId }: { playerId: string }) {
       isUpdating={updating === game.gameKey}
       isEditable={editable}
       isBye={game.isBye}
-      activationStatus={game.availability.activationStatus ?? ''}
+      activationStatus={APP_CONFIG.HAS_ACTIVATION_STATUS ? (game.availability.activationStatus ?? '') : undefined}
       extraFields={game.availability.extraFields}
       onUpdateExtraField={editable ? (columnName, value) => updateExtraField(game, columnName, value) : undefined}
     >

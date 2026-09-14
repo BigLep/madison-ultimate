@@ -86,13 +86,15 @@ export function PortalHome() {
             </a>
             .)
           </p>
-          <p style={{ color: 'var(--primary-text)' }}>
-            🍎{' '}
-            <a href={APP_CONFIG.GAME_SNACK_SIGNUP_URL} target="_blank" rel="noopener noreferrer" style={linkStyle}>
-              Signup to bring game snacks
-            </a>
-            !
-          </p>
+          {APP_CONFIG.GAME_SNACK_SIGNUP_URL && (
+            <p style={{ color: 'var(--primary-text)' }}>
+              🍎{' '}
+              <a href={APP_CONFIG.GAME_SNACK_SIGNUP_URL} target="_blank" rel="noopener noreferrer" style={linkStyle}>
+                Signup to bring game snacks
+              </a>
+              !
+            </p>
+          )}
         </CardContent>
       </Card>
 

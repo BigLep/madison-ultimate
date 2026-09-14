@@ -11,13 +11,13 @@ describe('getDeadlineState', () => {
     expect(getDeadlineState(utcDate('2026-09-08'))).toBe('open');
   });
 
-  it('is late from September 9 through September 18', () => {
+  it('is late from September 9 through September 13', () => {
     expect(getDeadlineState(utcDate('2026-09-09'))).toBe('late');
-    expect(getDeadlineState(utcDate('2026-09-18'))).toBe('late');
+    expect(getDeadlineState(utcDate('2026-09-13'))).toBe('late');
   });
 
-  it('is closed after September 18', () => {
-    expect(getDeadlineState(utcDate('2026-09-19'))).toBe('closed');
+  it('is closed from September 14', () => {
+    expect(getDeadlineState(utcDate('2026-09-14'))).toBe('closed');
   });
 });
 
@@ -32,8 +32,8 @@ describe('isNewSignupClosed', () => {
 describe('getSeasonPhase', () => {
   it('is signup season while new signups can still be created, portal season once closed', () => {
     expect(getSeasonPhase(utcDate('2026-09-01'))).toBe('signup');
-    expect(getSeasonPhase(utcDate('2026-09-18'))).toBe('signup');
-    expect(getSeasonPhase(utcDate('2026-09-19'))).toBe('portal');
+    expect(getSeasonPhase(utcDate('2026-09-13'))).toBe('signup');
+    expect(getSeasonPhase(utcDate('2026-09-14'))).toBe('portal');
   });
 });
 
