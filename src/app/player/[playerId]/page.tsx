@@ -12,7 +12,7 @@ import { DeadlineBanner } from '@/components/DeadlineBanner'
 import { SeededSignupBanner } from '@/components/SeededSignupBanner'
 import { PWAInstallBanner } from '@/components/pwa-install-banner'
 import { PortalHome } from '@/components/portal/PortalHome'
-import { PortalNav, PortalScreen, HASH_TO_SCREEN, SCREEN_TO_HASH } from '@/components/portal/PortalNav'
+import { PortalNav, PortalScreen, HASH_TO_SCREEN, SCREEN_TO_HASH, PORTAL_NAV_HEIGHT_PX } from '@/components/portal/PortalNav'
 import { PracticesTab } from '@/components/portal/PracticesTab'
 import { GamesTab } from '@/components/portal/GamesTab'
 import { usePortalPwa } from '@/components/portal/usePortalPwa'
@@ -141,7 +141,7 @@ export default function PlayerPortalPage() {
       <PlayerSwitcher variant="header" currentPlayerId={playerId} subtitle={subtitle || undefined} refreshKey={status} />
 
       <main className="flex-1">
-        <div className={`max-w-2xl mx-auto px-4 py-4 ${editSection ? 'pb-28' : 'pb-8'}`}>
+        <div className={`max-w-2xl mx-auto px-4 py-4 ${editSection ? 'pb-32' : 'pb-8'}`}>
           {status === 'loading' && (
             <Card style={cardStyle}>
               <CardContent className="pt-6" style={{ color: 'var(--primary-text)' }}>
@@ -194,6 +194,7 @@ export default function PlayerPortalPage() {
                         onSave={handleSave}
                         onSaved={leaveEdit}
                         onCancel={leaveEdit}
+                        bottomOffsetPx={PORTAL_NAV_HEIGHT_PX}
                       />
                     ) : (
                       <PlayerProfileSummary

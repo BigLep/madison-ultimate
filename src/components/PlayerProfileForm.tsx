@@ -45,6 +45,7 @@ export function PlayerProfileForm({
   onSave,
   onSaved,
   onCancel,
+  bottomOffsetPx = 0,
 }: {
   playerId: string
   defaultValues: ProfileFormValues
@@ -57,6 +58,8 @@ export function PlayerProfileForm({
   onSaved?: () => void
   /** When given, a Cancel button sits beside Save and discards edits without confirmation (grill Q15). */
   onCancel?: () => void
+  /** Height of any bottom bar the sticky Save bar must sit above (the Player Portal's nav), in px. */
+  bottomOffsetPx?: number
 }) {
   const {
     register,
@@ -127,6 +130,9 @@ export function PlayerProfileForm({
     })
     return () => subscription.unsubscribe()
   }, [watch])
+
+  // Sit above the Player Portal's bottom nav when one is present (bottomOffsetPx), else at the bottom.
+  const saveBarBottom = bottomOffsetPx > 0 ? `calc(${bottomOffsetPx}px + env(safe-area-inset-bottom))` : 0
 
   return (
     <form onSubmit={handleSubmit(submit)} className={`space-y-8 ${saveError ? 'pb-24' : ''}`}>
@@ -520,8 +526,12 @@ export function PlayerProfileForm({
       {/* Sticky save bar: always visible while scrolling, so families don't have to hunt for Save.
           Success is the button itself (✓ Saved); failure is a banner here so it isn't scrolled away. */}
       <div
-        className="fixed bottom-0 left-0 right-0 border-t p-3 z-20"
-        style={{ background: 'var(--card-bg)', borderColor: 'var(--border)' }}
+        className="fixed left-0 right-0 border-t p-3 z-20"
+        style={{
+          background: 'var(--card-bg)',
+          borderColor: 'var(--border)',
+          bottom: saveBarBottom,
+        }}
       >
         <div className="max-w-2xl mx-auto space-y-2">
           {saveError && (

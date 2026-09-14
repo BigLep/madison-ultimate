@@ -4,6 +4,9 @@ import { Home, User, Calendar, Trophy } from 'lucide-react'
 
 export type PortalScreen = 'home' | 'player' | 'practices' | 'games'
 
+/** Bottom nav height (excluding the safe-area inset); anything fixed to the bottom sits above it. */
+export const PORTAL_NAV_HEIGHT_PX = 68
+
 // Hash routing keeps last season's bookmarks and the PWA start URL working
 // (docs/fall-2026/player-portal-grill.md Q8). Legacy hashes map onto the same four tabs.
 export const HASH_TO_SCREEN: Record<string, PortalScreen> = {
@@ -34,7 +37,7 @@ export function PortalNav({ active, onChange }: { active: PortalScreen; onChange
   return (
     <div className="sticky bottom-0 z-40 border-t shadow-lg" style={{ background: 'var(--card-bg)', borderColor: 'var(--border)' }}>
       <div className="max-w-2xl mx-auto">
-        <nav aria-label="Player Portal" className="flex" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <nav aria-label="Player Portal" className="flex" style={{ height: `calc(${PORTAL_NAV_HEIGHT_PX}px + env(safe-area-inset-bottom))`, paddingBottom: 'env(safe-area-inset-bottom)' }}>
           {NAV_ITEMS.map(item => {
             const Icon = item.icon
             const isActive = active === item.id
@@ -44,7 +47,7 @@ export function PortalNav({ active, onChange }: { active: PortalScreen; onChange
                 key={item.id}
                 aria-current={isActive ? 'page' : undefined}
                 onClick={() => onChange(item.id)}
-                className={`flex-1 min-h-[52px] py-2 px-1 text-center transition-colors ${
+                className={`flex-1 py-2 px-1 text-center transition-colors ${
                   isActive ? 'text-[var(--page-title)] bg-[var(--primary-bg)]' : 'text-[var(--secondary-text)] bg-transparent'
                 }`}
               >

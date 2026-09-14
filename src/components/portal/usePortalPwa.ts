@@ -8,6 +8,10 @@ import { useEffect } from 'react'
 export function usePortalPwa(playerId: string, fullName: string | null) {
   useEffect(() => {
     let cancelled = false
+    // Only ever remove what this hook created. The root layout renders its own head tags
+    // (apple-touch-icon and friends) that React owns; detaching one of those makes React throw
+    // when it later tries to remove or replace it.
+    const created: Element[] = []
 
     const ensureLink = (rel: string, href: string) => {
       let link = document.querySelector(`link[rel="${rel}"]`) as HTMLLinkElement | null
@@ -15,6 +19,7 @@ export function usePortalPwa(playerId: string, fullName: string | null) {
         link = document.createElement('link')
         link.rel = rel
         document.head.appendChild(link)
+        created.push(link)
       }
       link.href = href
     }
@@ -24,6 +29,7 @@ export function usePortalPwa(playerId: string, fullName: string | null) {
         meta = document.createElement('meta')
         meta.name = name
         document.head.appendChild(meta)
+        created.push(meta)
       }
       meta.content = content
     }
@@ -38,7 +44,7 @@ export function usePortalPwa(playerId: string, fullName: string | null) {
       document.title = `Madison Ultimate - ${fullName}`
       ensureLink('manifest', `/api/manifest/${playerId}`)
       ensureMeta('theme-color', '#1e3a8a')
-      ensureLink('apple-touch-icon', '/images/madison-ultimate-logo-1/180.png')
+      ensureMeta('mobile-web-app-capable', 'yes')
       ensureMeta('apple-mobile-web-app-capable', 'yes')
       ensureMeta('apple-mobile-web-app-status-bar-style', 'default')
       if ('serviceWorker' in navigator) {
@@ -52,15 +58,7 @@ export function usePortalPwa(playerId: string, fullName: string | null) {
     return () => {
       cancelled = true
       document.title = 'Madison Ultimate'
-      for (const selector of [
-        'link[rel="manifest"]',
-        'meta[name="theme-color"]',
-        'link[rel="apple-touch-icon"]',
-        'meta[name="apple-mobile-web-app-capable"]',
-        'meta[name="apple-mobile-web-app-status-bar-style"]',
-      ]) {
-        document.querySelector(selector)?.remove()
-      }
+      for (const element of created) element.remove()
     }
   }, [playerId, fullName])
 }
