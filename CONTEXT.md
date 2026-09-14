@@ -14,8 +14,16 @@ A player's permanent identity in our system: a short random opaque slug minted w
 _Avoid_: deriving it from name or birthdate; lookup key, Portal ID (the legacy equivalent it replaces)
 
 **Player Lookup**:
-Finding a player row from what a family types: normalized last name and full birthdate must match exactly, and normalized preferred name disambiguates only when several rows share both (twins), using as many leading letters as needed. Matching runs against current field values; there is no stored or derived key.
-_Avoid_: lookup key, Portal Lookup Key (legacy derived-key scheme this replaces)
+Finding a player row from what a family types: normalized last name and full birthdate must match exactly, against the Signups sheet. When several rows share both (twins, or a duplicate signup), the family picks the right one from the candidates' preferred first names; nothing is derived or stored. Preferred first name is typed only when starting a new signup, never to find one.
+_Avoid_: lookup key, Portal Lookup Key (legacy derived-key scheme this replaces), roster lookup (the coach Roster mirrors Signups and is never what a family is matched against)
+
+**Portal Login**:
+The `/player` screen where a family reaches a Player Portal: remembered players on this device to tap, or Player Lookup by last name and birthdate. Finds existing players only; starting a new signup is `/signup`.
+_Avoid_: login (bare), sign in, player lookup page
+
+**Player Portal**:
+A player's own tabbed page at `/player/$playerId` for the whole season: Home, Player (signup status and profile, with a read-only view and an edit view), Practices, and Games. One header names the current player and switches between the device's remembered players.
+_Avoid_: player page, player dashboard, portal (bare)
 
 **Normalization**:
 The rules that make typed names comparable: trim, lowercase, strip internal whitespace, strip apostrophes, fold accents to plain letters, keep hyphens. Applied identically to typed input and stored fields.
