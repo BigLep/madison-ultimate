@@ -1,16 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-
-// Hide until portal login is ready for families this season. Flip to true to show again.
-const SHOW_CURRENT_PLAYERS_LOGIN = false;
-
-const secondaryButtonClass = 'border font-semibold hover:opacity-90 transition-opacity';
-const secondaryButtonStyle = {
-  backgroundColor: 'var(--card-bg)',
-  borderColor: 'var(--border)',
-  color: 'var(--primary-text)',
-} as const;
+import { LandingActions, secondaryButtonClass, secondaryButtonStyle } from '@/components/LandingActions';
 
 export default function Home() {
   return (
@@ -47,14 +38,7 @@ export default function Home() {
             first if you&apos;re new.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              asChild
-              size="lg"
-              className="text-white font-semibold hover:opacity-90 transition-opacity"
-              style={{ background: 'var(--accent)' }}
-            >
-              <Link href="/signup">🏁 Sign Up</Link>
-            </Button>
+            <LandingActions />
             <Button
               asChild
               size="lg"
@@ -79,20 +63,6 @@ export default function Home() {
             >
               <Link href="/calendar">📅 Team Calendar</Link>
             </Button>
-            {SHOW_CURRENT_PLAYERS_LOGIN && (
-              <Button
-                size="lg"
-                disabled
-                className="font-semibold cursor-not-allowed"
-                style={{
-                  backgroundColor: 'var(--card-bg)',
-                  color: 'var(--secondary-text)',
-                  opacity: 0.6,
-                }}
-              >
-                🔒 Current Players Login (coming soon)
-              </Button>
-            )}
           </div>
           <a
             href="/news"

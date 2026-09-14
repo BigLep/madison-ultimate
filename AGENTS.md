@@ -49,6 +49,8 @@ Install a real `node_modules` with `npm ci`. A `node_modules` symlink makes Turb
 - `/api/team-updates` - Fetch recent team updates from Buttondown newsletter RSS
 - `/api/auth/callback` - OAuth callback handler (for setup only)
 - `/admin/final-forms` and `/api/admin/final-forms` - Seed Signups from Final Forms (Preview and Apply); everything under `/admin` and `/api/admin` needs Basic Auth with `ADMIN_SECRET` (any username)
+- `/player` and `/player/[playerId]` - Portal Login and the Player Portal (Home / Player / Practices / Games); `/signup` shares the login screen and can also create a player. `/player-portal/*` redirects here
+- `/api/player/lookup` - Portal Login lookup (last name plus birthdate against the Signups sheet; returns every candidate); `/api/player/[playerId]/practice` and `/game` - availability read/write keyed by PlayerID; `/api/manifest/[playerId]` - per-player PWA manifest
 - `/api/admin/outreach` - Signup Outreach list (every signup's six checklist rows, Checklist Complete flag, recipient emails), read-only; consumed by `scripts/outreach-drafts.mjs` and shown on `/admin/final-forms`. Drafts are sent only by a human via `scripts/send-outreach-drafts.mjs`
 
 ## Troubleshooting

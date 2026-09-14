@@ -40,8 +40,8 @@ After changing `ROSTER_SHEET_ID`, restart the dev/server process.
 ## 3. Google Sheets access
 
 - **Share the season roster spreadsheet** with the app’s service account so it can read (and optionally write) data.  
-  In the sheet: **Share** → add the service account email (e.g. from `.google-service-account.json` → `client_email`) with at least **Viewer** (or **Editor** if the app writes availability).  
-  Without this, login and roster loading will fail with permission errors.
+  In the sheet: **Share** → add the service account email (e.g. from `.google-service-account.json` → `client_email`) with at least **Viewer** (or **Editor** if the app writes availability). From the coach profile, `gog drive share <sheetId> --to=user --email=<client_email> --role=writer` does the same without opening the sheet.  
+  Without this, the portal's Team read and availability writes fail with permission errors.
 - Ensure all tabs and data in that workbook are updated for the new season (Roster, Practice Info, Game Info, Practice Availability, Game Availability).
 
 See [AUTHENTICATION_SETUP.md](AUTHENTICATION_SETUP.md) for service account details.
@@ -60,14 +60,15 @@ If your roster sheet has a different layout than “row 1 = header, row 2 = firs
 
 ## 5. Portal UI and links (player-facing)
 
-All of these live in **`src/app/player-portal/[portalId]/page.tsx`**. Decide each season and update as needed.
+The Fall 2026 Player Portal lives at `/player` (Portal Login) and `/player/$playerId` (tabbed portal); see `DESIGN.md`, "Fall 2026 Player Portal". Per-season settings live in **`src/lib/app-config.ts`**, not in page files.
 
 | Setting | Where in code | What to decide |
 |--------|----------------|-----------------|
-| **Season label** | `HomeScreen`: `<CardDescription>… Season</CardDescription>` (e.g. “Spring 2026 Season”) | Exact label shown on the portal home. |
-| **SEASON_INFO_URL** | `HomeScreen`: `const SEASON_INFO_URL = '…'` | Notion (or other) URL for “team site” / season info. |
-| **MAILING_LIST_INFO_URL** | Top of `player-portal/[portalId]/page.tsx` | Notion deep link next to newsletter status. Replace last season's heading when this season has one; until then it is OK to keep last season's URL (Fall 2026 still does). |
-| **Show “Additional Info Form”** | Top of file: `const SHOW_ADDITIONAL_INFO_FORM = true \| false` | Whether to show the “Additional Info Form” link and questionnaire status in **Player Info**. Set to `false` to hide for seasons that don’t use it (e.g. Spring 2026). |
+| **SEASON_LABEL** | `src/lib/app-config.ts` | Exact label shown on the portal Home tab (e.g. "Fall 2026 Season"). |
+| **SEASON_INFO_URL** | `src/lib/app-config.ts` (and the `/info` redirect in `next.config.js`) | Notion (or other) URL for "team site" / season info. |
+| **PLAYER_PORTAL_DOCUMENTATION** | `src/lib/app-config.ts` | The Player Portal Guide (Notion). Re-check its content whenever the portal changes; the login step changed for Fall 2026. |
+| **Season phase dates** | `src/lib/signup-deadlines.ts` (`DEADLINE_DATE`, `CLOSE_DATE`) | Drive the deadline banners and the season phase: while new signups can be created the landing page leads with Sign Up and the switcher offers "Sign up another player"; once closed, the Player Portal leads and the switcher offers "Add another player". No separate switch to flip. |
+| **Team names** | `src/lib/team-display.ts` | Emoji labels for this season's squads (Fall 2026: Blue, Gold, Silver, Practice Squad). TBD or blank is hidden from families. |
 
 **Join the Community** (WhatsApp and game snack links on the portal home and the signed-up player profile):
 
@@ -88,7 +89,6 @@ The native date picker on `/signup` and the player profile form is bounded so fa
 | Setting | Where | What to decide |
 |--------|-----------------|-----------------|
 | **PLAYER_BIRTHDATE_MIN / MAX / PICKER_DEFAULT** | `src/lib/player-birthdates.ts` | Oldest and youngest birthdays you will accept. Fall 2026 is `2011-01-01` through `2015-12-31`. The picker default is Jan 1 of the oldest year so the year spinner opens in-range. |
-| **Portal login year list** | `src/app/player-portal/page.tsx` (`years`) | Same years if that login is still in use. |
 
 ---
 
@@ -105,7 +105,7 @@ In **`src/lib/game-config.ts`**:
 
 - **TEAM_DISPLAY_NAME** (e.g. `"Varsity Team"`): Used when the roster has no team column or a single team. Change if your season uses a different label.
 
-Sheet structure (single team vs Blue/Gold, etc.) is configured in the codebase and in the workbook; if you change how teams work, update game-config and the Game Info/Game Availability sheet layout to match.
+Multi-team games (Fall 2026): **Game Info** has a **Team** column, one row per team-game; leave Team blank for an all-team event. A player sees the rows for their Team (from the coach Roster tab's Team column, keyed by PlayerID) plus blank-Team rows; TBD and Practice Squad players see only blank-Team rows. **Practice Availability** and **Game Availability** carry a **PlayerID** column that the portal matches on (Full Name stays column A for the prep sheets); Build Practice/Game Availability in the coach sheet adds the column and appends a row per player with Include In Generated Rosters TRUE, so set Include FALSE for cut players before the first build. Practice Info stays team-agnostic.
 
 ---
 
@@ -169,9 +169,10 @@ These behaviors are driven by values in the **Practice Info** and **Game Info** 
 - **`.env.local`** – `ROSTER_SHEET_ID`, `SPS_FINAL_FORMS_FOLDER_ID`, `ADMIN_SECRET` (also on Vercel; gates `/admin`); optionally `TEAM_MAILING_LIST_FOLDER_ID`, `BUTTONDOWN_API_KEY`. Also `WHATSAPP_COMMUNITY_JOIN_URL` (and the same key on Vercel Production).
 - **Sheets integration test sheet** – `SIGNUPS_SHEET_ID_TEST` needs a new test spreadsheet each season once the real Signups sheet's schema is finalized; see "Recreating the test sheet" in [docs/TEST_DESIGN.md](docs/TEST_DESIGN.md).
 - **`src/lib/sheet-config.ts`** – `ROSTER_FIRST_DATA_ROW` if your roster has more than one header row (e.g. first data row is not row 2).
-- **`src/app/player-portal/[portalId]/page.tsx`** – Season label, `MAILING_LIST_INFO_URL`, `SHOW_ADDITIONAL_INFO_FORM`.
-- **`src/lib/app-config.ts`** – `SEASON_INFO_URL`; Join the Community: **`WHATSAPP_LEARN_MORE_URL` and `GAME_SNACK_SIGNUP_URL` (required each season)**; `ACTIVATION_STATUS_INFO_URL` (empty until this season has a heading). Invite is env, not this file.
-- **`src/lib/player-birthdates.ts`** – `PLAYER_BIRTHDATE_MIN` / `MAX` / picker default for the signup and profile date-of-birth fields (6th–8th grade window). Also update the year list on `src/app/player-portal/page.tsx` if that login is still in use.
+- **`src/lib/app-config.ts`** – `SEASON_LABEL`, `SEASON_INFO_URL`, `PLAYER_PORTAL_DOCUMENTATION`; Join the Community: **`WHATSAPP_LEARN_MORE_URL` and `GAME_SNACK_SIGNUP_URL` (required each season)**; `ACTIVATION_STATUS_INFO_URL` (empty until this season has a heading). Invite is env, not this file.
+- **`src/lib/player-birthdates.ts`** – `PLAYER_BIRTHDATE_MIN` / `MAX` / picker default for the signup, Portal Login, and profile date-of-birth fields (6th–8th grade window).
+- **`src/lib/signup-deadlines.ts`** – deadline and close dates (banners and season phase).
+- **`src/lib/team-display.ts`** – this season's team names and emoji.
 - **`src/lib/game-config.ts`** – `TEAM_DISPLAY_NAME` if you use a different default team name.
 - **Google Sheet** – Share with service account; update tabs and data.
 - **Buttondown** – RSS is public. Set `BUTTONDOWN_API_KEY` with **subscriber write** for newsletter status and Join / Leave; confirm both Buttondown checks on `/api/diagnostics`.

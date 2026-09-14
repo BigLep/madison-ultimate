@@ -21,7 +21,7 @@ A fundamental design principle of this application is to make it **easy for fami
 - **Bookmark Organization**: Browser bookmarks automatically organize by player name
 
 #### Portal-Based Architecture
-- **Unique URLs**: Each player has their own portal ID (e.g., `/player-portal/abc123`)
+- **Unique URLs**: Each player has their own PlayerID (e.g., `/player/ab3k9`); see the Fall 2026 Player Portal section below
 - **Direct Access**: Parents can bookmark or share direct links to specific player portals
 - **Independent Sessions**: Multiple browser tabs can be open for different players simultaneously
 
@@ -523,58 +523,35 @@ This decision aligns with the project requirement to use "popular, common web fr
 
 ## Player Authentication & Identification
 
-### Portal ID vs Player Name Lookup Strategy
+### Fall 2026 Player Portal (Portal Login, tabbed portal, PlayerID-keyed availability)
 
-The application uses a hybrid approach for player identification to balance security and simplicity:
+Decided in the 2026-09-14 design grill (`docs/fall-2026/player-portal-grill.md`, 26 questions; glossary terms Portal Login and Player Portal in `CONTEXT.md`). This replaced the Fall 2025 / Spring 2026 portal at `/player-portal/[portalId]`, which keyed everything off `Player Portal Lookup Key` and `Player Portal ID` columns in the coach Roster tab; those columns, the portal cache, and the legacy routes are gone, and `/player-portal/*` redirects permanently to `/player`.
 
-#### Initial Portal Access
-- **Route**: `/player-portal/{playerPortalId}`
-- **Method**: Portal ID lookup via `findPortalEntryByPortalId()`
-- **Purpose**: Secure initial authentication to verify the player has access
-- **Data Source**: Portal cache (roster sheet Portal columns)
+#### Portal Login (`/player`)
 
-#### Subsequent API Calls
-- **Routes**: `/api/practice/{portalId}` (POST), `/api/other-features/{portalId}` (POST)
-- **Method**: Full name passed in request body
-- **Purpose**: Direct sheet operations without repeated portal cache lookups
-- **Rationale**: This is a casual webapp - simplicity over robustness
+- One shared screen component (`src/components/PlayerEntryPage.tsx`) serves both doors: `/signup` finds or creates a player (preferred first name, last name, birthdate, near-match check), `/player` only finds one (last name plus birthdate). Both show the device's remembered players above the form and reuse the honeypot, minimum-time-to-submit guard, and birthdate bounds.
+- `POST /api/player/lookup` runs Player Lookup against the Signups sheet (never the coach Roster): normalized last name and full birthdate must match exactly; every candidate comes back, and with more than one (twins, or a duplicate signup) the family picks by preferred first name. Zero matches returns `notFound` and the client shows the "not signed up yet? / email the coaches" copy.
+- Rationale: the Signups sheet is the system of record with PlayerID on every row (ADR 0001, ADR 0002); the Roster tab is a formula mirror of it and lacks phones, volunteering, and feedback. Preferred-name disambiguation was replaced by "the family picks" because it is simpler for twins and needs no stored key.
 
-#### Design Benefits
-1. **Security**: Portal ID required for initial access
-2. **Simplicity**: POST requests use human-readable full names
-3. **Performance**: Avoids portal cache lookups on every mutation
-4. **Maintainability**: Clear separation between authentication and operations
+#### Player Portal (`/player/[playerId]`)
 
-#### Example Flow
-```
-1. User visits: /player-portal/{portalId}
-2. System validates portal ID → finds player
-3. User submits practice availability
-4. Frontend sends: { fullName: "<player full name>", availability: "👍 Planning to be there" }
-5. Backend finds player in Practice Availability sheet
-```
+- Hash-routed tabs (`#home`, `#player`, `#practices`, `#games`; legacy `#season` / `#help` / `#player-info` map onto them) so bookmarks and the per-player PWA manifest (`/api/manifest/[playerId]`) keep working. One sticky header (`PlayerSwitcher` header variant: avatar, name, "Team | Grade" line, tap for the switcher menu) and a bottom nav (`src/components/portal/PortalNav.tsx`).
+- Every Signups row gets the full portal, cut or not. Whether a player has an availability row is the coach's Include In Generated Rosters decision; when they have none, the Practices and Games tabs show the schedule read-only with an "availability tracking isn't open for you yet" line instead of an error.
+- Player tab: the Signup Status card, collapsed to "Signup Status ✅" once Checklist Complete (every row done including live Final Forms status; the panel stays mounted so status keeps refreshing, and it re-expands on its own if a row stops being done); the deadline banner only while not Checklist Complete and never in the `closed` state; then a read-only profile (`PlayerProfileSummary`) grouped by the form's sections with per-section Edit links. Edit opens the full `PlayerProfileForm` scrolled to that section; Save returns to the read-only view, Cancel discards without confirmation, and tab switches keep the form mounted so edits in progress survive.
+- Data sources: everything family-authored is read from and written to the Signups row (the same path the form uses, so Save and the read-only view can never disagree). The Fall coach workbook's Roster tab is read by PlayerID for Team only (`src/lib/roster-team.ts`), failing soft: an unshared workbook or missing column just hides Team. Team display (🟦 Blue, 🟨 Gold, 🪙 Silver, 🏋️ Practice Squad; TBD hidden) lives in `src/lib/team-display.ts`.
+- Season phase (`getSeasonPhase` in `src/lib/signup-deadlines.ts`, derived from the deadline dates): the landing page's primary action and the switcher menu's "another player" entry point at `/signup` while new signups can be created and at `/player` once closed, so no second switch can drift from the deadline config.
 
-### Data Sources for Player Portal
+#### Availability keyed by PlayerID
 
-#### Portal Cache
-- **Source**: Roster sheet Portal columns (Lookup Key, Portal ID)
-- **Purpose**: Map portal IDs to player lookup keys
-- **Usage**: Initial authentication only
-
-#### Player Data
-- **Source**: Full roster sheet via `/api/player/{portalId}`
-- **Purpose**: Complete player information
-- **Usage**: Displaying player details
-
-#### Practice Availability
-- **Source**: Practice Availability sheet
-- **Key**: Full Name column
-- **Purpose**: Store and retrieve practice attendance responses
+- `Practice Availability` and `Game Availability` carry a `PlayerID` column, located by header name (`AVAILABILITY_COLUMN_NAMES` in `src/lib/sheet-config.ts`). `Full Name` stays column A because the coach's practice and game roster prep sheets XLOOKUP against `A:A`, but the portal never matches on it: a family can edit their preferred name on the profile, and that must not redirect availability writes. The coach sheet's Build Practice/Game Availability adds the column and appends a row per Include TRUE player (admin repo, `coach-sheet-apps-script/Availability.gs`).
+- `src/lib/availability-helper.ts` finds the row by PlayerID from the cached whole tab, re-fetches header and row fresh, and verifies the PlayerID before any write; a mismatch (rows sorted since caching) refreshes the cache once.
+- Games: Game Info has one row per team-game with a `Team` column; blank Team means every team. A row shows to a player when its Team equals theirs or is blank; an unassigned (TBD) or Practice Squad player sees only blank-Team rows. Because availability columns are keyed by date, the "(Game 2)" ordinal counts per date and per team (`assignGameOrdinals` in `src/lib/game-schedule.ts`), matching the coach script, so three teams on one Saturday share one `M/D Availability` triple. Practice Info stays team-agnostic. Practice Info columns are read by header name (`PRACTICE_INFO_COLUMN_NAMES`), closing the last hardcoded-position read.
+- Routes: `GET/POST /api/player/[playerId]/practice` and `/game`; the request body no longer carries a full name, the PlayerID in the path is the whole identity.
 
 #### Game coach notes (plain text today; future: hyperlinks)
 
 - **Source**: Game Info sheet / season config flows into the game API as `gameNote` (see game route helpers).
-- **Current UI**: On the Game Availability portal screen, coach notes render as plain text: `Coach note: {game.gameNote}` in `src/app/player-portal/[portalId]/page.tsx` (upcoming and past game cards).
+- **Current UI**: On the Games tab, coach notes render as plain text: `Coach note: {game.gameNote}` in `src/components/portal/GamesTab.tsx` (upcoming and past game cards).
 - **Limitation**: If a coach pastes a long URL (e.g. bracket spreadsheet), families see the full string instead of a short, accessible label (e.g. “See bracket”) or a single tappable link with sensible link text.
 - **Future idea — hyperlink rendering**:
   1. **Auto-link URLs**: Detect `http(s)://…` in the note and render each as an `<a>` with `rel="noopener noreferrer"` and `target="_blank"` (and optionally truncate display text with ellipsis while keeping `href` full).
