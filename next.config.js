@@ -31,6 +31,11 @@ const nextConfig = {
         destination: 'https://buttondown.com/madisonultimate/archive/',
         permanent: false,
       },
+      {
+        source: '/merch',
+        destination: 'https://madisonultimate.notion.site/3dac4da46f758033bc9ed19f171f9e4c',
+        permanent: false,
+      },
     ]
   },
 }
