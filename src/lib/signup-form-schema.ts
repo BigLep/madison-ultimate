@@ -26,6 +26,25 @@ export const ADULT_JERSEY_SIZE_OPTIONS = [
 
 export const JERSEY_SIZE_OPTIONS = [...YOUTH_JERSEY_SIZE_OPTIONS, ...ADULT_JERSEY_SIZE_OPTIONS] as const;
 
+const JERSEY_SIZE_NAME_BY_SUFFIX: Record<string, string> = {
+  XS: 'Extra Small',
+  S: 'Small',
+  M: 'Medium',
+  L: 'Large',
+  XL: 'Extra Large',
+  '2XL': '2XL',
+};
+
+/** Full readable label for a stored jersey size code (e.g. "AS" -> "Adult Small"), for read-only display. */
+export function formatJerseySize(code: string): string {
+  const trimmed = code.trim();
+  if (!trimmed) return '';
+  const match = trimmed.match(/^(Y|A)(XS|S|M|L|XL|2XL)$/);
+  if (!match) return trimmed;
+  const [, group, suffix] = match;
+  return `${group === 'Y' ? 'Youth' : 'Adult'} ${JERSEY_SIZE_NAME_BY_SUFFIX[suffix]}`;
+}
+
 export const PRONOUN_OPTIONS = ['he', 'him', 'she', 'her', 'they', 'them'] as const;
 
 export const GENDER_IDENTIFICATION_OPTIONS = [
