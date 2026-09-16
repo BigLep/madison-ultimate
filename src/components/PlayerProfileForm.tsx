@@ -20,6 +20,7 @@ import {
   GRADE_OPTIONS,
   YOUTH_JERSEY_SIZE_OPTIONS,
   ADULT_JERSEY_SIZE_OPTIONS,
+  JERSEY_SIZE_SPEC_SHEET_URLS,
   PRONOUN_OPTIONS,
   GENDER_IDENTIFICATION_OPTIONS,
   ELEMENTARY_SCHOOL_OPTIONS,
@@ -251,9 +252,9 @@ export function PlayerProfileForm({
           <Label style={fieldLabelStyle}>Jersey / t-shirt size<Req /></Label>
           <HelperText>
             What size jersey does the player normally wear? These are unisex sizes. Not sure? See the{' '}
-            <LearnMoreLink href="https://www.sanmar.com/p/46774_TRyWhite/specSheetMeasurements" label="youth" />
+            <LearnMoreLink href={JERSEY_SIZE_SPEC_SHEET_URLS.youth} label="youth" />
             {' '}or{' '}
-            <LearnMoreLink href="https://www.sanmar.com/p/46773_TRyWhite/specSheetMeasurements" label="adult" />
+            <LearnMoreLink href={JERSEY_SIZE_SPEC_SHEET_URLS.adult} label="adult" />
             {' '}size chart.
           </HelperText>
           <select {...register('jerseySize')} className={selectClassName}>

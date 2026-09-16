@@ -26,6 +26,19 @@ export const ADULT_JERSEY_SIZE_OPTIONS = [
 
 export const JERSEY_SIZE_OPTIONS = [...YOUTH_JERSEY_SIZE_OPTIONS, ...ADULT_JERSEY_SIZE_OPTIONS] as const;
 
+export const JERSEY_SIZE_SPEC_SHEET_URLS = {
+  youth: 'https://www.sanmar.com/p/46774_TRyWhite/specSheetMeasurements',
+  adult: 'https://www.sanmar.com/p/46773_TRyWhite/specSheetMeasurements',
+} as const;
+
+/** Dimension spec-sheet URL for a stored jersey size code, or undefined if the code is unrecognized. */
+export function getJerseySizeSpecSheetUrl(code: string): string | undefined {
+  const trimmed = code.trim();
+  if (trimmed.startsWith('Y')) return JERSEY_SIZE_SPEC_SHEET_URLS.youth;
+  if (trimmed.startsWith('A')) return JERSEY_SIZE_SPEC_SHEET_URLS.adult;
+  return undefined;
+}
+
 const JERSEY_SIZE_NAME_BY_SUFFIX: Record<string, string> = {
   XS: 'Extra Small',
   S: 'Small',

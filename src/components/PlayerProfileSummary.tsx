@@ -7,7 +7,7 @@ import { APP_CONFIG } from '@/lib/app-config'
 import { SignupRecord } from '@/lib/signups-sheet'
 import { SIGNUPS_COLUMNS } from '@/lib/signups-config'
 import { formatBirthdate } from '@/lib/date-formatters'
-import { formatJerseySize } from '@/lib/signup-form-schema'
+import { formatJerseySize, getJerseySizeSpecSheetUrl } from '@/lib/signup-form-schema'
 
 // Read-only view of the profile for the Player tab (docs/fall-2026/player-portal-grill.md Q9):
 // the same sections as PlayerProfileForm, each with an Edit link that opens the form scrolled to
@@ -29,7 +29,7 @@ const labelStyle = { color: 'var(--secondary-text)' }
 const valueStyle = { color: 'var(--primary-text)' }
 const linkStyle = { color: 'var(--accent)' }
 
-function Field({ label, value, placeholder = 'Not provided' }: { label: string; value?: string; placeholder?: string }) {
+function Field({ label, value, href, placeholder = 'Not provided' }: { label: string; value?: string; href?: string; placeholder?: string }) {
   const text = (value || '').trim()
   return (
     <div>
@@ -37,7 +37,13 @@ function Field({ label, value, placeholder = 'Not provided' }: { label: string; 
         {label}
       </dt>
       <dd className={`whitespace-pre-wrap ${text ? 'font-medium' : 'italic'}`} style={text ? valueStyle : labelStyle}>
-        {text || placeholder}
+        {text && href ? (
+          <a href={href} target="_blank" rel="noopener noreferrer" className="underline" style={linkStyle}>
+            {text}
+          </a>
+        ) : (
+          text || placeholder
+        )}
       </dd>
     </div>
   )
@@ -106,7 +112,11 @@ export function PlayerProfileSummary({
           <Field label="Elementary school attended" value={v(SIGNUPS_COLUMNS.ELEMENTARY_SCHOOL)} />
           <Field label="Pronouns" value={list(v(SIGNUPS_COLUMNS.PRONOUNS))} />
           <Field label="Gender identification" value={v(SIGNUPS_COLUMNS.GENDER_IDENTIFICATION)} />
-          <Field label="Jersey / t-shirt size" value={formatJerseySize(v(SIGNUPS_COLUMNS.JERSEY_SIZE))} />
+          <Field
+            label="Jersey / t-shirt size"
+            value={formatJerseySize(v(SIGNUPS_COLUMNS.JERSEY_SIZE))}
+            href={getJerseySizeSpecSheetUrl(v(SIGNUPS_COLUMNS.JERSEY_SIZE))}
+          />
           <Field label="Allergies or medical info" value={v(SIGNUPS_COLUMNS.ALLERGIES)} />
           <Field label="Other sports and activities this fall" value={v(SIGNUPS_COLUMNS.COMPETING_SPORTS_AND_ACTIVITIES)} />
           <Field label="Ultimate playing experience" value={v(SIGNUPS_COLUMNS.PLAYING_EXPERIENCE)} />
