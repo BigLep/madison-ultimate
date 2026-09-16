@@ -18,7 +18,8 @@ import {
   profileFormSchema,
   ProfileFormValues,
   GRADE_OPTIONS,
-  JERSEY_SIZE_OPTIONS,
+  YOUTH_JERSEY_SIZE_OPTIONS,
+  ADULT_JERSEY_SIZE_OPTIONS,
   PRONOUN_OPTIONS,
   GENDER_IDENTIFICATION_OPTIONS,
   ELEMENTARY_SCHOOL_OPTIONS,
@@ -248,12 +249,25 @@ export function PlayerProfileForm({
 
         <div className="space-y-2">
           <Label style={fieldLabelStyle}>Jersey / t-shirt size<Req /></Label>
-          <HelperText>What size jersey does the player normally wear? Y = youth, A = adult; these are unisex sizes.</HelperText>
+          <HelperText>
+            What size jersey does the player normally wear? These are unisex sizes. Not sure? See the{' '}
+            <LearnMoreLink href="https://www.sanmar.com/p/46774_TRyWhite/specSheetMeasurements" label="youth" />
+            {' '}or{' '}
+            <LearnMoreLink href="https://www.sanmar.com/p/46773_TRyWhite/specSheetMeasurements" label="adult" />
+            {' '}size chart.
+          </HelperText>
           <select {...register('jerseySize')} className={selectClassName}>
             <option value="">Select...</option>
-            {JERSEY_SIZE_OPTIONS.map(size => (
-              <option key={size} value={size}>{size}</option>
-            ))}
+            <optgroup label="Youth">
+              {YOUTH_JERSEY_SIZE_OPTIONS.map(size => (
+                <option key={size.value} value={size.value}>{size.label}</option>
+              ))}
+            </optgroup>
+            <optgroup label="Adult">
+              {ADULT_JERSEY_SIZE_OPTIONS.map(size => (
+                <option key={size.value} value={size.value}>{size.label}</option>
+              ))}
+            </optgroup>
           </select>
         </div>
 

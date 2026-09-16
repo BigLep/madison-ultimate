@@ -6,7 +6,25 @@ import { SIGNUPS_COLUMNS } from './signups-config';
 import type { SignupRecord } from './signups-sheet';
 
 export const GRADE_OPTIONS = ['6', '7', '8'] as const;
-export const JERSEY_SIZE_OPTIONS = ['YM', 'YL', 'AS', 'AM', 'AL', 'AXL'] as const;
+
+export const YOUTH_JERSEY_SIZE_OPTIONS = [
+  { value: 'YXS', label: 'Youth XS' },
+  { value: 'YS', label: 'Youth S' },
+  { value: 'YM', label: 'Youth M' },
+  { value: 'YL', label: 'Youth L' },
+  { value: 'YXL', label: 'Youth XL' },
+] as const;
+
+export const ADULT_JERSEY_SIZE_OPTIONS = [
+  { value: 'AXS', label: 'Adult XS' },
+  { value: 'AS', label: 'Adult S' },
+  { value: 'AM', label: 'Adult M' },
+  { value: 'AL', label: 'Adult L' },
+  { value: 'AXL', label: 'Adult XL' },
+  { value: 'A2XL', label: 'Adult 2XL' },
+] as const;
+
+export const JERSEY_SIZE_OPTIONS = [...YOUTH_JERSEY_SIZE_OPTIONS, ...ADULT_JERSEY_SIZE_OPTIONS] as const;
 
 export const PRONOUN_OPTIONS = ['he', 'him', 'she', 'her', 'they', 'them'] as const;
 
