@@ -47,7 +47,7 @@ interface GameData {
 
 const cardStyle = { background: 'var(--card-bg)', borderColor: 'var(--border)' } as const
 
-export function GamesTab({ playerId }: { playerId: string }) {
+export function GamesTab({ playerId, readOnly = false }: { playerId: string; readOnly?: boolean }) {
   const [gameData, setGameData] = useState<GameData | null>(null)
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState<string | null>(null)
@@ -183,6 +183,7 @@ export function GamesTab({ playerId }: { playerId: string }) {
           pastItems={pastGamesForStats}
           availabilityOptions={availabilityOptions}
           allUpcomingResponded={allUpcomingResponded}
+          readOnly={readOnly}
         />
       )}
 
@@ -199,7 +200,7 @@ export function GamesTab({ playerId }: { playerId: string }) {
           <h2 className="text-lg font-semibold" style={{ color: 'var(--page-title)' }}>
             Upcoming Games
           </h2>
-          {upcomingGames.map(game => renderCard(game, availabilityOpen))}
+          {upcomingGames.map(game => renderCard(game, availabilityOpen && !readOnly))}
         </div>
       )}
 

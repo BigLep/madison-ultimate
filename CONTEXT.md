@@ -82,6 +82,20 @@ _Avoid_: mailing list (code, the retired Google Group, and coach-sheet columns m
 **WhatsApp Community**:
 The family WhatsApp community for questions, photos, carpools, and similar. Join via `/whatsapp`, which the server redirects to the invite. Linked only from signed-up player pages (`/player/$id`) and the player portal — not the public homepage. The invite URL lives in `WHATSAPP_COMMUNITY_JOIN_URL` (env only, never client code or git).
 
+### Coach Tools
+
+**Coach Tools**:
+A `/coach` area of coach-facing utilities, gated by its own shared password (distinct from and simpler than the `/admin` ops area's, though both use the same cookie-based password-gate mechanism; see ADR 0008). A landing page lists the available tools.
+_Avoid_: admin tools (that name is reserved for `/admin`, which is ops-facing)
+
+**Rostered Player**:
+A player who has a row on the coach Roster tab, as opposed to any row in Signups. Signing up does not make a player Rostered; being added to the Roster tab does. Team itself may still be blank or `TBD` (which team hasn't been decided yet) without affecting whether the player is Rostered.
+_Avoid_: active player, active roster (no such flag exists in the data); assuming blank/TBD Team means not Rostered
+
+**Player Directory**:
+The Coach Tools page where a coach picks a Rostered Player from a list and sees their Player Photo, contact info, Caretaker info, and availability. Distinct from Player Lookup, which is the family's own self-service identity match by last name and birthdate.
+_Avoid_: player lookup, player finder
+
 ### Outreach
 
 **Signup Outreach**:

@@ -6,6 +6,8 @@ interface AvailabilitySummaryProps {
   allUpcomingResponded: boolean;
   pastPresentValue?: string;
   pastAbsentValue?: string;
+  /** True for a read-only viewer (e.g. the coach Player Directory), who can't act on the prompt below. */
+  readOnly?: boolean;
 }
 
 export function AvailabilitySummary({
@@ -15,7 +17,8 @@ export function AvailabilitySummary({
   availabilityOptions,
   allUpcomingResponded,
   pastPresentValue = 'Was there',
-  pastAbsentValue = "Wasn't there"
+  pastAbsentValue = "Wasn't there",
+  readOnly = false,
 }: AvailabilitySummaryProps) {
   // Filter out byes for statistics calculations
   const upcomingItemsForStats = upcomingItems.filter(item => !item.isBye);
@@ -66,7 +69,7 @@ export function AvailabilitySummary({
                     {upcomingNoResponse}
                   </td>
                 </tr>
-                {upcomingNoResponse > 0 && (
+                {upcomingNoResponse > 0 && !readOnly && (
                   <tr style={{borderBottom: '1px solid var(--border)'}}>
                     <td colSpan={2} className="py-1 px-3 text-xs text-center" style={{color: 'var(--secondary-text)'}}>
                       Enter your availability below

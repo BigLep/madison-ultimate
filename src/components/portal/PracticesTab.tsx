@@ -53,7 +53,7 @@ export function AvailabilityNotOpenNotice() {
   )
 }
 
-export function PracticesTab({ playerId }: { playerId: string }) {
+export function PracticesTab({ playerId, readOnly = false }: { playerId: string; readOnly?: boolean }) {
   const [practiceData, setPracticeData] = useState<PracticeData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -175,6 +175,7 @@ export function PracticesTab({ playerId }: { playerId: string }) {
           allUpcomingResponded={allUpcomingResponded}
           pastPresentValue="Was there"
           pastAbsentValue="Wasn't there"
+          readOnly={readOnly}
         />
       )}
 
@@ -183,7 +184,7 @@ export function PracticesTab({ playerId }: { playerId: string }) {
           <h2 className="text-lg font-semibold" style={{ color: 'var(--page-title)' }}>
             Upcoming Practices
           </h2>
-          {upcomingPractices.map(practice => renderCard(practice, availabilityOpen))}
+          {upcomingPractices.map(practice => renderCard(practice, availabilityOpen && !readOnly))}
         </div>
       )}
 
