@@ -259,6 +259,19 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Coach Photos live in their own folder (COACH_PHOTOS_FOLDER_ID). Unset only disables Coach
+    // Photo upload on Coach Home, so it warns rather than fails.
+    const coachPhotosFolderId = process.env.COACH_PHOTOS_FOLDER_ID;
+    if (!coachPhotosFolderId) {
+      addResult('Photo Upload', 'Coach Photos Folder', 'warning', 'COACH_PHOTOS_FOLDER_ID not set; coach photo upload is disabled');
+    } else if (hasOAuthCreds) {
+      const coachFolderName = await getDriveFolderName(coachPhotosFolderId);
+      addResult('Photo Upload', 'Coach Photos Folder', coachFolderName ? 'pass' : 'fail',
+        coachFolderName
+          ? `OAuth identity can access the coach photos folder: "${coachFolderName}"`
+          : 'Could not access COACH_PHOTOS_FOLDER_ID with the OAuth identity');
+    }
+
     // Photo Carryover reads the Fall 2025 roster via the service account (not OAuth), so this
     // can fail independently of the OAuth identity check above.
     const fall2025SheetId = SHEET_CONFIG.FALL_2025_ROSTER_SHEET_ID;

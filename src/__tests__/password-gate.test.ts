@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { NextRequest } from 'next/server';
-import { gateResponse, isValidPassword, GateArea } from '@/lib/password-gate';
+import { gateResponse, isValidPassword, clearGateCookie, GateArea } from '@/lib/password-gate';
+import { NextResponse } from 'next/server';
 import { ADMIN_GATE_AREA, COACH_GATE_AREA } from '@/lib/gate-areas';
-import { config as proxyConfig } from '@/proxy';
+import { config as proxyConfig, proxy } from '@/proxy';
 
 const AREA: GateArea = { name: 'admin', cookieName: 'madison_admin_auth', loginPath: '/admin/login', secretEnvVar: 'ADMIN_SECRET' };
 
@@ -80,5 +81,33 @@ describe('proxy matcher', () => {
     expect(matches('/api/coach/players')).toBe(true);
     expect(matches('/api/diagnostics')).toBe(false);
     expect(matches('/player/abc12')).toBe(false);
+    // The public Coaches Page and its photos share the /coach prefix but not the segment.
+    expect(matches('/coaches')).toBe(false);
+    expect(matches('/api/coaches/c0001/photo')).toBe(false);
+  });
+});
+
+describe('proxy', () => {
+  it('gates /coach by whole path segment, so /coaches is never gated even if the matcher widens', () => {
+    process.env.COACH_TOOLS_PASSWORD = 's3cret';
+    expect(proxy(new NextRequest('http://localhost/coaches')).headers.get('location')).toBeNull();
+    expect(proxy(new NextRequest('http://localhost/api/coaches')).status).toBe(200);
+    expect(proxy(new NextRequest('http://localhost/coach')).status).toBe(307);
+    expect(proxy(new NextRequest('http://localhost/api/coach/coaches/c0001')).status).toBe(401);
+  });
+
+  it('keeps Coach Logout reachable without a valid cookie', () => {
+    process.env.COACH_TOOLS_PASSWORD = 's3cret';
+    expect(proxy(new NextRequest('http://localhost/api/coach/logout', { method: 'POST' })).status).toBe(200);
+  });
+});
+
+describe('clearGateCookie', () => {
+  it('expires the area cookie', () => {
+    const response = NextResponse.json({ success: true });
+    clearGateCookie(response, COACH_GATE_AREA);
+    const cookie = response.cookies.get(COACH_GATE_AREA.cookieName);
+    expect(cookie?.value).toBe('');
+    expect(cookie?.maxAge).toBe(0);
   });
 });

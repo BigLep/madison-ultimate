@@ -569,6 +569,17 @@ This is designed as a casual team management app, not a high-security system. Th
 
 For a production system requiring higher security, consider implementing proper user accounts, sessions, and role-based access control.
 
+## Coaches: Coach Home, Coach Availability, and the Coaches Page (Fall 2026)
+
+Design record: `docs/fall-2026/coaches-grill.md`. Glossary: CONTEXT.md (Coach, CoachID, Coach Login, Coach Home, Coach Availability, Coaches Page).
+
+- **Data**: two tabs in the seasonal coach workbook (`ROSTER_SHEET_ID`). **Coaches** holds one row per coach (CoachID, Name, Email, Phone, About as Markdown, Photo Drive File ID); its row order is display order. **Coach Availability** holds one row per coach with a column pair per practice and per Game Info row (every team's games, since coaches are not assigned to teams). Both are built by the coach sheet's Build Coach Availability (madison-ultimate-admin `CoachAvailability.gs`), which mints CoachIDs. The column names (`9/23 Practice`, `9/26 Blue Game`, `10/17 Game`, `9/26 Blue Game 2`, each with a ` Note` twin) are produced there and read here by `src/lib/coach-availability.ts`; change both together.
+- **Identity**: CoachID, a random slug on the PlayerID scheme, so a rename orphans nothing. Coach Login is a name picker plus the one shared `COACH_TOOLS_PASSWORD` (ADR 0008 gate cookie); the chosen CoachID is kept in localStorage (`coach-session.ts`). Any coach can pick any name and edit that coach's profile and availability; accepted as the same trust level families have (grill Q4). Rejected: per-coach passwords (setup cost for a small trusted group) and free-text name matching (typos).
+- **Why not reuse Practice/Game Availability**: coaches answer practices and games in one list, and every game regardless of team, so a combined tab keyed by CoachID is simpler than adding coach rows to the player tabs (which are keyed by PlayerID and filtered by Team).
+- **Split games**: when a blank-Team Game Info row is later split into per-team rows, the build copies each coach's answer from the all-teams column into the new team columns, so nobody answers twice (grill Q26).
+- **Public surface**: `/coaches` and `/api/coaches*` show name, About, and Coach Photo only; email and phone are only served behind the `/coach` gate. The proxy gates `/coach` by whole path segment so `/coaches` can never be caught by it. Coach Photos live in their own Drive folder (`COACH_PHOTOS_FOLDER_ID`).
+- **Reuse**: Coach Home reuses the player availability cards and summary, the photo uploader and photo routes (`photo-response.ts`), the schedule readers (`schedule-info.ts`), the keyed availability row lookup (`getAvailabilityRow`), and the bottom tab bar (`BottomTabNav`).
+
 ## Date Formatting Standards
 
 ### Centralized Date Formatting Strategy

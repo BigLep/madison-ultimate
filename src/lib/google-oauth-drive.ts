@@ -27,21 +27,22 @@ function getOAuthClient(): OAuth2Client {
   return client;
 }
 
-function getPhotosFolderId(): string {
-  const folderId = process.env.PHOTOS_FOLDER_ID;
+function requiredFolderId(envVar: 'PHOTOS_FOLDER_ID' | 'COACH_PHOTOS_FOLDER_ID'): string {
+  const folderId = process.env[envVar];
   if (!folderId) {
-    throw new Error('PHOTOS_FOLDER_ID is not set (create a photos folder in the fall Drive folder and share it with the OAuth identity)');
+    throw new Error(`${envVar} is not set (create the photos folder in the fall Drive folder and share it with the OAuth identity)`);
   }
   return folderId;
 }
 
 /**
- * Upload (or replace) a player's photo in the photos Drive folder. If `existingFileId` is
- * given, the file's content is replaced in place instead of creating a duplicate. Returns
- * the Drive file id.
+ * Upload (or replace) a photo in a Drive folder, named by an opaque ID (PlayerID or CoachID, never
+ * a person's name). If `existingFileId` is given, the file's content is replaced in place instead
+ * of creating a duplicate. Returns the Drive file id.
  */
-export async function uploadPlayerPhoto(
-  playerId: string,
+async function uploadPhoto(
+  id: string,
+  folderEnvVar: 'PHOTOS_FOLDER_ID' | 'COACH_PHOTOS_FOLDER_ID',
   fileBuffer: Buffer,
   mimeType: string,
   existingFileId?: string
@@ -63,8 +64,8 @@ export async function uploadPlayerPhoto(
   const extension = photoExtension(mimeType);
   const res = await drive.files.create({
     requestBody: {
-      name: `${playerId}.${extension}`,
-      parents: [getPhotosFolderId()],
+      name: `${id}.${extension}`,
+      parents: [requiredFolderId(folderEnvVar)],
     },
     media,
     fields: 'id',
@@ -74,6 +75,16 @@ export async function uploadPlayerPhoto(
     throw new Error('Drive did not return a file id for the uploaded photo');
   }
   return res.data.id;
+}
+
+/** Player Photo upload into PHOTOS_FOLDER_ID. */
+export async function uploadPlayerPhoto(playerId: string, fileBuffer: Buffer, mimeType: string, existingFileId?: string): Promise<string> {
+  return uploadPhoto(playerId, 'PHOTOS_FOLDER_ID', fileBuffer, mimeType, existingFileId);
+}
+
+/** Coach Photo upload into COACH_PHOTOS_FOLDER_ID, kept apart from Player Photos. */
+export async function uploadCoachPhoto(coachId: string, fileBuffer: Buffer, mimeType: string, existingFileId?: string): Promise<string> {
+  return uploadPhoto(coachId, 'COACH_PHOTOS_FOLDER_ID', fileBuffer, mimeType, existingFileId);
 }
 
 function bufferToStream(buffer: Buffer) {

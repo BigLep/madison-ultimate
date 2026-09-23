@@ -8,9 +8,24 @@ import { Input } from '@/components/ui/input'
 
 // Shared UI for the /admin and /coach login pages (ADR 0008): one password field, posted to the
 // area's login route. Reads `next` from the URL itself (not useSearchParams) so this can render
-// without a Suspense boundary.
+// without a Suspense boundary. Coach Login adds its name picker as `children` and remembers the
+// chosen coach in `onSuccess`, before the redirect.
 
-export function PasswordGateForm({ title, loginApiPath, defaultNext }: { title: string; loginApiPath: string; defaultNext: string }) {
+export function PasswordGateForm({
+  title,
+  loginApiPath,
+  defaultNext,
+  children,
+  canSubmit = true,
+  onSuccess,
+}: {
+  title: string
+  loginApiPath: string
+  defaultNext: string
+  children?: React.ReactNode
+  canSubmit?: boolean
+  onSuccess?: () => void
+}) {
   const router = useRouter()
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -31,6 +46,7 @@ export function PasswordGateForm({ title, loginApiPath, defaultNext }: { title: 
         setError(data.error || 'Incorrect password')
         return
       }
+      onSuccess?.()
       const next = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('next') : null
       router.push(next || defaultNext)
       router.refresh()
@@ -49,10 +65,11 @@ export function PasswordGateForm({ title, loginApiPath, defaultNext }: { title: 
             {title}
           </h1>
           <form onSubmit={onSubmit} className="space-y-4">
+            {children}
             <Input
               type="password"
               inputMode="text"
-              autoFocus
+              autoFocus={!children}
               autoComplete="off"
               placeholder="Password"
               value={password}
@@ -63,7 +80,7 @@ export function PasswordGateForm({ title, loginApiPath, defaultNext }: { title: 
                 {error}
               </p>
             )}
-            <Button type="submit" disabled={loading || !password} className="w-full">
+            <Button type="submit" disabled={loading || !password || !canSubmit} className="w-full min-h-[44px] text-white font-semibold bg-[var(--accent)]">
               {loading ? 'Checking…' : 'Log In'}
             </Button>
           </form>

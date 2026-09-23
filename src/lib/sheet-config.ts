@@ -12,6 +12,11 @@ export const SHEET_CONFIG = {
   GAME_INFO_SHEET_NAME: '📍Game Info',
   GAME_AVAILABILITY_SHEET_NAME: 'Game Availability',
   FIELDS_SHEET_NAME: '📍Fields',
+  // Coaches (one row per Coach, keyed by CoachID; row order is display order) and Coach
+  // Availability (one row per Coach, a column pair per practice and game). Both are created and
+  // extended by the coach sheet's Build Coach Availability.
+  COACHES_SHEET_NAME: 'Coaches',
+  COACH_AVAILABILITY_SHEET_NAME: 'Coach Availability',
 
   METADATA_ROWS: 4, // Used by roster-metadata (build tooling) for sheets with type/source/note rows
 
@@ -30,6 +35,21 @@ export const SHEET_CONFIG = {
 export const ROSTER_COLUMN_NAMES = {
   PLAYER_ID: 'PlayerID',
   TEAM: 'Team',
+} as const;
+
+// Coaches tab headers, located by name. About is Markdown, rendered on the Coaches Page and Coach Home.
+export const COACH_COLUMN_NAMES = {
+  COACH_ID: 'CoachID',
+  NAME: 'Name',
+  EMAIL: 'Email',
+  PHONE: 'Phone',
+  ABOUT: 'About',
+  PHOTO_DRIVE_FILE_ID: 'Photo Drive File ID',
+} as const;
+
+// Coach Availability's key column; the Name column is a Coaches lookup formula the portal never writes.
+export const COACH_AVAILABILITY_COLUMN_NAMES = {
+  COACH_ID: 'CoachID',
 } as const;
 
 // Availability tabs (Practice Availability, Game Availability): the portal finds a player's row by

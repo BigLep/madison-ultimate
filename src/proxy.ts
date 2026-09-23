@@ -14,16 +14,23 @@ const UNGATED_PATHS = new Set([
   COACH_GATE_AREA.loginPath,
   '/api/admin/login',
   '/api/coach/login',
+  // Coach Logout must work even with a stale cookie, or a coach could get stuck logged in.
+  '/api/coach/logout',
 ]);
+
+/** True for `base` itself and anything under `base/`, but not `base` + more letters (/coaches). */
+function isUnder(pathname: string, base: string): boolean {
+  return pathname === base || pathname.startsWith(base + '/');
+}
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   if (UNGATED_PATHS.has(pathname)) return NextResponse.next();
 
-  if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
+  if (isUnder(pathname, '/admin') || isUnder(pathname, '/api/admin')) {
     return gateResponse(request, ADMIN_GATE_AREA, process.env.ADMIN_SECRET) ?? NextResponse.next();
   }
-  if (pathname.startsWith('/coach') || pathname.startsWith('/api/coach')) {
+  if (isUnder(pathname, '/coach') || isUnder(pathname, '/api/coach')) {
     return gateResponse(request, COACH_GATE_AREA, process.env.COACH_TOOLS_PASSWORD) ?? NextResponse.next();
   }
   return NextResponse.next();

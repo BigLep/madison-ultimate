@@ -69,3 +69,14 @@ export function setGateCookie(response: NextResponse, area: GateArea, password: 
     path: '/',
   });
 }
+
+/** Expires the gate cookie (Coach Logout). */
+export function clearGateCookie(response: NextResponse, area: GateArea): void {
+  response.cookies.set(area.cookieName, '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 0,
+    path: '/',
+  });
+}

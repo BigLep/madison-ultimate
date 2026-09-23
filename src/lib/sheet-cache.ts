@@ -42,6 +42,17 @@ export const SHEET_CACHE_CONFIG: Record<string, SheetCacheConfig> = {
     sheetId: SHEET_CONFIG.ROSTER_SHEET_ID,
     sheetName: SHEET_CONFIG.GAME_AVAILABILITY_SHEET_NAME,
     cacheTTL: 5 * 60 * 1000, // 5 minutes - player list changes infrequently
+  },
+  // Public Coaches Page and the Coach Login list; edits force a refresh (coaches-sheet.ts).
+  COACHES: {
+    sheetId: SHEET_CONFIG.ROSTER_SHEET_ID,
+    sheetName: SHEET_CONFIG.COACHES_SHEET_NAME,
+    cacheTTL: 5 * 60 * 1000, // 5 minutes
+  },
+  COACH_AVAILABILITY_COACHES: {
+    sheetId: SHEET_CONFIG.ROSTER_SHEET_ID,
+    sheetName: SHEET_CONFIG.COACH_AVAILABILITY_SHEET_NAME,
+    cacheTTL: 5 * 60 * 1000, // 5 minutes - coach list changes infrequently
   }
 };
 

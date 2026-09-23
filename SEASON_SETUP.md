@@ -108,6 +108,8 @@ In **`src/lib/game-config.ts`**:
 
 Multi-team games (Fall 2026): **Game Info** has a **Team** column, one row per team-game; leave Team blank for an all-team event. A player sees the rows for their Team (from the coach Roster tab's Team column, keyed by PlayerID) plus blank-Team rows; TBD and Practice Squad players see only blank-Team rows. **Practice Availability** and **Game Availability** carry a **PlayerID** column that the portal matches on (Full Name stays column A for the prep sheets); Build Practice/Game Availability in the coach sheet adds the column and appends a row per player with Include In Generated Rosters TRUE, so set Include FALSE for cut players before the first build. Practice Info stays team-agnostic.
 
+Coaches: the coach sheet's **Coaches** tab lists each coach (CoachID, Name, Email, Phone, About as Markdown, Photo Drive File ID), in the order the public `/coaches` page shows them. Copy it forward from last season, remove anyone not coaching, and type new coaches' Names; **Build Coach Availability** mints their CoachIDs and builds the **Coach Availability** tab (one row per coach, a column pair per practice and game). Re-run it whenever Practice Info, Game Info, or Coaches change. Set `COACH_PHOTOS_FOLDER_ID` (a "Coach Photos" folder next to Player Photos), `COACH_PRACTICE_PLANS_DOC_URL`, and `COACH_COMMS_DOC_URL` in `.env.local` and on Vercel for the new season. Coaches log in at `/coach` by picking their name and entering `COACH_TOOLS_PASSWORD`.
+
 ---
 
 ## 9. Special portal behaviors (Bye, Cancelled, etc.)
@@ -167,7 +169,7 @@ These behaviors are driven by values in the **Practice Info** and **Game Info** 
 - **`package.json` / `package-lock.json`** – npm updates; `engines.node` for the Active LTS (Vercel).
 - **`.github/workflows/test.yml`** – `node-version` matching that LTS; keep `actions/checkout` and `actions/setup-node` on versions that run on a supported Node action runtime.
 - **`@types/node`** – major matching the runtime, not Current.
-- **`.env.local`** – `ROSTER_SHEET_ID`, `SPS_FINAL_FORMS_FOLDER_ID`, `ADMIN_SECRET` (also on Vercel; gates `/admin`); optionally `TEAM_MAILING_LIST_FOLDER_ID`, `BUTTONDOWN_API_KEY`. Also `WHATSAPP_COMMUNITY_JOIN_URL` (and the same key on Vercel Production).
+- **`.env.local`** – `ROSTER_SHEET_ID`, `SPS_FINAL_FORMS_FOLDER_ID`, `ADMIN_SECRET` (also on Vercel; gates `/admin`); optionally `TEAM_MAILING_LIST_FOLDER_ID`, `BUTTONDOWN_API_KEY`. Coach Home: `COACH_PHOTOS_FOLDER_ID`, `COACH_PRACTICE_PLANS_DOC_URL`, `COACH_COMMS_DOC_URL` (also on Vercel). Also `WHATSAPP_COMMUNITY_JOIN_URL` (and the same key on Vercel Production).
 - **Sheets integration test sheet** – `SIGNUPS_SHEET_ID_TEST` needs a new test spreadsheet each season once the real Signups sheet's schema is finalized; see "Recreating the test sheet" in [docs/TEST_DESIGN.md](docs/TEST_DESIGN.md).
 - **`src/lib/sheet-config.ts`** – `ROSTER_FIRST_DATA_ROW` if your roster has more than one header row (e.g. first data row is not row 2).
 - **`src/lib/app-config.ts`** – `SEASON_LABEL`, `SEASON_INFO_URL`, `PLAYER_PORTAL_DOCUMENTATION`; Join the Community: **`WHATSAPP_LEARN_MORE_URL` and `GAME_SNACK_SIGNUP_URL` (required each season)**; `ACTIVATION_STATUS_INFO_URL` (empty until this season has a heading). Invite is env, not this file.
