@@ -21,8 +21,8 @@ export const APP_CONFIG = {
   WHATSAPP_JOIN_PATH: '/whatsapp',
   /** Notion (or other) URL to learn more about the WhatsApp community. */
   WHATSAPP_LEARN_MORE_URL: 'https://madisonultimate.notion.site/More-Season-Info-982c4da46f75826db2fd81b6a02568e1#76fc4da46f7582c9899b01109ade6891',
-  /** Game snack and tent signup (SignUpGenius for Fall 2026). Empty string = the snack line is not shown. */
-  GAME_SNACK_SIGNUP_URL: 'https://www.signupgenius.com/go/8050B4DA4AB28A4F58-59057492-snack',
+  /** Notion deep link to the Game Snacks and Tents section (which links the signup). Empty string = the snack line is not shown. */
+  GAME_SNACK_SIGNUP_URL: 'https://madisonultimate.notion.site/More-Season-Info-982c4da46f75826db2fd81b6a02568e1#417c4da46f7582139ea08167e252c913',
 
   // Season features (SEASON_SETUP.md): decide at the start of each season.
   /**

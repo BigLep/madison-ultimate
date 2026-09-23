@@ -88,7 +88,7 @@ export function PortalHome() {
           </p>
           {APP_CONFIG.GAME_SNACK_SIGNUP_URL && (
             <p style={{ color: 'var(--primary-text)' }}>
-              🍎{' '}
+              🍊{' '}
               <a href={APP_CONFIG.GAME_SNACK_SIGNUP_URL} target="_blank" rel="noopener noreferrer" style={linkStyle}>
                 Sign up to bring game snacks or a tent
               </a>
