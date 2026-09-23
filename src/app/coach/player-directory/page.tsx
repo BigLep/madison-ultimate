@@ -6,18 +6,21 @@ import { Card, CardContent } from '@/components/ui/card'
 import { PracticesTab } from '@/components/portal/PracticesTab'
 import { GamesTab } from '@/components/portal/GamesTab'
 import type { RosteredPlayerSummary, PlayerDirectoryEntry } from '@/lib/coach-directory'
+import { formatTeamOrTbd, compareTeams } from '@/lib/team-display'
+import { GENDER_CODE_ORDER, shortGenderCode } from '@/lib/gender-display'
 
 const cardStyle = { background: 'var(--card-bg)', borderColor: 'var(--border)' } as const
 const labelStyle = { color: 'var(--secondary-text)' }
 const valueStyle = { color: 'var(--primary-text)' }
 
-// A coach's team filter is a per-device convenience, not shared state, so it lives in
+// A coach's team/gender filters are a per-device convenience, not shared state, so they live in
 // localStorage rather than being synced anywhere (issue #1: "should persist between sessions").
 const TEAM_FILTER_STORAGE_KEY = 'coach-player-directory-teams'
+const GENDER_FILTER_STORAGE_KEY = 'coach-player-directory-genders'
 
-function loadStoredTeams(): string[] {
+function loadStoredList(key: string): string[] {
   try {
-    const raw = window.localStorage.getItem(TEAM_FILTER_STORAGE_KEY)
+    const raw = window.localStorage.getItem(key)
     const parsed = raw ? JSON.parse(raw) : []
     return Array.isArray(parsed) ? parsed.filter((t): t is string => typeof t === 'string') : []
   } catch {
@@ -25,9 +28,9 @@ function loadStoredTeams(): string[] {
   }
 }
 
-function storeTeams(teams: string[]) {
+function storeList(key: string, values: string[]) {
   try {
-    window.localStorage.setItem(TEAM_FILTER_STORAGE_KEY, JSON.stringify(teams))
+    window.localStorage.setItem(key, JSON.stringify(values))
   } catch {
     // Private browsing / blocked storage: filter just won't persist. Not worth surfacing.
   }
@@ -75,15 +78,17 @@ export default function PlayerDirectoryPage() {
 
   const [nameFilter, setNameFilter] = useState('')
   const [selectedTeams, setSelectedTeams] = useState<string[]>([])
-  const [teamsLoaded, setTeamsLoaded] = useState(false)
+  const [selectedGenders, setSelectedGenders] = useState<string[]>([])
+  const [filtersLoaded, setFiltersLoaded] = useState(false)
 
   // Bookmarkable: the selected player lives in the URL hash (#playerId), so a link to a
   // specific player can be sent to another coach.
   useEffect(() => {
     const hash = window.location.hash.slice(1)
     if (hash) setSelectedPlayerId(hash)
-    setSelectedTeams(loadStoredTeams())
-    setTeamsLoaded(true)
+    setSelectedTeams(loadStoredList(TEAM_FILTER_STORAGE_KEY))
+    setSelectedGenders(loadStoredList(GENDER_FILTER_STORAGE_KEY))
+    setFiltersLoaded(true)
   }, [])
 
   const selectPlayer = (playerId: string) => {
@@ -121,13 +126,24 @@ export default function PlayerDirectoryPage() {
 
   const teams = useMemo(() => {
     const seen = new Set(players?.map(p => p.team) ?? [])
-    return Array.from(seen).sort((a, b) => a.localeCompare(b))
+    return Array.from(seen).sort(compareTeams)
+  }, [players])
+
+  const genderCodes = useMemo(() => {
+    const seen = new Set(players?.map(p => shortGenderCode(p.gender)).filter(Boolean) ?? [])
+    return GENDER_CODE_ORDER.filter(code => seen.has(code))
   }, [players])
 
   const toggleTeam = (team: string) => {
     const next = selectedTeams.includes(team) ? selectedTeams.filter(t => t !== team) : [...selectedTeams, team]
     setSelectedTeams(next)
-    storeTeams(next)
+    storeList(TEAM_FILTER_STORAGE_KEY, next)
+  }
+
+  const toggleGender = (code: string) => {
+    const next = selectedGenders.includes(code) ? selectedGenders.filter(g => g !== code) : [...selectedGenders, code]
+    setSelectedGenders(next)
+    storeList(GENDER_FILTER_STORAGE_KEY, next)
   }
 
   const filteredPlayers = useMemo(() => {
@@ -135,10 +151,11 @@ export default function PlayerDirectoryPage() {
     const query = nameFilter.trim().toLowerCase()
     return players.filter(p => {
       const matchesTeam = selectedTeams.length === 0 || selectedTeams.includes(p.team)
+      const matchesGender = selectedGenders.length === 0 || selectedGenders.includes(shortGenderCode(p.gender))
       const matchesName = !query || p.fullName.toLowerCase().includes(query)
-      return matchesTeam && matchesName
+      return matchesTeam && matchesGender && matchesName
     })
-  }, [players, nameFilter, selectedTeams])
+  }, [players, nameFilter, selectedTeams, selectedGenders])
 
   const showingList = !selectedPlayerId
 
@@ -161,7 +178,7 @@ export default function PlayerDirectoryPage() {
             </p>
           )}
 
-          {players !== null && teamsLoaded && (
+          {players !== null && filtersLoaded && (
             <>
               {teams.length > 0 && (
                 <fieldset>
@@ -177,7 +194,28 @@ export default function PlayerDirectoryPage() {
                           checked={selectedTeams.includes(team)}
                           onChange={() => toggleTeam(team)}
                         />
-                        {team}
+                        {formatTeamOrTbd(team)}
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+              )}
+
+              {genderCodes.length > 0 && (
+                <fieldset>
+                  <legend className="text-sm mb-2" style={labelStyle}>
+                    Filter by gender
+                  </legend>
+                  <div className="flex flex-wrap gap-x-4 gap-y-2">
+                    {genderCodes.map(code => (
+                      <label key={code} className="flex items-center gap-2 text-sm" style={valueStyle}>
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4"
+                          checked={selectedGenders.includes(code)}
+                          onChange={() => toggleGender(code)}
+                        />
+                        {code}
                       </label>
                     ))}
                   </div>
@@ -207,13 +245,13 @@ export default function PlayerDirectoryPage() {
                           <button
                             type="button"
                             onClick={() => selectPlayer(p.playerId)}
-                            className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left min-h-[44px]"
+                            className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left min-h-[44px] cursor-pointer hover:bg-[var(--secondary-bg,var(--primary-bg))] transition-colors"
                           >
                             <span className="font-medium" style={valueStyle}>
                               {p.fullName}
                             </span>
                             <span className="text-sm" style={labelStyle}>
-                              {p.team}
+                              {formatTeamOrTbd(p.team)}
                             </span>
                           </button>
                         </li>
@@ -228,7 +266,7 @@ export default function PlayerDirectoryPage() {
       )}
 
       {!showingList && (
-        <button type="button" onClick={() => selectPlayer('')} className="text-sm underline mb-4 block" style={{ color: 'var(--accent)' }}>
+        <button type="button" onClick={() => selectPlayer('')} className="text-sm underline mb-4 block cursor-pointer" style={{ color: 'var(--accent)' }}>
           ← Back to list
         </button>
       )}
@@ -274,7 +312,7 @@ export default function PlayerDirectoryPage() {
                   <h2 className="text-xl font-bold" style={{ color: 'var(--page-title)' }}>
                     {player.fullName}
                   </h2>
-                  <p style={labelStyle}>{player.team}</p>
+                  <p style={labelStyle}>{formatTeamOrTbd(player.team)}</p>
                 </div>
               </div>
 

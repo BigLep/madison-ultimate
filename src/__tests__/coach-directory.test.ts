@@ -70,16 +70,16 @@ describe('listRosteredPlayers', () => {
 
     const players = await listRosteredPlayers();
 
-    expect(players).toEqual([{ playerId: 'p001', fullName: 'TestFirst TestLast', team: 'Green' }]);
+    expect(players).toEqual([{ playerId: 'p001', fullName: 'TestFirst TestLast', team: 'Green', gender: 'Girl' }]);
   });
 
   it('includes a signup whose Team is still TBD or blank, normalized to "TBD": being on the Roster tab at all is what makes them Rostered', async () => {
     getData.mockResolvedValue([SIGNUPS_HEADER, ROSTERED]);
     getCachedData.mockResolvedValue([ROSTER_HEADER, ['p001', 'TBD']]);
-    expect(await listRosteredPlayers()).toEqual([{ playerId: 'p001', fullName: 'TestFirst TestLast', team: 'TBD' }]);
+    expect(await listRosteredPlayers()).toEqual([{ playerId: 'p001', fullName: 'TestFirst TestLast', team: 'TBD', gender: 'Girl' }]);
 
     getCachedData.mockResolvedValue([ROSTER_HEADER, ['p001', '']]);
-    expect(await listRosteredPlayers()).toEqual([{ playerId: 'p001', fullName: 'TestFirst TestLast', team: 'TBD' }]);
+    expect(await listRosteredPlayers()).toEqual([{ playerId: 'p001', fullName: 'TestFirst TestLast', team: 'TBD', gender: 'Girl' }]);
   });
 
   it('excludes a signup with no row at all on the Roster tab', async () => {

@@ -6,11 +6,13 @@ import { listAllSignups, findSignupByPlayerId, SignupRecord } from './signups-sh
 import { SIGNUPS_COLUMNS } from './signups-config';
 import { isPhotoComplete } from './signup-checklist';
 import { getAllRosterTeams } from './roster-team';
+import { isTeamAssigned } from './team-display';
 
 export interface RosteredPlayerSummary {
   playerId: string;
   fullName: string;
   team: string;
+  gender: string;
 }
 
 export interface CaretakerContact {
@@ -36,9 +38,9 @@ function fullNameOf(record: SignupRecord): string {
   return `${record[SIGNUPS_COLUMNS.PREFERRED_FIRST_NAME] || ''} ${record[SIGNUPS_COLUMNS.LAST_NAME] || ''}`.trim();
 }
 
-/** '' and the literal 'TBD' both mean "which team hasn't been decided yet" (see portal-player.ts). */
+/** '' and the literal 'TBD' both mean "which team hasn't been decided yet" (see team-display.ts). */
 function normalizeTeam(team: string): string {
-  return team || 'TBD';
+  return isTeamAssigned(team) ? team : 'TBD';
 }
 
 function caretakersOf(record: SignupRecord): CaretakerContact[] {
@@ -84,7 +86,12 @@ export async function listRosteredPlayers(): Promise<RosteredPlayerSummary[]> {
     .filter(record => teamsByPlayerId.has(record[SIGNUPS_COLUMNS.PLAYER_ID] || ''))
     .map(record => {
       const playerId = record[SIGNUPS_COLUMNS.PLAYER_ID] || '';
-      return { playerId, fullName: fullNameOf(record), team: normalizeTeam(teamsByPlayerId.get(playerId) || '') };
+      return {
+        playerId,
+        fullName: fullNameOf(record),
+        team: normalizeTeam(teamsByPlayerId.get(playerId) || ''),
+        gender: record[SIGNUPS_COLUMNS.GENDER_IDENTIFICATION] || '',
+      };
     })
     .sort((a, b) => a.fullName.localeCompare(b.fullName));
 }

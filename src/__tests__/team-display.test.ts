@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatTeam, isTeamAssigned, isGameRowVisibleToPlayer } from '@/lib/team-display';
+import { formatTeam, formatTeamOrTbd, compareTeams, isTeamAssigned, isGameRowVisibleToPlayer } from '@/lib/team-display';
 
 describe('team display (player-portal-grill.md Q24)', () => {
   it('hides Team while unassigned', () => {
@@ -19,6 +19,30 @@ describe('team display (player-portal-grill.md Q24)', () => {
 
   it('shows an unknown team value as typed', () => {
     expect(formatTeam('Varsity')).toBe('Varsity');
+  });
+});
+
+describe('formatTeamOrTbd', () => {
+  it('shows an explicit TBD label instead of hiding an unassigned team', () => {
+    expect(formatTeamOrTbd('')).toBe('🕒 TBD');
+    expect(formatTeamOrTbd('TBD')).toBe('🕒 TBD');
+    expect(formatTeamOrTbd(undefined)).toBe('🕒 TBD');
+  });
+
+  it('matches formatTeam for an assigned team', () => {
+    expect(formatTeamOrTbd('Blue')).toBe('🟦 Blue');
+  });
+});
+
+describe('compareTeams', () => {
+  it('sorts the four Fall 2026 squads Blue, Gold, Silver, then Practice Squad', () => {
+    const teams = ['Practice Squad', 'Silver', 'Blue', 'Gold'];
+    expect([...teams].sort(compareTeams)).toEqual(['Blue', 'Gold', 'Silver', 'Practice Squad']);
+  });
+
+  it('sorts unrecognized teams, including TBD, after all known squads', () => {
+    const teams = ['TBD', 'Gold', 'Varsity', 'Blue'];
+    expect([...teams].sort(compareTeams)).toEqual(['Blue', 'Gold', 'TBD', 'Varsity']);
   });
 });
 
