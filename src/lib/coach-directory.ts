@@ -10,6 +10,7 @@ import { getAllRosterTeams } from './roster-team';
 export interface RosteredPlayerSummary {
   playerId: string;
   fullName: string;
+  team: string;
 }
 
 export interface CaretakerContact {
@@ -33,6 +34,11 @@ export interface PlayerDirectoryEntry {
 
 function fullNameOf(record: SignupRecord): string {
   return `${record[SIGNUPS_COLUMNS.PREFERRED_FIRST_NAME] || ''} ${record[SIGNUPS_COLUMNS.LAST_NAME] || ''}`.trim();
+}
+
+/** '' and the literal 'TBD' both mean "which team hasn't been decided yet" (see portal-player.ts). */
+function normalizeTeam(team: string): string {
+  return team || 'TBD';
 }
 
 function caretakersOf(record: SignupRecord): CaretakerContact[] {
@@ -70,16 +76,16 @@ function toDirectoryEntry(record: SignupRecord, team: string): PlayerDirectoryEn
  * Every Rostered Player: a signup with a row at all on the coach Roster tab. Team itself may
  * still be blank or 'TBD' (not yet decided which team) — that doesn't make the player any less
  * Rostered, only a signup with no Roster row at all is excluded. Sorted alphabetically by full
- * name for the Player Directory dropdown.
+ * name; includes each player's Team so the Player Directory can filter by it (issue #1).
  */
 export async function listRosteredPlayers(): Promise<RosteredPlayerSummary[]> {
   const [signups, teamsByPlayerId] = await Promise.all([listAllSignups(), getAllRosterTeams()]);
   return signups
-    .map(record => ({
-      playerId: record[SIGNUPS_COLUMNS.PLAYER_ID] || '',
-      fullName: fullNameOf(record),
-    }))
-    .filter(player => player.playerId && teamsByPlayerId.has(player.playerId))
+    .filter(record => teamsByPlayerId.has(record[SIGNUPS_COLUMNS.PLAYER_ID] || ''))
+    .map(record => {
+      const playerId = record[SIGNUPS_COLUMNS.PLAYER_ID] || '';
+      return { playerId, fullName: fullNameOf(record), team: normalizeTeam(teamsByPlayerId.get(playerId) || '') };
+    })
     .sort((a, b) => a.fullName.localeCompare(b.fullName));
 }
 
@@ -88,6 +94,5 @@ export async function getPlayerDirectoryEntry(playerId: string): Promise<PlayerD
   const [found, teamsByPlayerId] = await Promise.all([findSignupByPlayerId(playerId), getAllRosterTeams()]);
   if (!found) return null;
   if (!teamsByPlayerId.has(playerId)) return null;
-  const team = teamsByPlayerId.get(playerId) || 'TBD';
-  return toDirectoryEntry(found.record, team);
+  return toDirectoryEntry(found.record, normalizeTeam(teamsByPlayerId.get(playerId) || ''));
 }
