@@ -90,9 +90,9 @@ export function PortalHome() {
             <p style={{ color: 'var(--primary-text)' }}>
               🍎{' '}
               <a href={APP_CONFIG.GAME_SNACK_SIGNUP_URL} target="_blank" rel="noopener noreferrer" style={linkStyle}>
-                Signup to bring game snacks
+                Sign up to bring game snacks or a tent
               </a>
-              !
+              ! Tents must be weighted or staked down, even if it doesn&apos;t look windy (league safety rule).
             </p>
           )}
         </CardContent>
