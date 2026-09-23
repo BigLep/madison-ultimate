@@ -1,0 +1,16 @@
+Subject: Madison Ultimate: please finish {{preferredName}} {{lastName}}'s signup before tryouts
+
+Hello, family of {{preferredName}} {{lastName}},
+
+Tryouts are tomorrow, Friday September 11. Before then, this is the signup status for {{preferredName}}:
+
+{{statusRows}}
+
+Please open the link below and finish the items marked "Not done" as soon as you can.
+
+{{portalUrl}}
+
+Note: If you have more than one player, you will get one of these per player.
+
+Let us know if you have any questions,
+Madison Coaches
