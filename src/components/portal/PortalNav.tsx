@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, User, Calendar, Trophy } from 'lucide-react'
+import { Home, User, Calendar, Trophy, type LucideIcon } from 'lucide-react'
 
 export type PortalScreen = 'home' | 'player' | 'practices' | 'games'
 
@@ -26,7 +26,7 @@ export const SCREEN_TO_HASH: Record<PortalScreen, string> = {
   games: '#games',
 }
 
-const NAV_ITEMS: Array<{ id: PortalScreen; label: string; icon: typeof Home }> = [
+const NAV_ITEMS: Array<BottomTabItem<PortalScreen>> = [
   { id: 'home', label: 'Home', icon: Home },
   { id: 'player', label: 'Player', icon: User },
   { id: 'practices', label: 'Practices', icon: Calendar },
@@ -34,11 +34,32 @@ const NAV_ITEMS: Array<{ id: PortalScreen; label: string; icon: typeof Home }> =
 ]
 
 export function PortalNav({ active, onChange }: { active: PortalScreen; onChange: (screen: PortalScreen) => void }) {
+  return <BottomTabNav label="Player Portal" items={NAV_ITEMS} active={active} onChange={onChange} />
+}
+
+export interface BottomTabItem<T extends string> {
+  id: T
+  label: string
+  icon: LucideIcon
+}
+
+/** The sticky bottom tab bar shared by the Player Portal and Coach Home. */
+export function BottomTabNav<T extends string>({
+  label,
+  items,
+  active,
+  onChange,
+}: {
+  label: string
+  items: Array<BottomTabItem<T>>
+  active: T
+  onChange: (screen: T) => void
+}) {
   return (
     <div className="sticky bottom-0 z-40 border-t shadow-lg" style={{ background: 'var(--card-bg)', borderColor: 'var(--border)' }}>
       <div className="max-w-2xl mx-auto">
-        <nav aria-label="Player Portal" className="flex" style={{ height: `calc(${PORTAL_NAV_HEIGHT_PX}px + env(safe-area-inset-bottom))`, paddingBottom: 'env(safe-area-inset-bottom)' }}>
-          {NAV_ITEMS.map(item => {
+        <nav aria-label={label} className="flex" style={{ height: `calc(${PORTAL_NAV_HEIGHT_PX}px + env(safe-area-inset-bottom))`, paddingBottom: 'env(safe-area-inset-bottom)' }}>
+          {items.map(item => {
             const Icon = item.icon
             const isActive = active === item.id
             return (

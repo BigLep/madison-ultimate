@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { findSignupByPlayerId, updateSignupRow } from '../../../../../../lib/signups-sheet';
 import { SIGNUPS_COLUMNS } from '../../../../../../lib/signups-config';
-import { downloadDriveFile, uploadPlayerPhoto } from '../../../../../../lib/google-oauth-drive';
-import { PHOTO_ALLOWED_TYPES, PHOTO_MAX_BYTES, photoContentDisposition, photoContentType, photoDownloadFilename, photoTooLargeMessage } from '../../../../../../lib/photo-limits';
+import { uploadPlayerPhoto } from '../../../../../../lib/google-oauth-drive';
+import { drivePhotoResponse, readPhotoUpload } from '../../../../../../lib/photo-response';
 
-// Serves the player's photo bytes directly (rather than a Drive link), since families viewing
-// /player/$playerId have no Google sign-in and Drive's own links (thumbnailLink, webContentLink)
-// either require Drive auth or don't render HEIC in a browser (docs/adr/0003). No conversion:
-// the browser decides whether it can render the bytes; PhotoUpload falls back to a plain link.
+// Serves the player's photo bytes directly (see photo-response.ts and docs/adr/0003);
+// PhotoUpload falls back to a plain link when the browser can't render them.
 export async function GET(request: NextRequest, { params }: { params: Promise<{ playerId: string }> }) {
   try {
     const { playerId } = await params;
@@ -21,24 +19,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ success: false, error: 'No photo uploaded' }, { status: 404 });
     }
 
-    const file = await downloadDriveFile(fileId);
-    if (!file) {
-      return NextResponse.json({ success: false, error: 'Photo not found in Drive' }, { status: 404 });
-    }
-
-    const filename = photoDownloadFilename(
-      existing.record[SIGNUPS_COLUMNS.PREFERRED_FIRST_NAME] || '',
-      existing.record[SIGNUPS_COLUMNS.LAST_NAME] || '',
-      file.mimeType,
-    )
-
-    return new NextResponse(new Uint8Array(file.buffer), {
-      status: 200,
-      headers: {
-        'Content-Type': photoContentType(file.mimeType),
-        'Content-Disposition': photoContentDisposition(filename),
-        'Cache-Control': 'private, no-cache, must-revalidate',
-      },
+    return drivePhotoResponse(fileId, {
+      firstName: existing.record[SIGNUPS_COLUMNS.PREFERRED_FIRST_NAME] || '',
+      lastName: existing.record[SIGNUPS_COLUMNS.LAST_NAME] || '',
     });
   } catch (error) {
     console.error('Error fetching player photo:', error);
@@ -57,23 +40,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ success: false, error: 'Player not found' }, { status: 404 });
     }
 
-    const formData = await request.formData();
-    const file = formData.get('photo');
-    if (!(file instanceof File)) {
-      return NextResponse.json({ success: false, error: 'No photo provided' }, { status: 400 });
-    }
-
-    if (!(PHOTO_ALLOWED_TYPES as readonly string[]).includes(file.type)) {
-      return NextResponse.json({ success: false, error: 'Unsupported file type' }, { status: 400 });
-    }
-    if (file.size > PHOTO_MAX_BYTES) {
-      return NextResponse.json({ success: false, error: photoTooLargeMessage(file.size) }, { status: 400 });
-    }
-
-    const buffer = Buffer.from(await file.arrayBuffer());
+    const upload = await readPhotoUpload(request);
+    if (upload instanceof NextResponse) return upload;
+    const { buffer, mimeType } = upload;
     const existingFileId = existing.record[SIGNUPS_COLUMNS.PHOTO_DRIVE_FILE_ID] || undefined;
 
-    const fileId = await uploadPlayerPhoto(playerId, buffer, file.type, existingFileId);
+    const fileId = await uploadPlayerPhoto(playerId, buffer, mimeType, existingFileId);
 
     const updated = await updateSignupRow(playerId, {
       [SIGNUPS_COLUMNS.PHOTO_DRIVE_FILE_ID]: fileId,

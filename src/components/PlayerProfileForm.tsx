@@ -314,7 +314,12 @@ export function PlayerProfileForm({
 
       <section id="photo-upload" className="space-y-4 scroll-mt-4">
         <h3 className="font-semibold text-lg" style={sectionHeadingStyle}>📷 Player Photo<Req /></h3>
-        <PhotoUpload playerId={playerId} hasPhoto={hasPhoto} onUploaded={onPhotoUploaded} />
+        <PhotoUpload
+          uploadUrl={`/api/signup/player/${playerId}/photo`}
+          photoUrl={`/api/signup/player/${playerId}/photo`}
+          hasPhoto={hasPhoto}
+          onUploaded={onPhotoUploaded}
+        />
       </section>
 
       <section id="player-contact" className="space-y-4 scroll-mt-4">

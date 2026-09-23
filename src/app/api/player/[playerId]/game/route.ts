@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { updateSheetData } from '../../../../../lib/google-api';
-import { getCachedSheetData, getCachedGameAvailabilityHeaderNotes } from '../../../../../lib/sheet-cache';
+import { getCachedGameAvailabilityHeaderNotes } from '../../../../../lib/sheet-cache';
+import { readGameInfo, readFieldUrls, formatFieldLocation } from '../../../../../lib/schedule-info';
 import { getPlayerGameAvailability, findGameColumns } from '../../../../../lib/game-availability-helper';
 import { getColumnLetter } from '../../../../../lib/availability-helper';
 import { SHEET_CONFIG } from '../../../../../lib/sheet-config';
 import { loadPortalPlayer } from '../../../../../lib/portal-player';
 import { formatTeam, isGameRowVisibleToPlayer } from '../../../../../lib/team-display';
-import { assignGameOrdinals, makeGameKey, parseGameKey } from '../../../../../lib/game-schedule';
+import { makeGameKey, parseGameKey } from '../../../../../lib/game-schedule';
 import {
   GAME_CONFIG,
   ExtraFieldValue,
@@ -29,85 +30,6 @@ function normalizeActivationStatus(value: string | undefined): ActivationStatus 
   const v = (value || '').trim();
   if (ACTIVATION_STATUS_VALUES.includes(v as ActivationStatus)) return v as ActivationStatus;
   return '';
-}
-
-function headerMap(headerRow: any[]): Record<string, number> {
-  const map: Record<string, number> = {};
-  headerRow.forEach((h, i) => {
-    const name = (h ?? '').toString().trim();
-    if (name) map[name] = i;
-  });
-  return map;
-}
-
-interface GameInfoRow {
-  date: string;
-  label: string;
-  team: string;
-  warmupTime: string;
-  gameStart: string;
-  doneBy: string;
-  fieldName: string;
-  fieldLocation: string;
-  gameNote: string;
-}
-
-/** Every Game Info row with a date and label, in sheet order, with per-date-per-team ordinals. */
-async function readGameInfo(): Promise<Array<GameInfoRow & { ordinalForDate: number }> | null> {
-  const data = await getCachedSheetData('GAME_INFO');
-  if (!data || data.length < 2) return null;
-  const col = GAME_CONFIG.GAME_INFO_COLUMN_NAMES;
-  const map = headerMap(data[0]);
-  const get = (row: any[], name: string) => {
-    const index = map[name];
-    return index === undefined ? '' : (row[index] ?? '').toString().trim();
-  };
-  const rows: GameInfoRow[] = [];
-  for (let i = 1; i < data.length; i++) {
-    const row = data[i];
-    const rawDate = get(row, col.DATE);
-    const label = get(row, col.GAME_LABEL);
-    if (!rawDate || !label) continue;
-    rows.push({
-      date: toCanonicalDateKey(rawDate),
-      label,
-      team: get(row, col.TEAM),
-      warmupTime: get(row, col.WARMUP),
-      gameStart: get(row, col.START),
-      doneBy: get(row, col.DONE),
-      fieldName: get(row, col.FIELD_NAME),
-      fieldLocation: get(row, col.FIELD_LOCATION),
-      gameNote: get(row, col.GAME_NOTE),
-    });
-  }
-  return assignGameOrdinals(rows);
-}
-
-async function readFieldUrls(): Promise<Record<string, { googleMapUrl: string | null; discNwUrl: string | null }>> {
-  const byName: Record<string, { googleMapUrl: string | null; discNwUrl: string | null }> = {};
-  try {
-    const fieldsData = await getCachedSheetData('FIELDS');
-    if (fieldsData && fieldsData.length >= 2) {
-      const map = headerMap(fieldsData[0]);
-      const nameIdx = map[GAME_CONFIG.FIELDS_COLUMN_NAMES.FIELD_NAME];
-      const mapIdx = map[GAME_CONFIG.FIELDS_COLUMN_NAMES.GOOGLE_MAP_URL];
-      const discIdx = map[GAME_CONFIG.FIELDS_COLUMN_NAMES.DISC_NW_URL];
-      if (nameIdx !== undefined) {
-        for (let r = 1; r < fieldsData.length; r++) {
-          const name = (fieldsData[r][nameIdx] ?? '').toString().trim();
-          if (name) {
-            byName[name] = {
-              googleMapUrl: mapIdx !== undefined ? (fieldsData[r][mapIdx] ?? '').toString().trim() || null : null,
-              discNwUrl: discIdx !== undefined ? (fieldsData[r][discIdx] ?? '').toString().trim() || null : null,
-            };
-          }
-        }
-      }
-    }
-  } catch (e) {
-    console.log('Fields sheet not available, game location URLs will be missing:', e);
-  }
-  return byName;
 }
 
 export async function GET(
@@ -135,8 +57,7 @@ export async function GET(
     let games = gameInfo
       .filter(row => isGameRowVisibleToPlayer(row.team, player.team))
       .map(row => {
-        // Display: "Walt Hudley (East)" when both set; "Walt Hudley" when location empty; else the one that's set
-        const location = row.fieldName && row.fieldLocation ? `${row.fieldName} (${row.fieldLocation})` : (row.fieldName || row.fieldLocation);
+        const location = formatFieldLocation(row.fieldName, row.fieldLocation);
         return {
           team: row.team,
           gameLabel: row.label,

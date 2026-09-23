@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { updateSheetData } from '../../../../../lib/google-api';
-import { getCachedSheetData } from '../../../../../lib/sheet-cache';
+import { readPracticeInfo, readFieldUrls, formatFieldLocation } from '../../../../../lib/schedule-info';
 import { getPlayerPracticeAvailability, findPracticeColumns } from '../../../../../lib/practice-availability-helper';
 import { getColumnLetter } from '../../../../../lib/availability-helper';
 import { SHEET_CONFIG } from '../../../../../lib/sheet-config';
@@ -14,7 +14,6 @@ import {
   formatPracticeDate,
   formatPracticeTime,
 } from '../../../../../lib/practice-config';
-import { GAME_CONFIG } from '../../../../../lib/game-config';
 import { parseMMDDDate, toCanonicalDateKey } from '../../../../../lib/date-formatters';
 
 // Practices tab data for the Player Portal (docs/fall-2026/player-portal-grill.md Q3, Q12, Q16):
@@ -22,74 +21,6 @@ import { parseMMDDDate, toCanonicalDateKey } from '../../../../../lib/date-forma
 // PlayerID column of Practice Availability, and Practice Info is read by header name.
 
 const ROSTER_SHEET_ID = SHEET_CONFIG.ROSTER_SHEET_ID;
-
-function headerMap(headerRow: any[]): Record<string, number> {
-  const map: Record<string, number> = {};
-  headerRow.forEach((h, i) => {
-    const name = (h ?? '').toString().trim();
-    if (name) map[name] = i;
-  });
-  return map;
-}
-
-interface PracticeInfoRow {
-  date: string;
-  fieldName: string;
-  fieldLocation: string;
-  startTime: string;
-  endTime: string;
-  note: string;
-}
-
-async function readPracticeInfo(): Promise<PracticeInfoRow[] | null> {
-  const data = await getCachedSheetData('PRACTICE_INFO');
-  if (!data || data.length < 2) return null;
-  const cols = PRACTICE_CONFIG.PRACTICE_INFO_COLUMN_NAMES;
-  const map = headerMap(data[0]);
-  if (map[cols.DATE] === undefined) {
-    throw new Error(`Practice Info is missing the "${cols.DATE}" column`);
-  }
-  const get = (row: any[], name: string) => {
-    const index = map[name];
-    return index === undefined ? '' : (row[index] ?? '').toString().trim();
-  };
-  const rows: PracticeInfoRow[] = [];
-  for (let i = 1; i < data.length; i++) {
-    const row = data[i];
-    const rawDate = get(row, cols.DATE);
-    if (!rawDate) continue;
-    rows.push({
-      date: toCanonicalDateKey(rawDate),
-      fieldName: get(row, cols.FIELD_NAME),
-      fieldLocation: get(row, cols.FIELD_LOCATION),
-      startTime: get(row, cols.START),
-      endTime: get(row, cols.END),
-      note: get(row, cols.NOTE),
-    });
-  }
-  return rows;
-}
-
-async function readFieldMapUrls(): Promise<Record<string, string | null>> {
-  const byName: Record<string, string | null> = {};
-  try {
-    const fieldsData = await getCachedSheetData('FIELDS');
-    if (fieldsData && fieldsData.length >= 2) {
-      const map = headerMap(fieldsData[0]);
-      const nameIdx = map[GAME_CONFIG.FIELDS_COLUMN_NAMES.FIELD_NAME];
-      const mapIdx = map[GAME_CONFIG.FIELDS_COLUMN_NAMES.GOOGLE_MAP_URL];
-      if (nameIdx !== undefined) {
-        for (let r = 1; r < fieldsData.length; r++) {
-          const name = (fieldsData[r][nameIdx] ?? '').toString().trim();
-          if (name) byName[name] = mapIdx !== undefined ? (fieldsData[r][mapIdx] ?? '').toString().trim() || null : null;
-        }
-      }
-    }
-  } catch (e) {
-    console.log('Fields sheet not available, practice location URLs will be missing:', e);
-  }
-  return byName;
-}
 
 export async function GET(
   request: NextRequest,
@@ -110,15 +41,13 @@ export async function GET(
     if (!practiceInfo) {
       return NextResponse.json({ success: false, error: 'No practice information found' }, { status: 404 });
     }
-    const fieldUrlByName = await readFieldMapUrls();
+    const fieldUrlByName = await readFieldUrls();
 
     let practices: Practice[] = practiceInfo.map(row => {
-      // Display: "Walt Hudley (East)" when both set; "Walt Hudley" when location empty; else the one that's set
-      const location = row.fieldName && row.fieldLocation ? `${row.fieldName} (${row.fieldLocation})` : (row.fieldName || row.fieldLocation);
       return {
         date: row.date,
-        location,
-        locationUrl: (row.fieldName && fieldUrlByName[row.fieldName]) || null,
+        location: formatFieldLocation(row.fieldName, row.fieldLocation),
+        locationUrl: (row.fieldName && fieldUrlByName[row.fieldName]?.googleMapUrl) || null,
         startTime: row.startTime,
         endTime: row.endTime,
         note: row.note,

@@ -22,16 +22,23 @@ function headerIndex(headerRow: any[], name: string): number {
   return headerRow.findIndex(h => (h ?? '').toString().trim() === name);
 }
 
-function findPlayerRowIndex(data: any[][], playerId: string): { rowIndex: number; playerIdIndex: number } | null {
+function findKeyedRowIndex(data: any[][], keyColumnName: string, key: string): number | null {
   if (!data || data.length < 1) return null;
-  const playerIdIndex = headerIndex(data[0], AVAILABILITY_COLUMN_NAMES.PLAYER_ID);
-  if (playerIdIndex === -1) return null;
+  const keyIndex = headerIndex(data[0], keyColumnName);
+  if (keyIndex === -1) return null;
   for (let i = 1; i < data.length; i++) {
-    if ((data[i][playerIdIndex] ?? '').toString().trim() === playerId) {
-      return { rowIndex: i + 1, playerIdIndex }; // 1-based sheet row
+    if ((data[i][keyIndex] ?? '').toString().trim() === key) {
+      return i + 1; // 1-based sheet row
     }
   }
   return null;
+}
+
+/** Where an availability tab lives and which column keys its rows. */
+export interface AvailabilityTab {
+  sheetName: string;
+  keyColumnName: string;
+  cacheKey: 'PRACTICE_AVAILABILITY_PLAYERS' | 'GAME_AVAILABILITY_PLAYERS' | 'COACH_AVAILABILITY_COACHES';
 }
 
 /**
@@ -45,26 +52,35 @@ function findPlayerRowIndex(data: any[][], playerId: string): { rowIndex: number
 export async function getPlayerAvailabilityData(
   playerId: string,
   playerCacheKey: 'PRACTICE_AVAILABILITY_PLAYERS' | 'GAME_AVAILABILITY_PLAYERS',
-  sheetName: string,
-  retried = false
+  sheetName: string
 ): Promise<AvailabilityResult | null> {
-  try {
-    let cached = await getCachedSheetData(playerCacheKey);
-    let located = findPlayerRowIndex(cached, playerId);
+  return getAvailabilityRow(playerId, { sheetName, keyColumnName: AVAILABILITY_COLUMN_NAMES.PLAYER_ID, cacheKey: playerCacheKey });
+}
 
-    if (!located) {
+/**
+ * The row keyed by `key` in an availability tab (a PlayerID in Practice/Game Availability, a
+ * CoachID in Coach Availability), with the live header row. Same contract as
+ * getPlayerAvailabilityData: null when the tab has no key column or no row for this key.
+ */
+export async function getAvailabilityRow(key: string, tab: AvailabilityTab, retried = false): Promise<AvailabilityResult | null> {
+  const { sheetName, keyColumnName, cacheKey } = tab;
+  try {
+    let cached = await getCachedSheetData(cacheKey);
+    let rowIndex = findKeyedRowIndex(cached, keyColumnName, key);
+
+    if (!rowIndex) {
       // The row may have been added since the cache was filled; refresh once before giving up.
-      await forceRefreshSheetCache(playerCacheKey);
-      cached = await getCachedSheetData(playerCacheKey);
-      located = findPlayerRowIndex(cached, playerId);
-      if (!located) {
-        console.log(`[availability] no PlayerID row for ${playerId} in ${sheetName}`);
+      await forceRefreshSheetCache(cacheKey);
+      cached = await getCachedSheetData(cacheKey);
+      rowIndex = findKeyedRowIndex(cached, keyColumnName, key);
+      if (!rowIndex) {
+        console.log(`[availability] no ${keyColumnName} row for ${key} in ${sheetName}`);
         return null;
       }
     }
 
-    // Fetch header row (row 1) and player row fresh in a single batch request
-    const ranges = [`'${sheetName}'!1:1`, `'${sheetName}'!${located.rowIndex}:${located.rowIndex}`];
+    // Fetch header row (row 1) and the keyed row fresh in a single batch request
+    const ranges = [`'${sheetName}'!1:1`, `'${sheetName}'!${rowIndex}:${rowIndex}`];
     const batchResponse = await getBatchSheetData(SHEET_CONFIG.ROSTER_SHEET_ID, ranges);
     if (!batchResponse || batchResponse.length < 2) {
       throw new Error('Failed to fetch header and player rows');
@@ -73,17 +89,17 @@ export async function getPlayerAvailabilityData(
     const headerRow = batchResponse[0]?.[0] || [];
     const playerRow = batchResponse[1]?.[0] || [];
 
-    // Verify the live row still belongs to this player (rows may have been sorted since caching)
-    const livePlayerIdIndex = headerIndex(headerRow, AVAILABILITY_COLUMN_NAMES.PLAYER_ID);
-    const fetchedPlayerId = livePlayerIdIndex === -1 ? '' : (playerRow[livePlayerIdIndex] ?? '').toString().trim();
-    if (fetchedPlayerId !== playerId) {
+    // Verify the live row still belongs to this key (rows may have been sorted since caching)
+    const liveKeyIndex = headerIndex(headerRow, keyColumnName);
+    const fetchedKey = liveKeyIndex === -1 ? '' : (playerRow[liveKeyIndex] ?? '').toString().trim();
+    if (fetchedKey !== key) {
       if (retried) {
-        console.log(`[availability] row mismatch for ${playerId} in ${sheetName} after refresh`);
+        console.log(`[availability] row mismatch for ${key} in ${sheetName} after refresh`);
         return null;
       }
-      console.log(`[availability] row mismatch for ${playerId} in ${sheetName}, refreshing cache...`);
-      await forceRefreshSheetCache(playerCacheKey);
-      return await getPlayerAvailabilityData(playerId, playerCacheKey, sheetName, true);
+      console.log(`[availability] row mismatch for ${key} in ${sheetName}, refreshing cache...`);
+      await forceRefreshSheetCache(cacheKey);
+      return await getAvailabilityRow(key, tab, true);
     }
 
     const columnMapping: Record<string, number> = {};
@@ -96,7 +112,7 @@ export async function getPlayerAvailabilityData(
     return {
       headerRow,
       playerRow,
-      rowIndex: located.rowIndex,
+      rowIndex,
       columnMapping,
     };
   } catch (error) {

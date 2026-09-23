@@ -74,14 +74,24 @@ function uploadWithProgress(
   })
 }
 
+const PLAYER_PHOTO_HELP = `This helps coaches learn names. It's used in the portal and by coaches only.`
+
+/**
+ * Photo picker with drag-and-drop, progress, and preview. `uploadUrl` takes a multipart `photo`
+ * POST; `photoUrl` serves the current photo. Used for Player Photos and Coach Photos.
+ */
 export function PhotoUpload({
-  playerId,
+  uploadUrl,
+  photoUrl,
   hasPhoto,
   onUploaded,
+  helpText = PLAYER_PHOTO_HELP,
 }: {
-  playerId: string
+  uploadUrl: string
+  photoUrl: string
   hasPhoto: boolean
   onUploaded: () => void
+  helpText?: string
 }) {
   const [isUploading, setIsUploading] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -121,7 +131,7 @@ export function PhotoUpload({
     replaceLocalPreview(canPreviewLocally(file) ? URL.createObjectURL(file) : null)
     try {
       const { ok, body } = await uploadWithProgress(
-        `/api/signup/player/${playerId}/photo`,
+        uploadUrl,
         file,
         setProgress,
       )
@@ -153,13 +163,12 @@ export function PhotoUpload({
   return (
     <div className="space-y-2">
       <p className="text-xs" style={{ color: 'var(--secondary-text)' }}>
-        This helps coaches learn names. It&apos;s used in the portal and by coaches only. JPEG, PNG,
-        WebP, or HEIC, {PHOTO_MAX_MB} MB or smaller.
+        {helpText} JPEG, PNG, WebP, or HEIC, {PHOTO_MAX_MB} MB or smaller.
       </p>
       {(hasPhoto || localPreview) && (
         <PhotoPreview
-          src={localPreview || `/api/signup/player/${playerId}/photo?v=${cacheBust}`}
-          downloadUrl={`/api/signup/player/${playerId}/photo?v=${cacheBust}`}
+          src={localPreview || `${photoUrl}?v=${cacheBust}`}
+          downloadUrl={`${photoUrl}?v=${cacheBust}`}
         />
       )}
       <div
