@@ -88,6 +88,35 @@ The family WhatsApp community for questions, photos, carpools, and similar. Join
 A `/coach` area of coach-facing utilities, gated by its own shared password (distinct from and simpler than the `/admin` ops area's, though both use the same cookie-based password-gate mechanism; see ADR 0008). A landing page lists the available tools.
 _Avoid_: admin tools (that name is reserved for `/admin`, which is ops-facing)
 
+**Coach**:
+A person on the Coaches tab of the coach workbook. The tab's row order is the order coaches are shown everywhere.
+_Avoid_: staff, volunteer (Coach Volunteering is a family signup answer, not a Coach)
+
+**CoachID**:
+A coach's permanent identity: a short random opaque slug, minted once and never changed, on the same scheme as PlayerID. Coach Availability rows and the Coach Photo hang off it, so renaming a coach breaks nothing.
+_Avoid_: keying on coach name
+
+**Coach Login**:
+The `/coach/login` screen: pick your name from the list of Coaches, enter the shared Coach Tools password. Any coach can pick any name; the password is the only real gate. The device remembers the chosen coach until Coach Logout.
+_Avoid_: coach sign in, coach account
+
+**Coach Logout**:
+Forgetting both the Coach Tools password and the remembered coach on this device, returning to Coach Login.
+
+**Coach Home**:
+The `/coach` page for the remembered coach: their own contact info, About, and Coach Photo (all editable by them), Coach Availability, key season links, and the list of Coach Tools.
+_Avoid_: coach dashboard, coach portal
+
+**Coach Photo**:
+A coach's photo, uploaded by the coach, kept separately from Player Photos and identified by CoachID. Shown publicly on the Coaches Page.
+
+**Coach Availability**:
+Whether a coach plans to be at each practice and each game, with an optional note per event, using the same three answers players give. Practices and games are one combined list, and every game appears regardless of team.
+
+**Coaches Page**:
+The public `/coaches` page listing every Coach in sheet order with their Coach Photo, name, and About. Never shows email or phone.
+_Avoid_: staff page, meet the coaches
+
 **Rostered Player**:
 A player who has a row on the coach Roster tab, as opposed to any row in Signups. Signing up does not make a player Rostered; being added to the Roster tab does. Team itself may still be blank or `TBD` (which team hasn't been decided yet) without affecting whether the player is Rostered.
 _Avoid_: active player, active roster (no such flag exists in the data); assuming blank/TBD Team means not Rostered
