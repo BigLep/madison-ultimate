@@ -29,8 +29,6 @@ interface CoachAvailabilityData {
   availabilityOptions: { PLANNING: string; CANT_MAKE: string; NOT_SURE: string }
 }
 
-const cardStyle = { background: 'var(--card-bg)', borderColor: 'var(--border)' } as const
-
 export function CoachAvailabilityTab({ coachId, availabilitySheetUrl }: { coachId: string; availabilitySheetUrl: string | null }) {
   const [data, setData] = useState<CoachAvailabilityData | null>(null)
   const [error, setError] = useState('')
@@ -77,7 +75,7 @@ export function CoachAvailabilityTab({ coachId, availabilitySheetUrl }: { coachI
 
   if (error) {
     return (
-      <Card className="shadow-lg" style={cardStyle}>
+      <Card className="shadow-lg surface-card">
         <CardContent className="text-center py-8">
           <p style={{ color: 'var(--error-text, #f87171)' }}>{error}</p>
         </CardContent>
@@ -87,7 +85,7 @@ export function CoachAvailabilityTab({ coachId, availabilitySheetUrl }: { coachI
 
   if (!data) {
     return (
-      <Card className="shadow-lg" style={cardStyle}>
+      <Card className="shadow-lg surface-card">
         <CardContent className="text-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
           <p style={{ color: 'var(--secondary-text)' }}>Loading availability...</p>
@@ -98,7 +96,7 @@ export function CoachAvailabilityTab({ coachId, availabilitySheetUrl }: { coachI
 
   if (!data.availabilityOpen) {
     return (
-      <Card className="shadow-lg" style={cardStyle}>
+      <Card className="shadow-lg surface-card">
         <CardContent className="py-4 text-sm space-y-2" style={{ color: 'var(--primary-text)' }}>
           <p>You don&apos;t have a row in Coach Availability yet. Run Build Coach Availability from the coach sheet menu, then reload.</p>
           {sheetLink}
@@ -169,7 +167,7 @@ export function CoachAvailabilityTab({ coachId, availabilitySheetUrl }: { coachI
       )}
 
       {data.events.length === 0 && (
-        <Card className="shadow-lg" style={cardStyle}>
+        <Card className="shadow-lg surface-card">
           <CardContent className="text-center py-8">
             <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" style={{ color: 'var(--secondary-text)' }} />
             <p style={{ color: 'var(--secondary-text)' }}>No practices or games in Coach Availability yet.</p>

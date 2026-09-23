@@ -5,6 +5,7 @@
 import type { PracticeInfoRow, GameInfoRow } from './schedule-info';
 import { isPracticeCancelled } from './practice-config';
 import { parseMMDDDate } from './date-formatters';
+import { headerMap } from './header-map';
 
 export type CoachEventKind = 'practice' | 'game';
 
@@ -98,11 +99,7 @@ export interface CoachEventAvailability {
  * Practices and Games tabs do.
  */
 export function readCoachAvailability(events: CoachEvent[], headerRow: unknown[], row: unknown[]): CoachEventAvailability[] {
-  const index: Record<string, number> = {};
-  headerRow.forEach((h, i) => {
-    const name = (h ?? '').toString().trim();
-    if (name && index[name] === undefined) index[name] = i;
-  });
+  const index = headerMap(headerRow);
   const cell = (i: number) => (row[i] ?? '').toString().trim();
   const out: CoachEventAvailability[] = [];
   for (const event of events) {

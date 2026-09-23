@@ -33,9 +33,17 @@ export interface CoachTool {
   description: string
 }
 
-const cardStyle = { background: 'var(--card-bg)', borderColor: 'var(--border)' } as const
-
-export function CoachHome({ links, tools, availabilitySheetUrl }: { links: CoachLink[]; tools: CoachTool[]; availabilitySheetUrl: string | null }) {
+export function CoachHome({
+  links,
+  tools,
+  availabilitySheetUrl,
+  photoUploadEnabled,
+}: {
+  links: CoachLink[]
+  tools: CoachTool[]
+  availabilitySheetUrl: string | null
+  photoUploadEnabled: boolean
+}) {
   const router = useRouter()
   const [coach, setCoach] = useState<CoachProfileData | null>(null)
   const [error, setError] = useState('')
@@ -101,7 +109,7 @@ export function CoachHome({ links, tools, availabilitySheetUrl }: { links: Coach
         {error && <p style={{ color: 'var(--error-text, #f87171)' }}>{error}</p>}
         {!coach && !error && <p style={{ color: 'var(--secondary-text)' }}>Loading…</p>}
         {coach && screen === 'home' && <CoachHomeTab links={links} tools={tools} />}
-        {coach && screen === 'me' && <CoachProfile coach={coach} onSaved={setCoach} />}
+        {coach && screen === 'me' && <CoachProfile coach={coach} onSaved={setCoach} photoUploadEnabled={photoUploadEnabled} />}
         {coach && screen === 'availability' && <CoachAvailabilityTab coachId={coach.coachId} availabilitySheetUrl={availabilitySheetUrl} />}
       </main>
 
@@ -112,7 +120,7 @@ export function CoachHome({ links, tools, availabilitySheetUrl }: { links: Coach
 
 function LinkCard({ href, icon, title, description, external }: CoachTool & { external?: boolean }) {
   const content = (
-    <Card className="shadow-lg transition-shadow hover:shadow-xl" style={cardStyle}>
+    <Card className="shadow-lg transition-shadow hover:shadow-xl surface-card">
       <CardContent className="p-4 flex items-center gap-4">
         <span className="text-3xl" aria-hidden="true">
           {icon}

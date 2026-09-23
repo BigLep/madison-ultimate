@@ -7,22 +7,7 @@ import { PRACTICE_CONFIG } from './practice-config';
 import { GAME_CONFIG } from './game-config';
 import { assignGameOrdinals } from './game-schedule';
 import { toCanonicalDateKey } from './date-formatters';
-
-export function headerMap(headerRow: any[]): Record<string, number> {
-  const map: Record<string, number> = {};
-  headerRow.forEach((h, i) => {
-    const name = (h ?? '').toString().trim();
-    if (name) map[name] = i;
-  });
-  return map;
-}
-
-function cellGetter(map: Record<string, number>) {
-  return (row: any[], name: string) => {
-    const index = map[name];
-    return index === undefined ? '' : (row[index] ?? '').toString().trim();
-  };
-}
+import { headerMap, cellGetter } from './header-map';
 
 /** "Walt Hudley (East)" when both are set; otherwise whichever one is set. */
 export function formatFieldLocation(fieldName: string, fieldLocation: string): string {

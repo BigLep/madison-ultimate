@@ -61,22 +61,14 @@ export function gateResponse(request: NextRequest, area: GateArea, secret: strin
 
 /** Sets the gate cookie on a response after a successful login POST. */
 export function setGateCookie(response: NextResponse, area: GateArea, password: string): void {
-  response.cookies.set(area.cookieName, password, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: GATE_COOKIE_MAX_AGE_SECONDS,
-    path: '/',
-  });
+  response.cookies.set(area.cookieName, password, gateCookieOptions(GATE_COOKIE_MAX_AGE_SECONDS));
 }
 
 /** Expires the gate cookie (Coach Logout). */
 export function clearGateCookie(response: NextResponse, area: GateArea): void {
-  response.cookies.set(area.cookieName, '', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 0,
-    path: '/',
-  });
+  response.cookies.set(area.cookieName, '', gateCookieOptions(0));
+}
+
+function gateCookieOptions(maxAge: number) {
+  return { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' as const, maxAge, path: '/' };
 }

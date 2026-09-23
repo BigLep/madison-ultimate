@@ -13,19 +13,22 @@ import type { CoachProfile as CoachProfileData } from '@/lib/coaches-table'
 // The Me tab of Coach Home: a coach's own Coach Photo, contact info, and About, with a read-only
 // view and an edit form (grill Q9, Q14). About is Markdown with a live preview.
 
-const cardStyle = { background: 'var(--card-bg)', borderColor: 'var(--border)' } as const
-
-export function CoachProfile({ coach, onSaved }: { coach: CoachProfileData; onSaved: (coach: CoachProfileData) => void }) {
+export function CoachProfile({ coach, onSaved, photoUploadEnabled }: { coach: CoachProfileData; onSaved: (coach: CoachProfileData) => void; photoUploadEnabled: boolean }) {
   const [editing, setEditing] = useState(false)
   const [photoVersion, setPhotoVersion] = useState(0)
 
   return (
     <div className="space-y-4">
-      <Card className="shadow-lg" style={cardStyle}>
+      <Card className="shadow-lg surface-card">
         <CardContent className="pt-6 space-y-3">
           <h2 className="font-semibold" style={{ color: 'var(--secondary-header)' }}>
             Photo
           </h2>
+          {!photoUploadEnabled ? (
+            <p className="text-sm" style={{ color: 'var(--secondary-text)' }}>
+              Photo upload isn&apos;t set up yet for this season (COACH_PHOTOS_FOLDER_ID is not set).
+            </p>
+          ) : (
           <PhotoUpload
             uploadUrl={`/api/coach/coaches/${coach.coachId}/photo`}
             photoUrl={`/api/coaches/${coach.coachId}/photo`}
@@ -36,10 +39,11 @@ export function CoachProfile({ coach, onSaved }: { coach: CoachProfileData; onSa
               onSaved({ ...coach, hasPhoto: true })
             }}
           />
+          )}
         </CardContent>
       </Card>
 
-      <Card className="shadow-lg" style={cardStyle}>
+      <Card className="shadow-lg surface-card">
         <CardContent className="pt-6">
           {editing ? (
             <CoachProfileForm
@@ -137,7 +141,7 @@ function CoachProfileForm({ coach, onCancel, onSaved }: { coach: CoachProfileDat
           <Markdown>{values.about}</Markdown>
         </div>
       )}
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {error && <p className="text-sm" style={{ color: 'var(--error-text, #f87171)' }}>{error}</p>}
       <div className="flex gap-2">
         <Button type="submit" className="flex-1 min-h-[44px] text-white font-semibold bg-[var(--accent)]" disabled={saving || !values.name.trim()}>
           {saving ? 'Saving…' : 'Save'}

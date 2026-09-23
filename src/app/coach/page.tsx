@@ -34,5 +34,12 @@ export default async function CoachHomePage() {
     commsDocUrl: process.env.COACH_COMMS_DOC_URL,
   })
   const availabilitySheetUrl = coachSheetUrl(SHEET_CONFIG.ROSTER_SHEET_ID, await coachAvailabilityTabGid())
-  return <CoachHome links={links} tools={TOOLS} availabilitySheetUrl={availabilitySheetUrl} />
+  return (
+    <CoachHome
+      links={links}
+      tools={TOOLS}
+      availabilitySheetUrl={availabilitySheetUrl}
+      photoUploadEnabled={Boolean(process.env.COACH_PHOTOS_FOLDER_ID)}
+    />
+  )
 }

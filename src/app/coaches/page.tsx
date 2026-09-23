@@ -30,7 +30,7 @@ export default async function CoachesPage() {
       </p>
       <div className="space-y-4">
         {coaches.map(coach => (
-          <Card key={coach.coachId} className="shadow-lg" style={{ background: 'var(--card-bg)', borderColor: 'var(--border)' }}>
+          <Card key={coach.coachId} className="shadow-lg surface-card">
             <CardContent className="pt-6 flex flex-col sm:flex-row gap-4">
               <CoachAvatar coachId={coach.coachId} name={coach.name} hasPhoto={coach.hasPhoto} size={112} />
               <div className="min-w-0 space-y-2">

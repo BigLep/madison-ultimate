@@ -2,6 +2,7 @@
 // found by header name, never by position (AGENTS.md). I/O lives in coaches-sheet.ts.
 
 import { COACH_COLUMN_NAMES } from './sheet-config';
+import { headerMap, cellGetter } from './header-map';
 
 export interface Coach {
   coachId: string;
@@ -26,24 +27,12 @@ const FIELD_TO_HEADER: Record<keyof EditableCoachFields, string> = {
   photoDriveFileId: COACH_COLUMN_NAMES.PHOTO_DRIVE_FILE_ID,
 };
 
-function headerIndexes(headerRow: unknown[]): Record<string, number> {
-  const map: Record<string, number> = {};
-  headerRow.forEach((h, i) => {
-    const name = (h ?? '').toString().trim();
-    if (name) map[name] = i;
-  });
-  return map;
-}
-
 /** Every Coach with a CoachID, in sheet order (which is display order everywhere). */
 export function parseCoachesTable(values: unknown[][]): Coach[] {
   if (!values || values.length < 1) return [];
-  const map = headerIndexes(values[0]);
+  const map = headerMap(values[0]);
   if (map[COACH_COLUMN_NAMES.COACH_ID] === undefined) return [];
-  const cell = (row: unknown[], header: string) => {
-    const index = map[header];
-    return index === undefined ? '' : (row[index] ?? '').toString().trim();
-  };
+  const cell = cellGetter(map);
   const coaches: Coach[] = [];
   values.slice(1).forEach((row, i) => {
     const coachId = cell(row, COACH_COLUMN_NAMES.COACH_ID);
@@ -66,7 +55,7 @@ export function parseCoachesTable(values: unknown[][]): Coach[] {
  * columns the portal doesn't know about) exactly as it was.
  */
 export function coachFieldsToRow(headerRow: unknown[], existingRow: unknown[], fields: EditableCoachFields): string[] {
-  const map = headerIndexes(headerRow);
+  const map = headerMap(headerRow);
   const row = headerRow.map((_, i) => (existingRow[i] ?? '').toString());
   for (const [field, value] of Object.entries(fields) as Array<[keyof EditableCoachFields, string | undefined]>) {
     const index = map[FIELD_TO_HEADER[field]];
