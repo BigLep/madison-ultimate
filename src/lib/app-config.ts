@@ -41,7 +41,7 @@ export const APP_CONFIG = {
    * Notion (or other) URL explaining Activation Status on game cards, used only when
    * HAS_ACTIVATION_STATUS is true. Empty string = label only, no link.
    */
-  ACTIVATION_STATUS_INFO_URL: '',
+  ACTIVATION_STATUS_INFO_URL: 'https://madisonultimate.notion.site/More-Season-Info-982c4da46f75826db2fd81b6a02568e1#c8ed51ef905f482c835d5093a120d4d7',
 
   // App Information
   APP_NAME: 'Madison Ultimate Player Portal',
