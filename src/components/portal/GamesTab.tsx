@@ -7,6 +7,7 @@ import { AvailabilityCard } from '@/components/availability-card'
 import { AvailabilitySummary } from '@/components/availability-summary'
 import { AvailabilityNotOpenNotice } from '@/components/portal/PracticesTab'
 import { APP_CONFIG } from '@/lib/app-config'
+import { isActivationTeam } from '@/lib/team-display'
 
 interface ExtraField {
   columnName: string
@@ -138,6 +139,7 @@ export function GamesTab({ playerId, readOnly = false }: { playerId: string; rea
   }
 
   const { games, availabilityOptions, player, availabilityOpen } = gameData
+  const showActivation = APP_CONFIG.HAS_ACTIVATION_STATUS && isActivationTeam(player.team, APP_CONFIG.ACTIVATION_TEAMS)
   const upcomingGames = games.filter(g => !g.isPast)
   const pastGames = games.filter(g => g.isPast)
   // Byes are shown but never counted
@@ -160,7 +162,7 @@ export function GamesTab({ playerId, readOnly = false }: { playerId: string; rea
       isUpdating={updating === game.gameKey}
       isEditable={editable}
       isBye={game.isBye}
-      activationStatus={APP_CONFIG.HAS_ACTIVATION_STATUS ? (game.availability.activationStatus ?? '') : undefined}
+      activationStatus={showActivation ? (game.availability.activationStatus ?? '') : undefined}
       extraFields={game.availability.extraFields}
       onUpdateExtraField={editable ? (columnName, value) => updateExtraField(game, columnName, value) : undefined}
     >

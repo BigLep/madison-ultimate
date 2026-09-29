@@ -65,3 +65,9 @@ export function isGameRowVisibleToPlayer(rowTeam: string | null | undefined, pla
   if (!isTeamAssigned(player) || player === PRACTICE_SQUAD) return false;
   return row === player;
 }
+
+/** Whether a player's Team is one of the season's activation teams (APP_CONFIG.ACTIVATION_TEAMS). */
+export function isActivationTeam(team: string | null | undefined, activationTeams: readonly string[]): boolean {
+  const t = normalizeTeam(team);
+  return t !== '' && activationTeams.some(a => normalizeTeam(a) === t);
+}

@@ -68,7 +68,7 @@ The Fall 2026 Player Portal lives at `/player` (Portal Login) and `/player/$play
 | **SEASON_INFO_URL** | `src/lib/app-config.ts` (and the `/info` redirect in `next.config.js`) | Notion (or other) URL for "team site" / season info. |
 | **PLAYER_PORTAL_DOCUMENTATION** | `src/lib/app-config.ts` | The Player Portal Guide (Notion). Re-check its content whenever the portal changes; the login step changed for Fall 2026. |
 | **Season phase dates** | `src/lib/signup-deadlines.ts` (`DEADLINE_DATE`, `CLOSE_DATE`) | Drive the deadline banners and the season phase: while new signups can be created the landing page leads with Sign Up and the switcher offers "Sign up another player"; once closed, the Player Portal leads, the landing page's Sign Up is greyed out ("check back next season"), and the switcher offers "Add another player". No separate switch to flip. |
-| **Team names** | `src/lib/team-display.ts` | Emoji labels for this season's squads (Fall 2026: Blue, Gold, Silver, Practice Squad). TBD or blank is hidden from families. |
+| **Team names** | `src/lib/team-display.ts` | Emoji labels for this season's squads (Fall 2026: Blue, Gold, Silver; Practice Squad is still labelled but unused since it was folded into Silver). TBD or blank is hidden from families. |
 
 **Join the Community** (WhatsApp and game snack links on the portal home and the signed-up player profile):
 
@@ -78,7 +78,8 @@ The Fall 2026 Player Portal lives at `/player` (Portal Login) and `/player/$play
 | **WHATSAPP_JOIN_PATH** | `src/lib/app-config.ts` | Public path families click (`/whatsapp`). Linked only from `/player/$id` and the player portal, not the homepage. |
 | **WHATSAPP_LEARN_MORE_URL** | `src/lib/app-config.ts` | Notion "Learn more" deep link for the WhatsApp community (signup Communication section and portal home). **Must be updated every season** — this is a season-specific Notion page + heading anchor, not a stable URL. Leaving last season's link is a real failure mode (Fall 2026 launched still pointing at Spring 2026's More Season Info). Open the new season's More Season Info page, copy the WhatsApp section's heading link, and replace this value. |
 | **GAME_SNACK_SIGNUP_URL** | `src/lib/app-config.ts` | Notion deep link to the season's Game Snacks and Tents section (which links the signup). Optional: an empty string hides the snack line on the portal Home tab entirely. When set, it **must be updated every season** — same failure mode as WhatsApp Learn more. |
-| **HAS_ACTIVATION_STATUS** | `src/lib/app-config.ts` | Whether coaches use a per-game Activation Status (Active / Inactive / TBD) this season. `false` hides the pill and the "assuming activated" wording on the Games tab regardless of what Game Availability holds (Fall 2026: `false`). |
+| **HAS_ACTIVATION_STATUS** | `src/lib/app-config.ts` | Whether coaches use a per-game Activation Status (Active / Inactive / TBD) this season. `false` hides the pill and the "assuming activated" wording on the Games tab regardless of what Game Availability holds (Fall 2026: `true`). |
+| **ACTIVATION_TEAMS** | `src/lib/app-config.ts` | Only when HAS_ACTIVATION_STATUS is `true`: the Teams whose players see Activation Status (Fall 2026: `['Silver']`). Players on other Teams see no pill. Keep in step with `CONFIG.gameRosterPrep.activationTeams` in the coach sheet script. |
 | **ACTIVATION_STATUS_INFO_URL** | `src/lib/app-config.ts` | Only when HAS_ACTIVATION_STATUS is `true`: Notion deep link on the "Activation Status" label on game cards. **Empty string is allowed** when this season has no heading yet (label stays visible, just not a link). Do not leave last season's URL as a stand-in. |
 
 ---

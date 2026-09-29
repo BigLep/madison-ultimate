@@ -27,10 +27,16 @@ export const APP_CONFIG = {
   // Season features (SEASON_SETUP.md): decide at the start of each season.
   /**
    * Whether coaches set a per-game Activation Status (Active / Inactive / TBD) in Game Availability
-   * that the Games tab should show. Fall 2026: off. When off, the pill and the
-   * "assuming activated" wording never appear, whatever the sheet holds.
+   * that the Games tab should show. Fall 2026: on, for ACTIVATION_TEAMS only. When off, the pill and
+   * the "assuming activated" wording never appear, whatever the sheet holds.
    */
-  HAS_ACTIVATION_STATUS: false,
+  HAS_ACTIVATION_STATUS: true,
+  /**
+   * Teams whose players are activated game by game (compared case-insensitively). Only players on
+   * these teams see Activation Status; everyone else plays every game they're available for.
+   * Fall 2026: Silver (docs/fall-2026/practice-squad-merge-grill.md).
+   */
+  ACTIVATION_TEAMS: ['Silver'] as readonly string[],
   /**
    * Notion (or other) URL explaining Activation Status on game cards, used only when
    * HAS_ACTIVATION_STATUS is true. Empty string = label only, no link.

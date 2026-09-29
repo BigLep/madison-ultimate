@@ -82,6 +82,19 @@ _Avoid_: mailing list (code, the retired Google Group, and coach-sheet columns m
 **WhatsApp Community**:
 The family WhatsApp community for questions, photos, carpools, and similar. Join via `/whatsapp`, which the server redirects to the invite. Linked only from signed-up player pages (`/player/$id`) and the player portal — not the public homepage. The invite URL lives in `WHATSAPP_COMMUNITY_JOIN_URL` (env only, never client code or git).
 
+### Teams and games
+
+**Team**:
+The coach-assigned squad a Player belongs to for the season. Fall 2026 values: Blue, Gold, Silver. Practice Squad (practice only, no games) is a known value that is unused in fall 2026, after it was folded into Silver. Blank or `TBD` means not placed yet. A Game Info row carries the Team it belongs to, blank meaning every team.
+_Avoid_: squad, tier, level
+
+**Activation Status**:
+Whether a Player on an Activation Team plays in a given game: Active, Inactive, or TBD (blank also means TBD). Set by coaches per player per game, and separate from the Player's own availability answer, which families enter regardless.
+_Avoid_: active roster, dropped, cut (those describe who is on the team at all, not who plays a given Saturday)
+
+**Activation Team**:
+A Team whose players are activated game by game, because it has more players than one game roster holds. Fall 2026: Silver only. Players on other Teams play every game they are available for and have no Activation Status.
+
 ### Coach Tools
 
 **Coach Tools**:
@@ -119,7 +132,7 @@ _Avoid_: staff page, meet the coaches
 
 **Rostered Player**:
 A player who has a row on the coach Roster tab, as opposed to any row in Signups. Signing up does not make a player Rostered; being added to the Roster tab does. Team itself may still be blank or `TBD` (which team hasn't been decided yet) without affecting whether the player is Rostered.
-_Avoid_: active player, active roster (no such flag exists in the data); assuming blank/TBD Team means not Rostered
+_Avoid_: active player, active roster (no such flag exists in the data; Activation Status is per game, not per season); assuming blank/TBD Team means not Rostered
 
 **Player Directory**:
 The Coach Tools page where a coach picks a Rostered Player from a list and sees their Player Photo, contact info, Caretaker info, and availability. Distinct from Player Lookup, which is the family's own self-service identity match by last name and birthdate.

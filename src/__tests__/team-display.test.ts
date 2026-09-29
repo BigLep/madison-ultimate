@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatTeam, formatTeamOrTbd, compareTeams, isTeamAssigned, isGameRowVisibleToPlayer } from '@/lib/team-display';
+import { formatTeam, formatTeamOrTbd, compareTeams, isTeamAssigned, isGameRowVisibleToPlayer, isActivationTeam } from '@/lib/team-display';
 
 describe('team display (player-portal-grill.md Q24)', () => {
   it('hides Team while unassigned', () => {
@@ -62,5 +62,19 @@ describe('isGameRowVisibleToPlayer (player-portal-grill.md Q25)', () => {
     expect(isGameRowVisibleToPlayer('Blue', 'TBD')).toBe(false);
     expect(isGameRowVisibleToPlayer('Blue', '')).toBe(false);
     expect(isGameRowVisibleToPlayer('Practice Squad', 'Practice Squad')).toBe(false);
+  });
+});
+
+describe('isActivationTeam', () => {
+  it('matches a listed team case-insensitively', () => {
+    expect(isActivationTeam('Silver', ['Silver'])).toBe(true);
+    expect(isActivationTeam(' silver ', ['Silver'])).toBe(true);
+  });
+
+  it('is false for other teams, unassigned players, and an empty list', () => {
+    expect(isActivationTeam('Blue', ['Silver'])).toBe(false);
+    expect(isActivationTeam('', ['Silver'])).toBe(false);
+    expect(isActivationTeam(undefined, ['Silver'])).toBe(false);
+    expect(isActivationTeam('Silver', [])).toBe(false);
   });
 });
