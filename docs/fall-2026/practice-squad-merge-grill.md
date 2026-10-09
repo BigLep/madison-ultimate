@@ -134,7 +134,7 @@ For Blue and Gold these cells are blank. The attendance rule would then miss Blu
 > We have three teams this season:
 > - 🟦 **Blue** plays in the B division
 > - 🟨 **Gold** plays in the C/D division (combined this season)
-> - 🪙 **Silver** plays in the 6th grade A division, with players activated game by game (see Silver Activation Status below)
+> - ◻️ **Silver** plays in the 6th grade A division, with players activated game by game (see Silver Activation Status below)
 
 Keep the rest of Team Structure unchanged: the division link, "Blue, Gold, and Silver all play in Saturday DiscNW games", and both placement paragraphs.
 

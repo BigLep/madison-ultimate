@@ -13,7 +13,7 @@ describe('team display (player-portal-grill.md Q24)', () => {
   it('maps the four Fall 2026 squads to their emoji labels, case-insensitively', () => {
     expect(formatTeam('Blue')).toBe('🟦 Blue');
     expect(formatTeam('gold')).toBe('🟨 Gold');
-    expect(formatTeam('Silver')).toBe('🪙 Silver');
+    expect(formatTeam('Silver')).toBe('◻️ Silver');
     expect(formatTeam('Practice Squad')).toBe('🏋️ Practice Squad');
   });
 

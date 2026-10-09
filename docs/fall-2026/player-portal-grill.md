@@ -195,7 +195,7 @@ With the "surprising to a coach" argument gone, the availability change is a pla
 - Q21 settled: set Include In Generated Rosters FALSE for cut players before the first availability build; README note, no deleting build.
 - Q22 settled: no ADR; admin README and coach-sheet glossary amended instead.
 - Q23 settled: deadline banner only on the Player tab, only while not Checklist Complete, never in the `closed` state; none on the Portal Login.
-- New from Steve: three teams plus a practice squad this fall (🟦 Blue, 🟨 Gold, 🪙 Silver, Practice Squad); nobody is assigned yet, Team is TBD for everyone who was not cut, and assignment happens later this week. Round 4 covers what that changes.
+- New from Steve: three teams plus a practice squad this fall (🟦 Blue, 🟨 Gold, ◻️ Silver, Practice Squad); nobody is assigned yet, Team is TBD for everyone who was not cut, and assignment happens later this week. Round 4 covers what that changes.
 
 # Round 4
 
@@ -208,7 +208,7 @@ Facts that shape this round:
 
 ## Q24: Team display
 
-The header shows "Team | Grade" once Team is not TBD. Proposed display map, in one config: 🟦 Blue, 🟨 Gold, 🪙 Silver, 🏋️ Practice Squad; TBD and blank hide the Team segment; any other value shows as typed. Does the practice squad get the 🏋️ emoji from last season or none?
+The header shows "Team | Grade" once Team is not TBD. Proposed display map, in one config: 🟦 Blue, 🟨 Gold, ◻️ Silver, 🏋️ Practice Squad; TBD and blank hide the Team segment; any other value shows as typed. Does the practice squad get the 🏋️ emoji from last season or none?
 
 ➡️ Adopt the map with 🏋️ Practice Squad, carried over from last season.
 
@@ -226,7 +226,7 @@ Do all four groups practice together on the Practice Info schedule, so Practice 
 
 ## Round 4 decisions (2026-09-14)
 
-- Q24 settled: team display map 🟦 Blue, 🟨 Gold, 🪙 Silver, 🏋️ Practice Squad; TBD and blank hide the Team segment.
+- Q24 settled: team display map 🟦 Blue, 🟨 Gold, ◻️ Silver, 🏋️ Practice Squad; TBD and blank hide the Team segment.
 - Q25 settled: Team column in Game Info, one row per team-game; a row shows to a player when Team matches or is blank; TBD and Practice Squad players see only blank-Team rows; Build Game Availability numbers "(Game 2)" per date and per team.
 - Q26 settled: Practice Info stays team-agnostic this season.
 

@@ -5,7 +5,7 @@
 const TEAM_DISPLAY: Record<string, string> = {
   blue: '🟦 Blue',
   gold: '🟨 Gold',
-  silver: '🪙 Silver',
+  silver: '◻️ Silver',
   'practice squad': '🏋️ Practice Squad',
 };
 
