@@ -24,6 +24,9 @@ export const APP_CONFIG = {
   /** Notion deep link to the Game Snacks and Tents section (which links the signup). Empty string = the snack line is not shown. */
   GAME_SNACK_SIGNUP_URL: 'https://madisonultimate.notion.site/More-Season-Info-982c4da46f75826db2fd81b6a02568e1#c13c4da46f758327ad9c01ee675abb68',
 
+  /** Google Form for caretaker/player feedback (in the season Drive folder). `/feedback` redirects here, and the portal Home tab links it. Empty string = `/feedback` 404s and the portal line is hidden. Update each season. */
+  FEEDBACK_FORM_URL: 'https://docs.google.com/forms/d/e/1FAIpQLSf9Ekb2D7VVX7AR2VzOJkNPTvE9i61-t0KEok7O2wn6U4xa4w/viewform',
+
   // Season features (SEASON_SETUP.md): decide at the start of each season.
   /**
    * Whether coaches set a per-game Activation Status (Active / Inactive / TBD) in Game Availability

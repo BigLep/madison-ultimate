@@ -95,6 +95,15 @@ export function PortalHome() {
               ! Tents must be weighted or staked down, even if it doesn&apos;t look windy (league safety rule).
             </p>
           )}
+          {APP_CONFIG.FEEDBACK_FORM_URL && (
+            <p style={{ color: 'var(--primary-text)' }}>
+              👂 We&apos;d love to hear how things are going.{' '}
+              <a href={APP_CONFIG.FEEDBACK_FORM_URL} target="_blank" rel="noopener noreferrer" style={linkStyle}>
+                Share feedback with the coaches
+              </a>{' '}
+              (anonymous is fine).
+            </p>
+          )}
         </CardContent>
       </Card>
 
