@@ -46,6 +46,13 @@ export const APP_CONFIG = {
    */
   ACTIVATION_STATUS_INFO_URL: 'https://madisonultimate.notion.site/More-Season-Info-982c4da46f75826db2fd81b6a02568e1#c8ed51ef905f482c835d5093a120d4d7',
 
+  /**
+   * When every Program Jersey is due back this season (CONTEXT.md: Jersey Loan), as YYYY-MM-DD.
+   * Shown in the Player Portal's jersey card. Empty string = the card asks for the jersey back
+   * without a date. Update each season (SEASON_SETUP.md).
+   */
+  JERSEY_RETURN_DUE_DATE: '2026-11-21',
+
   // App Information
   APP_NAME: 'Madison Ultimate Player Portal',
   VERSION: '1.0.0',

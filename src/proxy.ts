@@ -1,19 +1,21 @@
 // Request gate (this Next.js version's name for middleware): cookie-based password gates on the
-// admin and coach surfaces (ADR 0008). See src/lib/password-gate.ts and src/lib/gate-areas.ts.
+// admin, coach, and Jersey Manager surfaces (ADR 0008). See src/lib/password-gate.ts and src/lib/gate-areas.ts.
 // /api/diagnostics stays outside the matcher on purpose: it is read-only and is how a
 // misconfigured secret gets noticed.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { gateResponse } from './lib/password-gate';
-import { ADMIN_GATE_AREA, COACH_GATE_AREA } from './lib/gate-areas';
+import { ADMIN_GATE_AREA, COACH_GATE_AREA, JERSEY_GATE_AREA } from './lib/gate-areas';
 
 // The login page and the login API route it submits to must stay reachable without a cookie,
 // or nobody could ever get one.
 const UNGATED_PATHS = new Set([
   ADMIN_GATE_AREA.loginPath,
   COACH_GATE_AREA.loginPath,
+  JERSEY_GATE_AREA.loginPath,
   '/api/admin/login',
   '/api/coach/login',
+  '/api/jerseys/login',
   // Coach Logout must work even with a stale cookie, or a coach could get stuck logged in.
   '/api/coach/logout',
 ]);
@@ -33,9 +35,12 @@ export function proxy(request: NextRequest) {
   if (isUnder(pathname, '/coach') || isUnder(pathname, '/api/coach')) {
     return gateResponse(request, COACH_GATE_AREA, process.env.COACH_TOOLS_PASSWORD) ?? NextResponse.next();
   }
+  if (isUnder(pathname, '/jerseys') || isUnder(pathname, '/api/jerseys')) {
+    return gateResponse(request, JERSEY_GATE_AREA, process.env.JERSEY_MANAGER_PASSWORD) ?? NextResponse.next();
+  }
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/api/admin/:path*', '/coach/:path*', '/api/coach/:path*'],
+  matcher: ['/admin/:path*', '/api/admin/:path*', '/coach/:path*', '/api/coach/:path*', '/jerseys/:path*', '/api/jerseys/:path*'],
 };

@@ -148,6 +148,10 @@ A second suite (`src/__tests__/integration/`) calls the *real* Google Sheets API
 4. Update `SIGNUPS_SHEET_ID_TEST` in `.env.local`, `.env.example`, and the `SIGNUPS_SHEET_ID_TEST` GitHub Actions secret.
 5. Run `npm run test:integration` locally once to confirm it’s wired up correctly before relying on CI.
 
+### Jerseys workbook integration test
+
+`jerseys-sheet.integration.test.ts` runs check-out, check-in, a refused second check-in, and a note against **Madison Ultimate Jerseys (Test)**, a copy of the real Jerseys workbook holding only fake players (`p001`-style PlayerIDs, `TestFirst TestLast`), shared with the service account as a writer. Config: `JERSEYS_SHEET_ID_TEST` in `.env.local` / the GitHub Actions secret of the same name. It uses the same `vi.resetModules()` + `vi.stubEnv()` guard as the Signups suite and refuses to run if `JERSEYS_SHEET_ID` did not resolve to the test workbook. Rows it appends stay in the test workbook under PlayerID `it-p001`. The workbook is not seasonal, so the test copy only needs recreating if the real workbook's tabs or headers change. For a local look at `/jerseys`, run `JERSEYS_SHEET_ID=<test id> npm run dev` so manual check-outs land in the test copy.
+
 ## Layer 2b: Drive integration tests (photo upload and Photo Carryover)
 
 A third suite, `src/__tests__/integration/photo-drive.integration.test.ts`, calls the *real* Google Drive API (`@/lib/google-oauth-drive`, not mocked) and the real Sheets API against a dedicated test “Fall 2025 roster” fixture, covering what the mocked `photo-carryover.test.ts`/route tests structurally cannot: whether `uploadPlayerPhoto`’s replace-in-place genuinely keeps the same Drive file id rather than creating a duplicate, whether downloaded bytes round-trip unchanged, and whether header discovery across a real sheet out to column AQ actually finds the right row.

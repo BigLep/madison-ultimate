@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { APP_CONFIG } from '@/lib/app-config'
 import { WhatsAppIcon } from '@/components/WhatsAppIcon'
+import { PortalJerseyCard } from '@/components/portal/PortalJerseyCard'
 
 interface TeamUpdate {
   id: string
@@ -19,8 +20,9 @@ const linkStyle = { color: 'var(--accent)', textDecoration: 'underline' } as con
 const cardStyle = { background: 'var(--card-bg)', borderColor: 'var(--border)' } as const
 
 // Home tab, carried over from last season (docs/fall-2026/player-portal-grill.md Q10): welcome,
-// Join the Community, Recent Team Updates from the Buttondown RSS, and Need Help.
-export function PortalHome() {
+// Join the Community, Recent Team Updates from the Buttondown RSS, and Need Help. The Program
+// Jersey card goes first, and only appears when there is something to return or pay.
+export function PortalHome({ playerId }: { playerId: string }) {
   const [messages, setMessages] = useState<TeamUpdate[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set())
@@ -51,6 +53,8 @@ export function PortalHome() {
 
   return (
     <div className="space-y-6">
+      <PortalJerseyCard playerId={playerId} />
+
       <Card className="shadow-lg" style={cardStyle}>
         <CardHeader>
           <CardTitle style={{ color: 'var(--page-title)' }}>Welcome to Madison Ultimate!</CardTitle>

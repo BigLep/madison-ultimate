@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { NextRequest } from 'next/server';
 import { gateResponse, isValidPassword, clearGateCookie, GateArea } from '@/lib/password-gate';
 import { NextResponse } from 'next/server';
-import { ADMIN_GATE_AREA, COACH_GATE_AREA } from '@/lib/gate-areas';
+import { ADMIN_GATE_AREA, COACH_GATE_AREA, JERSEY_GATE_AREA } from '@/lib/gate-areas';
 import { config as proxyConfig, proxy } from '@/proxy';
 
 const AREA: GateArea = { name: 'admin', cookieName: 'madison_admin_auth', loginPath: '/admin/login', secretEnvVar: 'ADMIN_SECRET' };
@@ -63,23 +63,28 @@ describe('gateResponse', () => {
 });
 
 describe('gate areas', () => {
-  it('admin and coach use distinct cookies, secrets, and login paths', () => {
-    expect(ADMIN_GATE_AREA.cookieName).not.toBe(COACH_GATE_AREA.cookieName);
-    expect(ADMIN_GATE_AREA.secretEnvVar).not.toBe(COACH_GATE_AREA.secretEnvVar);
-    expect(ADMIN_GATE_AREA.loginPath).not.toBe(COACH_GATE_AREA.loginPath);
+  it('admin, coach, and jersey manager use distinct cookies, secrets, and login paths', () => {
+    const areas = [ADMIN_GATE_AREA, COACH_GATE_AREA, JERSEY_GATE_AREA];
+    for (const key of ['cookieName', 'secretEnvVar', 'loginPath'] as const) {
+      expect(new Set(areas.map(a => a[key])).size).toBe(areas.length);
+    }
   });
 });
 
 describe('proxy matcher', () => {
   it('covers the admin and coach pages and APIs, and leaves diagnostics open', () => {
-    expect(proxyConfig.matcher).toEqual(['/admin/:path*', '/api/admin/:path*', '/coach/:path*', '/api/coach/:path*']);
+    expect(proxyConfig.matcher).toEqual(['/admin/:path*', '/api/admin/:path*', '/coach/:path*', '/api/coach/:path*', '/jerseys/:path*', '/api/jerseys/:path*']);
     const matches = (path: string) =>
       proxyConfig.matcher.some(pattern => new RegExp('^' + pattern.replace('/:path*', '(/.*)?') + '$').test(path));
     expect(matches('/admin/final-forms')).toBe(true);
     expect(matches('/api/admin/final-forms')).toBe(true);
     expect(matches('/coach/player-directory')).toBe(true);
     expect(matches('/api/coach/players')).toBe(true);
+    expect(matches('/jerseys')).toBe(true);
+    expect(matches('/api/jerseys/state')).toBe(true);
     expect(matches('/api/diagnostics')).toBe(false);
+    // The family's own jersey status is keyed by PlayerID like practices and games, not gated.
+    expect(matches('/api/player/abc12/jersey')).toBe(false);
     expect(matches('/player/abc12')).toBe(false);
     // The public Coaches Page and its photos share the /coach prefix but not the segment.
     expect(matches('/coaches')).toBe(false);
@@ -99,6 +104,30 @@ describe('proxy', () => {
   it('keeps Coach Logout reachable without a valid cookie', () => {
     process.env.COACH_TOOLS_PASSWORD = 's3cret';
     expect(proxy(new NextRequest('http://localhost/api/coach/logout', { method: 'POST' })).status).toBe(200);
+  });
+});
+
+describe('proxy: jersey manager area', () => {
+  it('gates /jerseys and /api/jerseys with JERSEY_MANAGER_PASSWORD, not the coach password', () => {
+    process.env.COACH_TOOLS_PASSWORD = 'coachpw';
+    process.env.JERSEY_MANAGER_PASSWORD = 'jerseypw';
+    const withCookie = (url: string, name: string, value: string) => new NextRequest(url, { headers: { cookie: `${name}=${value}` } });
+    expect(proxy(new NextRequest('http://localhost/jerseys')).status).toBe(307);
+    expect(proxy(new NextRequest('http://localhost/api/jerseys/state')).status).toBe(401);
+    expect(proxy(withCookie('http://localhost/api/jerseys/state', COACH_GATE_AREA.cookieName, 'coachpw')).status).toBe(401);
+    expect(proxy(withCookie('http://localhost/api/jerseys/state', JERSEY_GATE_AREA.cookieName, 'jerseypw')).status).toBe(200);
+    expect(proxy(withCookie('http://localhost/api/coach/players', JERSEY_GATE_AREA.cookieName, 'jerseypw')).status).toBe(401);
+  });
+
+  it('keeps the jersey login page and login API reachable without a cookie', () => {
+    process.env.JERSEY_MANAGER_PASSWORD = 'jerseypw';
+    expect(proxy(new NextRequest('http://localhost/jerseys/login')).status).toBe(200);
+    expect(proxy(new NextRequest('http://localhost/api/jerseys/login', { method: 'POST' })).status).toBe(200);
+  });
+
+  it('fails closed when JERSEY_MANAGER_PASSWORD is unset', () => {
+    delete process.env.JERSEY_MANAGER_PASSWORD;
+    expect(proxy(new NextRequest('http://localhost/api/jerseys/state')).status).toBe(503);
   });
 });
 

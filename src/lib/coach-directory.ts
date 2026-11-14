@@ -13,6 +13,8 @@ export interface RosteredPlayerSummary {
   fullName: string;
   team: string;
   gender: string;
+  /** The size the family asked for at signup (a code like "AS"); Jersey Managers' check-out default. */
+  jerseySize: string;
 }
 
 export interface CaretakerContact {
@@ -91,6 +93,7 @@ export async function listRosteredPlayers(): Promise<RosteredPlayerSummary[]> {
         fullName: fullNameOf(record),
         team: normalizeTeam(teamsByPlayerId.get(playerId) || ''),
         gender: record[SIGNUPS_COLUMNS.GENDER_IDENTIFICATION] || '',
+        jerseySize: record[SIGNUPS_COLUMNS.JERSEY_SIZE] || '',
       };
     })
     .sort((a, b) => a.fullName.localeCompare(b.fullName));

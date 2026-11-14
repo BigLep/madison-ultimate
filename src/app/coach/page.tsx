@@ -15,6 +15,12 @@ const TOOLS: CoachTool[] = [
     description: "Look up a rostered player's photo, contact info, and availability.",
   },
   {
+    href: '/jerseys',
+    icon: '🎽',
+    title: 'Jerseys',
+    description: 'Check Program Jerseys in and out and see stock. Uses the separate Jersey Manager password.',
+  },
+  {
     href: '/coaches',
     icon: '🧑‍🏫',
     title: 'Coaches page',

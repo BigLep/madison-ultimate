@@ -8,3 +8,7 @@ We decided to replace Basic Auth everywhere with one shared, custom cookie-based
 
 - **Basic Auth for `/admin`, a custom gate for `/coach`.** Rejected: two different auth mechanisms in one small app is exactly the kind of thing a future reader would wonder about, for no benefit — `/admin`'s audience (you) has no need for Basic Auth's browser-level caching over a cookie.
 - **Keep Basic Auth for both.** Rejected: fails the actual requirement for Coach Tools (a plain password field, not a browser credential prompt), and there was no reason to keep `/admin` on a different mechanism than `/coach` once a real custom gate existed.
+
+## Later areas
+
+`/jerseys` (Jersey Managers, ADR 0009) is a third area on the same mechanism, with its own `JERSEY_MANAGER_PASSWORD` and cookie, so team parents can record jerseys without reaching Coach Tools.

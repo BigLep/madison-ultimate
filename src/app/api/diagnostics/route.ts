@@ -5,6 +5,7 @@ import { getSheetData, getMostRecentFileInfoFromFolder } from '../../../lib/goog
 import { getDriveFolderName } from '../../../lib/google-oauth-drive';
 import { SHEET_CONFIG } from '../../../lib/sheet-config';
 import { SIGNUPS_COLUMNS, SIGNUPS_SHEET_CONFIG } from '../../../lib/signups-config';
+import { JERSEY_TABS, LOAN_COLUMNS, STOCK_COLUMNS, FAMILY_JERSEY_COLUMNS, NOTE_COLUMNS } from '../../../lib/jerseys-config';
 import { probeButtondownPermissions } from '../../../lib/buttondown-api';
 
 interface DiagnosticResult {
@@ -43,6 +44,7 @@ export async function GET(request: NextRequest) {
     'ADDITIONAL_QUESTIONNAIRE_SHEET_ID',
     'SIGNUPS_SHEET_ID',
     'ADMIN_SECRET',
+    'JERSEYS_SHEET_ID',
   ];
 
   requiredEnvVars.forEach(envVar => {
@@ -197,6 +199,30 @@ export async function GET(request: NextRequest) {
       } else {
         addResult('Sheets Access', 'Signups Headers', 'fail',
           `Missing headers: ${missingHeaders.join(', ')}`, { missingHeaders });
+      }
+    }
+
+    // Jerseys workbook (ADR 0009): every tab the app reads or writes must have every expected
+    // header, or appended rows silently drop that column.
+    const jerseysSheetId = process.env.JERSEYS_SHEET_ID;
+    if (jerseysSheetId) {
+      const expected: Array<[string, Record<string, string>]> = [
+        [JERSEY_TABS.LOANS, LOAN_COLUMNS],
+        [JERSEY_TABS.STOCK, STOCK_COLUMNS],
+        [JERSEY_TABS.FAMILY_JERSEYS, FAMILY_JERSEY_COLUMNS],
+        [JERSEY_TABS.NOTES, NOTE_COLUMNS],
+      ];
+      const missing: string[] = [];
+      for (const [tab, columns] of expected) {
+        const header = await getSheetData(jerseysSheetId, `'${tab}'!1:1`);
+        const names = new Set((header[0] || []).map(h => (h || '').toString().trim()));
+        if (names.size === 0) missing.push(`${tab} (tab missing or unreadable)`);
+        else Object.values(columns).filter(name => !names.has(name)).forEach(name => missing.push(`${tab}: ${name}`));
+      }
+      if (missing.length === 0) {
+        addResult('Sheets Access', 'Jerseys Workbook', 'pass', `All ${expected.length} tabs readable with expected headers`);
+      } else {
+        addResult('Sheets Access', 'Jerseys Workbook', 'fail', `Missing: ${missing.join(', ')}`, { missing });
       }
     }
   } catch (error) {

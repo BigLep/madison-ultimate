@@ -167,7 +167,7 @@ export default function PlayerPortalPage() {
 
           {status === 'ready' && record && (
             <>
-              {screen === 'home' && <PortalHome />}
+              {screen === 'home' && <PortalHome playerId={playerId} />}
 
               {/* The Player tab stays mounted across tab switches so edits in progress survive (Q15). */}
               <div hidden={screen !== 'player'} className="space-y-4">
