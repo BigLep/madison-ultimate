@@ -113,10 +113,11 @@ export async function appendLoan(input: { playerId: string; playerName: string; 
 /**
  * Re-reads the loan right before writing, lets `decide` refuse (returning an error message) based
  * on its current state, writes only the returned cells, then re-reads the row and confirms they
- * stuck. Two managers acting on the same jersey within the same second can both pass the first
- * check; the later write wins in the sheet, and the earlier manager's confirmation sees the
- * difference and gets an error instead of a false success. (A real lock would need a store shared
- * across server instances; at a handful of Jersey Managers this is the proportionate guard.)
+ * stuck. This is best effort, not a lock: when two managers act on the same jersey at nearly the
+ * same time, a manager whose confirmation read lands after the other's write gets a conflict
+ * error, but one whose confirmation read lands first can still be told it worked and then be
+ * overwritten. Closing that fully would need a lock shared across server instances, which a
+ * handful of Jersey Managers does not justify; the loan row always shows what was saved last.
  */
 export async function updateLoan(
   loanId: string,

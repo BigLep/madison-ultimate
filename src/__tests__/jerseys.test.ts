@@ -18,6 +18,8 @@ import {
   cleanIsoDate,
   compareSizes,
   jerseyStatusesFor,
+  filterOptions,
+  keepAvailable,
   JerseyLoan,
 } from '@/lib/jerseys';
 
@@ -262,5 +264,26 @@ describe('jerseyStatusesFor', () => {
   it('marks a Family Jersey, and "none" only when there is neither a loan nor a Family Jersey', () => {
     expect(statuses('p003', [])).toEqual(['family']);
     expect(statuses('p009', [loan()])).toEqual(['none']);
+  });
+});
+
+describe('filter options and saved selections', () => {
+  const players = [
+    { team: 'Gold', gender: 'Girl /Gx/' },
+    { team: 'Blue', gender: 'Boy /Bx/' },
+    { team: 'TBD', gender: '' },
+  ];
+
+  it('offers the roster\'s teams in team order and only the gender codes present', () => {
+    const { teams, genders } = filterOptions(players);
+    expect(teams[0]).toBe('Blue');
+    expect(teams).toContain('Gold');
+    expect(genders).toEqual(['Gx', 'Bx']);
+  });
+
+  it('drops a saved team that has left the roster, so it cannot hide everyone unseen', () => {
+    const { teams } = filterOptions([{ team: 'Gold', gender: 'Girl' }]);
+    expect(keepAvailable(['Blue'], teams)).toEqual([]);
+    expect(keepAvailable(['Blue', 'Gold'], teams)).toEqual(['Gold']);
   });
 });

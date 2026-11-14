@@ -4,6 +4,8 @@
 
 import { headerMap, cellGetter } from './header-map';
 import { JERSEY_SIZE_OPTIONS } from './signup-form-schema';
+import { compareTeams } from './team-display';
+import { GENDER_CODE_ORDER, shortGenderCode } from './gender-display';
 import {
   LOAN_COLUMNS,
   STOCK_COLUMNS,
@@ -263,6 +265,21 @@ export function jerseyStatusesFor(playerId: string, loans: JerseyLoan[], familyJ
   if (familyJerseys.some(f => f.playerId === playerId)) statuses.add('family');
   if (mine.length === 0 && !statuses.has('family')) statuses.add('none');
   return statuses;
+}
+
+/** The team and gender checkboxes the /jerseys filters offer, from the current roster. */
+export function filterOptions(players: { team: string; gender: string }[]): { teams: string[]; genders: string[] } {
+  const teams = Array.from(new Set(players.map(p => p.team))).sort(compareTeams);
+  const seen = new Set<string>(players.map(p => shortGenderCode(p.gender)).filter(Boolean));
+  return { teams, genders: GENDER_CODE_ORDER.filter(code => seen.has(code)) };
+}
+
+/**
+ * Saved filter choices that still have a checkbox. A choice saved on this device for a team or
+ * gender that has since left the roster would otherwise hide everyone with no box to untick.
+ */
+export function keepAvailable<T extends string>(selected: T[], available: readonly string[]): T[] {
+  return selected.filter(v => available.includes(v));
 }
 
 // ---- Write validation ----

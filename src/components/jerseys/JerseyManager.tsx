@@ -9,7 +9,7 @@ import { BottomTabNav, type BottomTabItem } from '@/components/portal/PortalNav'
 import { formatJerseySize, JERSEY_SIZE_OPTIONS } from '@/lib/signup-form-schema'
 import { formatLocalTimestamp, formatFullDate } from '@/lib/date-formatters'
 import { formatTeamOrTbd, compareTeams } from '@/lib/team-display'
-import { GENDER_CODE_ORDER, shortGenderCode } from '@/lib/gender-display'
+import { shortGenderCode } from '@/lib/gender-display'
 import { getJerseyManagerName, rememberJerseyManagerName } from '@/lib/jersey-session'
 import {
   computeStock,
@@ -18,6 +18,8 @@ import {
   isOpenLoan,
   newestFirst,
   jerseyStatusesFor,
+  filterOptions,
+  keepAvailable,
   JERSEY_STATUSES,
   type JerseyStatus,
   MAX_MANAGER_NAME_LENGTH,
@@ -196,13 +198,28 @@ export function JerseyManager({ workbookUrl }: { workbookUrl: string }) {
     load()
   }, [load])
 
+  const options = useMemo(() => filterOptions(state?.players || []), [state])
+
+  // Saved choices for a team or gender no longer on the roster are dropped, never left hiding
+  // everyone behind a checkbox that isn't shown.
+  const activeFilters = useMemo<Filters>(
+    () =>
+      state
+        ? { ...filters, teams: keepAvailable(filters.teams, options.teams), genders: keepAvailable(filters.genders, options.genders) }
+        : filters,
+    [filters, options, state]
+  )
+
   const toggleFilter = (group: 'teams' | 'genders' | 'statuses', value: string) => {
-    setFilters(f => {
-      const current = f[group] as string[]
-      const next = current.includes(value) ? current.filter(v => v !== value) : [...current, value]
-      storeList(FILTER_STORAGE_KEYS[group], next)
-      return { ...f, [group]: next }
-    })
+    const current = activeFilters[group] as string[]
+    const next = current.includes(value) ? current.filter(v => v !== value) : [...current, value]
+    storeList(FILTER_STORAGE_KEYS[group], next)
+    setFilters(f => ({ ...f, [group]: next }))
+  }
+
+  const clearFilters = () => {
+    for (const key of Object.values(FILTER_STORAGE_KEYS)) storeList(key, [])
+    setFilters({ search: '', teams: [], genders: [], statuses: [] })
   }
 
   /** Posts a write stamped with the manager name; on success re-reads everything. */
@@ -304,18 +321,19 @@ export function JerseyManager({ workbookUrl }: { workbookUrl: string }) {
 
         {state && !selected && screen !== 'stock' && (
           <FilterBar
-            state={state}
-            filters={filters}
+            options={options}
+            filters={activeFilters}
             showStatus={screen === 'players'}
             onSearch={search => setFilters(f => ({ ...f, search }))}
             onToggle={toggleFilter}
+            onClear={clearFilters}
           />
         )}
 
         {state && !selected && screen === 'checkin' && (
-          <CheckInList state={state} filters={filters} subjectFor={subjectFor} onPick={setSelected} />
+          <CheckInList state={state} filters={activeFilters} subjectFor={subjectFor} onPick={setSelected} />
         )}
-        {state && !selected && screen === 'players' && <PlayersList state={state} filters={filters} onPick={setSelected} />}
+        {state && !selected && screen === 'players' && <PlayersList state={state} filters={activeFilters} onPick={setSelected} />}
         {state && !selected && screen === 'stock' && <StockView state={state} workbookUrl={workbookUrl} subjectFor={subjectFor} onPick={setSelected} />}
       </main>
 
@@ -400,21 +418,21 @@ function TeamGroups<T>({ groups, render }: { groups: Array<[string, T[]]>; rende
 }
 
 function FilterBar({
-  state,
+  options,
   filters,
   showStatus,
   onSearch,
   onToggle,
+  onClear,
 }: {
-  state: JerseyState
+  options: { teams: string[]; genders: string[] }
   filters: Filters
   showStatus: boolean
   onSearch: (search: string) => void
   onToggle: (group: 'teams' | 'genders' | 'statuses', value: string) => void
+  onClear: () => void
 }) {
-  const teams = Array.from(new Set(state.players.map(p => p.team))).sort(compareTeams)
-  const seenGenders = new Set(state.players.map(p => shortGenderCode(p.gender)).filter(Boolean))
-  const genders = GENDER_CODE_ORDER.filter(code => seenGenders.has(code))
+  const { teams, genders } = options
   const active = filters.teams.length + filters.genders.length + (showStatus ? filters.statuses.length : 0)
 
   const group = (legend: string, name: 'teams' | 'genders' | 'statuses', options: Array<{ value: string; label: string }>) =>
@@ -444,6 +462,11 @@ function FilterBar({
           {group('Team', 'teams', teams.map(t => ({ value: t, label: formatTeamOrTbd(t) })))}
           {group('Gender', 'genders', genders.map(g => ({ value: g, label: g })))}
           {showStatus && group('Jersey status', 'statuses', JERSEY_STATUSES.map(st => ({ value: st.id, label: st.label })))}
+          {(active > 0 || filters.search) && (
+            <Button variant="outline" size="sm" onClick={onClear}>
+              Clear filters
+            </Button>
+          )}
         </div>
       </details>
       <Input aria-label="Search players" placeholder="Search by name" value={filters.search} onChange={e => onSearch(e.target.value)} />
