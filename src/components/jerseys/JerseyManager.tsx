@@ -11,6 +11,7 @@ import { formatLocalTimestamp, formatFullDate } from '@/lib/date-formatters'
 import { formatTeamOrTbd, compareTeams } from '@/lib/team-display'
 import { shortGenderCode } from '@/lib/gender-display'
 import { getJerseyManagerName, rememberJerseyManagerName } from '@/lib/jersey-session'
+import { parseJerseyHash, jerseyHash, parseFilterQuery, filterQuery, type JerseyScreen } from '@/lib/jersey-url'
 import {
   computeStock,
   stockTotals,
@@ -35,7 +36,7 @@ import {
 // plus a jersey status filter, a player panel with every action for that player, and Add note. All data comes
 // from one GET /api/jerseys/state; after any write the page re-reads it.
 
-type Screen = 'checkin' | 'players' | 'stock'
+type Screen = JerseyScreen
 
 const TABS: Array<BottomTabItem<Screen>> = [
   { id: 'checkin', label: 'Check-in', icon: ArrowDownToLine },
@@ -167,9 +168,12 @@ function SizeSelect({ value, onChange, label, allowBlank }: { value: string; onC
 export function JerseyManager({ workbookUrl }: { workbookUrl: string }) {
   const [state, setState] = useState<JerseyState | null>(null)
   const [loadError, setLoadError] = useState('')
+  // The tab and open player come from the URL hash (jersey-url.ts), so the back button and
+  // bookmarks work like the Player Portal's tabs; navigate() only ever changes the hash.
   const [screen, setScreen] = useState<Screen>('checkin')
+  const [selectedId, setSelectedId] = useState('')
   const [filters, setFilters] = useState<Filters>({ search: '', teams: [], genders: [], statuses: [] })
-  const [selected, setSelected] = useState<Subject | null>(null)
+  const [filtersReady, setFiltersReady] = useState(false)
   const [noteFor, setNoteFor] = useState<Subject | 'general' | null>(null)
   const [managerName, setManagerName] = useState<string | null>(null)
   const [message, setMessage] = useState<{ kind: 'success' | 'error'; text: string } | null>(null)
@@ -191,14 +195,39 @@ export function JerseyManager({ workbookUrl }: { workbookUrl: string }) {
 
   useEffect(() => {
     setManagerName(getJerseyManagerName())
-    setFilters(f => ({
-      ...f,
-      teams: loadStoredList(FILTER_STORAGE_KEYS.teams),
-      genders: loadStoredList(FILTER_STORAGE_KEYS.genders),
-      statuses: loadStoredList(FILTER_STORAGE_KEYS.statuses) as JerseyStatus[],
-    }))
+    // Filters in the URL win (a bookmark or shared link); otherwise this device's last choices.
+    const fromUrl = parseFilterQuery(window.location.search)
+    setFilters(
+      fromUrl
+        ? { ...fromUrl, statuses: fromUrl.statuses as JerseyStatus[] }
+        : {
+            search: '',
+            teams: loadStoredList(FILTER_STORAGE_KEYS.teams),
+            genders: loadStoredList(FILTER_STORAGE_KEYS.genders),
+            statuses: loadStoredList(FILTER_STORAGE_KEYS.statuses) as JerseyStatus[],
+          }
+    )
+    setFiltersReady(true)
     load()
   }, [load])
+
+  useEffect(() => {
+    const applyHash = () => {
+      const location = parseJerseyHash(window.location.hash)
+      setScreen(location.screen)
+      setSelectedId(location.playerId)
+      setNoteFor(null)
+    }
+    applyHash()
+    window.addEventListener('hashchange', applyHash)
+    return () => window.removeEventListener('hashchange', applyHash)
+  }, [])
+
+  /** Every tab change or player tap is its own history entry, as in the Player Portal. */
+  const navigate = useCallback((next: Screen, playerId = '') => {
+    setMessage(null)
+    window.location.hash = jerseyHash({ screen: next, playerId })
+  }, [])
 
   // Like the portal's "✓ Saved" button, a success confirmation is brief; errors stay until the next action.
   useEffect(() => {
@@ -218,6 +247,13 @@ export function JerseyManager({ workbookUrl }: { workbookUrl: string }) {
         : filters,
     [filters, options, state]
   )
+
+  // Filters edit the query string in place (no history entry per checkbox), keeping the hash.
+  useEffect(() => {
+    if (!filtersReady) return
+    const url = window.location.pathname + filterQuery(activeFilters) + window.location.hash
+    if (url !== window.location.pathname + window.location.search + window.location.hash) window.history.replaceState(null, '', url)
+  }, [activeFilters, filtersReady])
 
   const toggleFilter = (group: 'teams' | 'genders' | 'statuses', value: string) => {
     const current = activeFilters[group] as string[]
@@ -265,6 +301,13 @@ export function JerseyManager({ workbookUrl }: { workbookUrl: string }) {
       playersById.get(playerId) || { playerId, fullName: fallbackName || playerId, team: NOT_ON_ROSTER, gender: '', jerseySize: '' },
     [playersById]
   )
+
+  const selected = useMemo<Subject | null>(() => {
+    if (!selectedId || !state) return null
+    return subjectFor(selectedId, state.loans.find(l => l.playerId === selectedId)?.playerName || '')
+  }, [selectedId, state, subjectFor])
+
+  const pick = useCallback((subject: Subject) => navigate(screen, subject.playerId), [navigate, screen])
 
   if (managerName === null) return null
   if (!managerName) return <NamePrompt onSave={name => { rememberJerseyManagerName(name); setManagerName(name) }} />
@@ -315,7 +358,7 @@ export function JerseyManager({ workbookUrl }: { workbookUrl: string }) {
             subject={selected}
             state={state}
             write={write}
-            onClose={() => setSelected(null)}
+            onClose={() => navigate(screen)}
             onAddNote={() => setNoteFor(selected)}
           />
         )}
@@ -332,21 +375,17 @@ export function JerseyManager({ workbookUrl }: { workbookUrl: string }) {
         )}
 
         {state && !selected && screen === 'checkin' && (
-          <CheckInList state={state} filters={activeFilters} subjectFor={subjectFor} onPick={setSelected} />
+          <CheckInList state={state} filters={activeFilters} subjectFor={subjectFor} onPick={pick} />
         )}
-        {state && !selected && screen === 'players' && <PlayersList state={state} filters={activeFilters} onPick={setSelected} />}
-        {state && !selected && screen === 'stock' && <StockView state={state} workbookUrl={workbookUrl} subjectFor={subjectFor} onPick={setSelected} />}
+        {state && !selected && screen === 'players' && <PlayersList state={state} filters={activeFilters} onPick={pick} />}
+        {state && !selected && screen === 'stock' && <StockView state={state} workbookUrl={workbookUrl} subjectFor={subjectFor} onPick={pick} />}
       </main>
 
       <BottomTabNav
         label="Jerseys"
         items={TABS}
         active={screen}
-        onChange={s => {
-          setScreen(s)
-          setSelected(null)
-          setMessage(null)
-        }}
+        onChange={s => navigate(s)}
       />
     </div>
   )
