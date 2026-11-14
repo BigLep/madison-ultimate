@@ -303,10 +303,8 @@ export function JerseyManager({ workbookUrl }: { workbookUrl: string }) {
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--primary-bg)' }}>
       <header className="border-b" style={cardStyle}>
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
-          <div>
-            <h1 className="text-lg font-bold" style={titleStyle}>
-              Jerseys
-            </h1>
+          <div className="min-w-0">
+            <Breadcrumbs screen={screen} playerName={selected?.fullName} />
             <p className="text-xs" style={mutedStyle}>
               Signed in as {managerName}.{' '}
               <button type="button" className="underline" onClick={() => setManagerName('')}>
@@ -314,9 +312,11 @@ export function JerseyManager({ workbookUrl }: { workbookUrl: string }) {
               </button>
             </p>
           </div>
-          <Button variant="outline" size="sm" className={secondaryButton} onClick={() => setNoteFor(selected || 'general')}>
-            Add note
-          </Button>
+          {!selected && (
+            <Button variant="outline" size="sm" className={secondaryButton} onClick={() => setNoteFor('general')}>
+              Add note
+            </Button>
+          )}
         </div>
       </header>
 
@@ -345,7 +345,6 @@ export function JerseyManager({ workbookUrl }: { workbookUrl: string }) {
             subject={selected}
             state={state}
             write={write}
-            onClose={() => navigate(screen)}
             onAddNote={() => setNoteFor(selected)}
           />
         )}
@@ -391,6 +390,38 @@ function SaveBanner({ message }: { message: { kind: 'success' | 'error'; text: s
     <div role="status" aria-live="polite" className="border px-4 py-3 rounded font-medium bg-green-50 border-green-200 text-green-800">
       ✓ {message.text}
     </div>
+  )
+}
+
+const SCREEN_LABELS: Record<Screen, string> = { checkin: 'Check-in', players: 'Players', stock: 'Stock' }
+
+/** "Jerseys › Check-in › Player": every crumb but the last is a link, so it replaces a Back button. */
+function Breadcrumbs({ screen, playerName }: { screen: Screen; playerName?: string }) {
+  const link = 'underline-offset-4 hover:underline'
+  const crumbs: Array<{ label: string; href?: string }> = [
+    { label: 'Jerseys', href: '#checkin' },
+    { label: SCREEN_LABELS[screen], href: playerName ? `#${screen}` : undefined },
+    ...(playerName ? [{ label: playerName }] : []),
+  ]
+  return (
+    <nav aria-label="Breadcrumb">
+      <ol className="flex flex-wrap items-center gap-x-1 text-lg font-bold" style={titleStyle}>
+        {crumbs.map((c, i) => (
+          <li key={i} className="flex items-center gap-1 min-w-0">
+            {i > 0 && <ChevronRight className="w-4 h-4 shrink-0" style={mutedStyle} aria-hidden="true" />}
+            {c.href ? (
+              <a href={c.href} className={link}>
+                {c.label}
+              </a>
+            ) : (
+              <span aria-current="page" className="truncate">
+                {c.label}
+              </span>
+            )}
+          </li>
+        ))}
+      </ol>
+    </nav>
   )
 }
 
@@ -772,17 +803,21 @@ function NoteForm({ subject, onCancel, onSave }: { subject: Subject | null; onCa
 
 type Write = (url: string, body: Record<string, unknown>, success: string) => Promise<boolean>
 
+/**
+ * One player, laid out for a Jersey Manager working through a line of families: what they have out
+ * and the Returned / Lost actions first, then notes. Checking out is up front only when nothing is
+ * out (that is why you opened them); otherwise it sits with Family Jersey and past loans under a
+ * collapsed "More options".
+ */
 function PlayerPanel({
   subject,
   state,
   write,
-  onClose,
   onAddNote,
 }: {
   subject: Subject
   state: JerseyState
   write: Write
-  onClose: () => void
   onAddNote: () => void
 }) {
   const loans = newestFirst(
@@ -794,24 +829,16 @@ function PlayerPanel({
   const family = state.familyJerseys.filter(f => f.playerId === subject.playerId)
   const notes = newestFirst(state.notes.filter(n => n.playerId === subject.playerId), n => n.recordedAt)
   const onRoster = subject.team !== NOT_ON_ROSTER
+  const checkOut = onRoster && <CheckOut subject={subject} hasOpenLoan={open.length > 0} hasFamilyJersey={family.length > 0} write={write} />
 
   return (
     <Card style={cardStyle}>
       <CardContent className="pt-4 space-y-4">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <h2 className="text-lg font-bold" style={titleStyle}>
-              {subject.fullName}
-            </h2>
-            <p className="text-sm" style={mutedStyle}>
-              {onRoster ? formatTeamOrTbd(subject.team) : NOT_ON_ROSTER}
-              {subject.jerseySize && ` · asked for ${sizeLabel(subject.jerseySize)} at signup`}
-            </p>
-          </div>
-          <Button variant="outline" size="sm" className={secondaryButton} onClick={onClose}>
-            Back
-          </Button>
-        </div>
+        {/* The name is in the header breadcrumb; this line just places the player. */}
+        <p className="text-sm" style={mutedStyle}>
+          {onRoster ? formatTeamOrTbd(subject.team) : NOT_ON_ROSTER}
+          {open.length === 0 && subject.jerseySize && ` · asked for ${sizeLabel(subject.jerseySize)} at signup`}
+        </p>
 
         {open.map(loan => (
           <OpenLoan key={loan.loanId} loan={loan} write={write} />
@@ -821,47 +848,52 @@ function PlayerPanel({
           <FeePaid key={loan.loanId} loan={loan} write={write} />
         ))}
 
-        {onRoster && <CheckOut subject={subject} hasOpenLoan={open.length > 0} hasFamilyJersey={family.length > 0} write={write} />}
-        {onRoster && <RecordFamilyJersey subject={subject} family={family} write={write} />}
+        {open.length === 0 && checkOut}
 
-        <section className="space-y-1">
-          <div className="flex items-center justify-between">
+        <Button variant="outline" size="sm" className={secondaryButton} onClick={onAddNote}>
+          Add note
+        </Button>
+
+        {notes.length > 0 && (
+          <section className="space-y-2">
             <h3 className="text-sm font-semibold" style={titleStyle}>
               Notes
             </h3>
-            <Button variant="outline" size="sm" className={secondaryButton} onClick={onAddNote}>
-              Add note
-            </Button>
-          </div>
-          {notes.length === 0 ? (
-            <p className="text-sm" style={mutedStyle}>
-              None.
-            </p>
-          ) : (
             <ul className="space-y-2">
               {notes.map((n, i) => (
                 <NoteItem key={i} note={n} />
               ))}
             </ul>
-          )}
-        </section>
-
-        {closed.length > 0 && (
-          <section>
-            <h3 className="text-sm font-semibold mb-1" style={titleStyle}>
-              Past loans
-            </h3>
-            <ul className="text-sm space-y-1" style={mutedStyle}>
-              {closed.map(l => (
-                <li key={l.loanId}>
-                  {l.size} · {l.outcome}
-                  {l.checkedInAt && ` ${whenText(l.checkedInAt)}`}
-                  {l.checkedInBy && ` by ${l.checkedInBy}`}
-                  {l.feeIssued && ` · fee $${l.feeIssued}${l.feePaidOn ? ` paid ${formatFullDate(l.feePaidOn)}` : ' unpaid'}`}
-                </li>
-              ))}
-            </ul>
           </section>
+        )}
+
+        {(onRoster || closed.length > 0) && (
+          <details className="border-t pt-3" style={{ borderColor: 'var(--border)' }}>
+            <summary className="text-sm cursor-pointer min-h-[44px] flex items-center" style={mutedStyle}>
+              More options
+            </summary>
+            <div className="space-y-4 pt-2">
+              {open.length > 0 && checkOut}
+              {onRoster && <RecordFamilyJersey subject={subject} family={family} write={write} />}
+              {closed.length > 0 && (
+                <section>
+                  <h3 className="text-sm font-semibold mb-1" style={titleStyle}>
+                    Past loans
+                  </h3>
+                  <ul className="text-sm space-y-1" style={mutedStyle}>
+                    {closed.map(l => (
+                      <li key={l.loanId}>
+                        {l.size} · {l.outcome}
+                        {l.checkedInAt && ` ${whenText(l.checkedInAt)}`}
+                        {l.checkedInBy && ` by ${l.checkedInBy}`}
+                        {l.feeIssued && ` · fee $${l.feeIssued}${l.feePaidOn ? ` paid ${formatFullDate(l.feePaidOn)}` : ' unpaid'}`}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+            </div>
+          </details>
         )}
       </CardContent>
     </Card>
@@ -975,7 +1007,7 @@ function CheckOut({ subject, hasOpenLoan, hasFamilyJersey, write }: { subject: S
   return (
     <section className="space-y-2">
       <h3 className="text-sm font-semibold" style={titleStyle}>
-        Check out a Program Jersey
+        Check out
       </h3>
       {hasOpenLoan && (
         <p className="text-sm" style={warnStyle}>
