@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ArrowDownToLine, Users, Package } from 'lucide-react'
+import { ArrowDownToLine, ChevronRight, Users, Package } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -114,8 +114,11 @@ const errorStyle = { color: 'var(--error-text, #f87171)' }
 const selectClassName = 'flex h-9 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900'
 
 const NOT_ON_ROSTER = 'Not on Roster'
-/** The main action in a group; the theme's default button is too close to the card color. */
-const primaryButton = 'bg-[var(--accent)] text-white hover:bg-[var(--accent)] hover:opacity-90'
+// Button styles match the rest of the portal (PlayerProfileForm, CoachProfile, PasswordGateForm):
+// the main action is accent-filled, everything else is the outline variant, and both are at least
+// 44px tall so they are easy to tap.
+const primaryButton = 'min-h-[44px] text-white font-semibold bg-[var(--accent)] hover:bg-[var(--accent)] hover:opacity-90'
+const secondaryButton = 'min-h-[44px]'
 
 function sizeLabel(code: string): string {
   return code ? `${formatJerseySize(code)} (${code})` : 'size not recorded'
@@ -275,7 +278,7 @@ export function JerseyManager({ workbookUrl }: { workbookUrl: string }) {
               </button>
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => setNoteFor(selected || 'general')}>
+          <Button variant="outline" size="sm" className={secondaryButton} onClick={() => setNoteFor(selected || 'general')}>
             Add note
           </Button>
         </div>
@@ -381,11 +384,16 @@ function NamePrompt({ onSave }: { onSave: (name: string) => void }) {
   )
 }
 
+/** A tappable player row, styled like the Player Directory's, with a chevron so it reads as a link. */
 function PlayerRow({ name, detail, onClick }: { name: string; detail?: string; onClick: () => void }) {
   return (
     <li>
-      <button type="button" onClick={onClick} className="w-full text-left py-2 flex items-center justify-between gap-2">
-        <span className="font-medium" style={textStyle}>
+      <button
+        type="button"
+        onClick={onClick}
+        className="w-full text-left min-h-[44px] py-2 -mx-2 px-2 rounded-md flex items-center gap-2 cursor-pointer hover:bg-[var(--primary-bg)] transition-colors"
+      >
+        <span className="font-medium flex-1" style={textStyle}>
           {name}
         </span>
         {detail && (
@@ -393,6 +401,7 @@ function PlayerRow({ name, detail, onClick }: { name: string; detail?: string; o
             {detail}
           </span>
         )}
+        <ChevronRight className="w-4 h-4 shrink-0" style={mutedStyle} aria-hidden="true" />
       </button>
     </li>
   )
@@ -438,7 +447,7 @@ function FilterBar({
   const group = (legend: string, name: 'teams' | 'genders' | 'statuses', options: Array<{ value: string; label: string }>) =>
     options.length > 0 && (
       <fieldset>
-        <legend className="text-sm mb-1" style={mutedStyle}>
+        <legend className="text-sm mb-2" style={mutedStyle}>
           {legend}
         </legend>
         <div className="flex flex-wrap gap-x-4 gap-y-2">
@@ -453,22 +462,15 @@ function FilterBar({
     )
 
   return (
-    <div className="space-y-3">
-      <details open={active > 0 || undefined} className="space-y-3">
-        <summary className="text-sm cursor-pointer" style={mutedStyle}>
-          Filters{active > 0 ? ` (${active} on)` : ''}
-        </summary>
-        <div className="space-y-3 pt-2">
-          {group('Team', 'teams', teams.map(t => ({ value: t, label: formatTeamOrTbd(t) })))}
-          {group('Gender', 'genders', genders.map(g => ({ value: g, label: g })))}
-          {showStatus && group('Jersey status', 'statuses', JERSEY_STATUSES.map(st => ({ value: st.id, label: st.label })))}
-          {(active > 0 || filters.search) && (
-            <Button variant="outline" size="sm" onClick={onClear}>
-              Clear filters
-            </Button>
-          )}
-        </div>
-      </details>
+    <div className="space-y-4">
+      {group('Filter by team', 'teams', teams.map(t => ({ value: t, label: formatTeamOrTbd(t) })))}
+      {group('Filter by gender', 'genders', genders.map(g => ({ value: g, label: g })))}
+      {showStatus && group('Filter by jersey status', 'statuses', JERSEY_STATUSES.map(st => ({ value: st.id, label: st.label })))}
+      {(active > 0 || filters.search) && (
+        <Button variant="outline" size="sm" className={secondaryButton} onClick={onClear}>
+          Clear filters
+        </Button>
+      )}
       <Input aria-label="Search players" placeholder="Search by name" value={filters.search} onChange={e => onSearch(e.target.value)} />
     </div>
   )
@@ -711,7 +713,7 @@ function NoteForm({ subject, onCancel, onSave }: { subject: Subject | null; onCa
             <Button type="submit" className={primaryButton} disabled={!note.trim() || saving}>
               {saving ? 'Saving…' : 'Save note'}
             </Button>
-            <Button type="button" variant="outline" onClick={onCancel}>
+            <Button type="button" variant="outline" size="sm" className={secondaryButton} onClick={onCancel}>
               Cancel
             </Button>
           </div>
@@ -759,7 +761,7 @@ function PlayerPanel({
               {subject.jerseySize && ` · asked for ${sizeLabel(subject.jerseySize)} at signup`}
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={onClose}>
+          <Button variant="outline" size="sm" className={secondaryButton} onClick={onClose}>
             Back
           </Button>
         </div>
@@ -780,7 +782,7 @@ function PlayerPanel({
             <h3 className="text-sm font-semibold" style={titleStyle}>
               Notes
             </h3>
-            <Button variant="outline" size="sm" onClick={onAddNote}>
+            <Button variant="outline" size="sm" className={secondaryButton} onClick={onAddNote}>
               Add note
             </Button>
           </div>
@@ -856,10 +858,10 @@ function OpenLoan({ loan, write }: { loan: JerseyLoan; write: Write }) {
           <Button className={primaryButton} disabled={busy} onClick={() => run({ outcome: 'Returned' }, `${loan.size} checked in.`)}>
             Returned
           </Button>
-          <Button variant="outline" disabled={busy} onClick={() => setMode('size')}>
+          <Button variant="outline" size="sm" className={secondaryButton} disabled={busy} onClick={() => setMode('size')}>
             Returned, different size
           </Button>
-          <Button variant="outline" disabled={busy} onClick={() => setMode('lost')}>
+          <Button variant="outline" size="sm" className={secondaryButton} disabled={busy} onClick={() => setMode('lost')}>
             Lost
           </Button>
         </div>
@@ -871,7 +873,7 @@ function OpenLoan({ loan, write }: { loan: JerseyLoan; write: Write }) {
             <Button className={primaryButton} disabled={busy || !size} onClick={() => run({ outcome: 'Returned', size }, `Checked in as ${size}.`)}>
               Check in as {size}
             </Button>
-            <Button variant="outline" onClick={() => setMode('idle')}>
+            <Button variant="outline" size="sm" className={secondaryButton} onClick={() => setMode('idle')}>
               Cancel
             </Button>
           </div>
@@ -884,7 +886,7 @@ function OpenLoan({ loan, write }: { loan: JerseyLoan; write: Write }) {
             <Button className={primaryButton} disabled={busy} onClick={() => run({ outcome: 'Lost', fee }, fee ? `Marked lost with a $${fee.replace(/^\$/, '')} fee.` : 'Marked lost.')}>
               Mark lost
             </Button>
-            <Button variant="outline" onClick={() => setMode('idle')}>
+            <Button variant="outline" size="sm" className={secondaryButton} onClick={() => setMode('idle')}>
               Cancel
             </Button>
           </div>
@@ -975,7 +977,7 @@ function RecordFamilyJersey({ subject, family, write }: { subject: Subject; fami
         </p>
       )}
       {!open ? (
-        <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+        <Button variant="outline" size="sm" className={secondaryButton} onClick={() => setOpen(true)}>
           Has a Family Jersey
         </Button>
       ) : (

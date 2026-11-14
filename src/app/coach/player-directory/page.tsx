@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { ChevronRight } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { PracticesTab } from '@/components/portal/PracticesTab'
 import { GamesTab } from '@/components/portal/GamesTab'
@@ -250,8 +251,9 @@ export default function PlayerDirectoryPage() {
                             <span className="font-medium" style={valueStyle}>
                               {p.fullName}
                             </span>
-                            <span className="text-sm" style={labelStyle}>
+                            <span className="flex items-center gap-2 text-sm" style={labelStyle}>
                               {formatTeamOrTbd(p.team)}
+                              <ChevronRight className="w-4 h-4 shrink-0" aria-hidden="true" />
                             </span>
                           </button>
                         </li>
