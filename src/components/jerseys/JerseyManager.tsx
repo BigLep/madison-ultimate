@@ -110,7 +110,6 @@ const mutedStyle = { color: 'var(--secondary-text)' }
 const textStyle = { color: 'var(--primary-text)' }
 const titleStyle = { color: 'var(--page-title)' }
 const warnStyle = { color: 'var(--availability-unsure-border)' }
-const errorStyle = { color: 'var(--error-text, #f87171)' }
 const selectClassName = 'flex h-9 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900'
 
 const NOT_ON_ROSTER = 'Not on Roster'
@@ -173,7 +172,7 @@ export function JerseyManager({ workbookUrl }: { workbookUrl: string }) {
   const [selected, setSelected] = useState<Subject | null>(null)
   const [noteFor, setNoteFor] = useState<Subject | 'general' | null>(null)
   const [managerName, setManagerName] = useState<string | null>(null)
-  const [message, setMessage] = useState('')
+  const [message, setMessage] = useState<{ kind: 'success' | 'error'; text: string } | null>(null)
 
   const load = useCallback(async () => {
     try {
@@ -200,6 +199,13 @@ export function JerseyManager({ workbookUrl }: { workbookUrl: string }) {
     }))
     load()
   }, [load])
+
+  // Like the portal's "✓ Saved" button, a success confirmation is brief; errors stay until the next action.
+  useEffect(() => {
+    if (message?.kind !== 'success') return
+    const timer = setTimeout(() => setMessage(null), 4000)
+    return () => clearTimeout(timer)
+  }, [message])
 
   const options = useMemo(() => filterOptions(state?.players || []), [state])
 
@@ -228,7 +234,7 @@ export function JerseyManager({ workbookUrl }: { workbookUrl: string }) {
   /** Posts a write stamped with the manager name; on success re-reads everything. */
   const write = useCallback(
     async (url: string, body: Record<string, unknown>, success: string): Promise<boolean> => {
-      setMessage('')
+      setMessage(null)
       try {
         const res = await fetch(url, {
           method: 'POST',
@@ -237,15 +243,15 @@ export function JerseyManager({ workbookUrl }: { workbookUrl: string }) {
         })
         const data = await res.json()
         if (!res.ok || !data.success) {
-          setMessage(`⚠️ ${data.error || 'That did not save.'}`)
+          setMessage({ kind: 'error', text: data.error || 'That did not save.' })
           await load()
           return false
         }
-        setMessage(`✅ ${success}`)
+        setMessage({ kind: 'success', text: success })
         await load()
         return true
       } catch {
-        setMessage('⚠️ Network error: nothing was saved. Try again.')
+        setMessage({ kind: 'error', text: 'Network error. Nothing was saved; please try again.' })
         return false
       }
     },
@@ -285,16 +291,8 @@ export function JerseyManager({ workbookUrl }: { workbookUrl: string }) {
       </header>
 
       <main className="flex-1 max-w-2xl w-full mx-auto px-4 py-4 space-y-4">
-        {message && (
-          <p role="status" className="text-sm" style={textStyle}>
-            {message}
-          </p>
-        )}
-        {loadError && (
-          <p className="text-sm" style={errorStyle}>
-            {loadError}
-          </p>
-        )}
+        {message && <SaveBanner message={message} />}
+        {loadError && <SaveBanner message={{ kind: 'error', text: loadError }} />}
         {!state && !loadError && <p style={mutedStyle}>Loading…</p>}
 
         {state && noteFor && (
@@ -347,9 +345,25 @@ export function JerseyManager({ workbookUrl }: { workbookUrl: string }) {
         onChange={s => {
           setScreen(s)
           setSelected(null)
-          setMessage('')
+          setMessage(null)
         }}
       />
+    </div>
+  )
+}
+
+/**
+ * Save feedback in the Player Portal's style: its error banner (PlayerProfileForm's save bar), and
+ * the same shape in green for success, since here the button that was tapped usually disappears.
+ */
+function SaveBanner({ message }: { message: { kind: 'success' | 'error'; text: string } }) {
+  return message.kind === 'error' ? (
+    <div role="alert" aria-live="assertive" className="border px-4 py-3 rounded font-medium bg-red-50 border-red-200 text-red-600">
+      {message.text}
+    </div>
+  ) : (
+    <div role="status" aria-live="polite" className="border px-4 py-3 rounded font-medium bg-green-50 border-green-200 text-green-800">
+      ✓ {message.text}
     </div>
   )
 }
@@ -856,7 +870,7 @@ function OpenLoan({ loan, write }: { loan: JerseyLoan; write: Write }) {
       {mode === 'idle' && (
         <div className="flex flex-wrap gap-2">
           <Button className={primaryButton} disabled={busy} onClick={() => run({ outcome: 'Returned' }, `${loan.size} checked in.`)}>
-            Returned
+            {busy ? 'Saving…' : 'Returned'}
           </Button>
           <Button variant="outline" size="sm" className={secondaryButton} disabled={busy} onClick={() => setMode('size')}>
             Returned, different size
@@ -871,7 +885,7 @@ function OpenLoan({ loan, write }: { loan: JerseyLoan; write: Write }) {
           <SizeSelect label="Size actually returned" value={size} onChange={setSize} />
           <div className="flex gap-2">
             <Button className={primaryButton} disabled={busy || !size} onClick={() => run({ outcome: 'Returned', size }, `Checked in as ${size}.`)}>
-              Check in as {size}
+              {busy ? 'Saving…' : `Check in as ${size}`}
             </Button>
             <Button variant="outline" size="sm" className={secondaryButton} onClick={() => setMode('idle')}>
               Cancel
@@ -884,7 +898,7 @@ function OpenLoan({ loan, write }: { loan: JerseyLoan; write: Write }) {
           <Input aria-label="Lost Jersey Fee (optional)" inputMode="decimal" placeholder="Fee in dollars (leave blank for no fee)" value={fee} onChange={e => setFee(e.target.value)} />
           <div className="flex gap-2">
             <Button className={primaryButton} disabled={busy} onClick={() => run({ outcome: 'Lost', fee }, fee ? `Marked lost with a $${fee.replace(/^\$/, '')} fee.` : 'Marked lost.')}>
-              Mark lost
+              {busy ? 'Saving…' : 'Mark lost'}
             </Button>
             <Button variant="outline" size="sm" className={secondaryButton} onClick={() => setMode('idle')}>
               Cancel
@@ -915,7 +929,7 @@ function FeePaid({ loan, write }: { loan: JerseyLoan; write: Write }) {
             setBusy(false)
           }}
         >
-          Fee paid
+          {busy ? 'Saving…' : 'Fee paid'}
         </Button>
       </div>
     </section>
@@ -951,7 +965,7 @@ function CheckOut({ subject, hasOpenLoan, hasFamilyJersey, write }: { subject: S
             setBusy(false)
           }}
         >
-          Check out
+          {busy ? 'Saving…' : 'Check out'}
         </Button>
       </div>
     </section>
@@ -993,7 +1007,7 @@ function RecordFamilyJersey({ subject, family, write }: { subject: Subject; fami
               if (ok) setOpen(false)
             }}
           >
-            Save
+            {busy ? 'Saving…' : 'Save'}
           </Button>
         </div>
       )}
