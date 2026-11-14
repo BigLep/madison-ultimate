@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
+import ExcelJS from 'exceljs';
 import type { JerseyLoan } from '@/lib/jerseys';
 
 vi.mock('@/lib/coach-directory', () => ({
@@ -159,12 +160,34 @@ describe('GET /api/player/[playerId]/jersey', () => {
 });
 
 describe('GET /api/jerseys/outstanding-xlsx', () => {
-  it('returns an .xlsx attachment of the open loans that pass the query filters', async () => {
-    vi.mocked(readLoans).mockResolvedValue([LOAN]);
+  it('returns an .xlsx of the open loans that pass the query filters, with no contact info or notes', async () => {
+    vi.mocked(readLoans).mockResolvedValue([
+      { ...LOAN, notes: 'private manager note' },
+      { ...LOAN, loanId: 'l0002', playerId: 'p002', playerName: 'TestOther TestLast', size: 'YL' },
+    ]);
     const res = await getOutstandingXlsx(new NextRequest('http://localhost/api/jerseys/outstanding-xlsx?team=Blue'));
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toContain('spreadsheetml');
-    expect(res.headers.get('content-disposition')).toMatch(/attachment; filename="outstanding-jerseys-\d{4}-\d{2}-\d{2}\.xlsx"/);
-    expect((await res.arrayBuffer()).byteLength).toBeGreaterThan(0);
+
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(await res.arrayBuffer());
+    const sheet = workbook.worksheets[0];
+    const cells: string[] = [];
+    sheet.eachRow(row => row.eachCell(cell => cells.push(String(cell.value))));
+    expect(sheet.getRow(4).getCell(1).value).toBe('TestFirst TestLast');
+    expect(sheet.getRow(5).getCell(1).value).toBeFalsy(); // p002 is not on the Roster as Blue
+    expect(cells.join(' ')).not.toMatch(/private manager note|@|555-/);
+  });
+
+  it("dates the file by Pacific time, so a download just before midnight isn't tomorrow's", async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-14T07:30:00Z')); // 11:30pm Friday, November 13 in Seattle
+    try {
+      vi.mocked(readLoans).mockResolvedValue([]);
+      const res = await getOutstandingXlsx(new NextRequest('http://localhost/api/jerseys/outstanding-xlsx'));
+      expect(res.headers.get('content-disposition')).toContain('outstanding-jerseys-2026-11-13.xlsx');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

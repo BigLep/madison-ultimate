@@ -10,7 +10,7 @@ import { formatJerseySize, JERSEY_SIZE_OPTIONS } from '@/lib/signup-form-schema'
 import { formatLocalTimestamp, formatFullDate } from '@/lib/date-formatters'
 import { formatTeamOrTbd, compareTeams } from '@/lib/team-display'
 import { getJerseyManagerName, rememberJerseyManagerName } from '@/lib/jersey-session'
-import { parseJerseyHash, jerseyHash, parseFilterQuery, filterQuery, type JerseyScreen } from '@/lib/jersey-url'
+import { parseJerseyHash, jerseyHash, filtersForUrl, filterQuery, type JerseyScreen } from '@/lib/jersey-url'
 import {
   computeStock,
   stockTotals,
@@ -182,32 +182,37 @@ export function JerseyManager({ workbookUrl }: { workbookUrl: string }) {
 
   useEffect(() => {
     setManagerName(getJerseyManagerName())
-    // Filters in the URL win (a bookmark or shared link); otherwise this device's last choices.
-    const fromUrl = parseFilterQuery(window.location.search)
-    setFilters(
-      fromUrl
-        ? { ...fromUrl, statuses: fromUrl.statuses as JerseyStatus[] }
-        : {
-            search: '',
-            teams: loadStoredList(FILTER_STORAGE_KEYS.teams),
-            genders: loadStoredList(FILTER_STORAGE_KEYS.genders),
-            statuses: loadStoredList(FILTER_STORAGE_KEYS.statuses) as JerseyStatus[],
-          }
-    )
-    setFiltersReady(true)
     load()
   }, [load])
 
+  // The URL is the source of truth for tab, open player, and filters. It is applied on first load
+  // and on every history move (back/forward can change the query, the hash, or both), so the page
+  // always shows exactly what the current entry says. On first load only, a URL naming no
+  // filters falls back to this device's saved ones.
   useEffect(() => {
-    const applyHash = () => {
+    const applyUrl = (initial: boolean) => {
       const location = parseJerseyHash(window.location.hash)
       setScreen(location.screen)
       setSelectedId(location.playerId)
       setNoteFor(null)
+      const saved = {
+        search: '',
+        teams: loadStoredList(FILTER_STORAGE_KEYS.teams),
+        genders: loadStoredList(FILTER_STORAGE_KEYS.genders),
+        statuses: loadStoredList(FILTER_STORAGE_KEYS.statuses),
+      }
+      const next = filtersForUrl(window.location.search, { initial, saved })
+      setFilters({ ...next, statuses: next.statuses as JerseyStatus[] })
+      setFiltersReady(true)
     }
-    applyHash()
-    window.addEventListener('hashchange', applyHash)
-    return () => window.removeEventListener('hashchange', applyHash)
+    const onHistory = () => applyUrl(false)
+    applyUrl(true)
+    window.addEventListener('popstate', onHistory)
+    window.addEventListener('hashchange', onHistory)
+    return () => {
+      window.removeEventListener('popstate', onHistory)
+      window.removeEventListener('hashchange', onHistory)
+    }
   }, [])
 
   /** Every tab change or player tap is its own history entry, as in the Player Portal. */

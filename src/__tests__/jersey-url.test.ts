@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseJerseyHash, jerseyHash, parseFilterQuery, filterQuery } from '@/lib/jersey-url';
+import { parseJerseyHash, jerseyHash, parseFilterQuery, filterQuery, filtersForUrl } from '@/lib/jersey-url';
 
 describe('jersey hash', () => {
   it('round-trips a tab and an open player', () => {
@@ -27,5 +27,19 @@ describe('filter query', () => {
     expect(filterQuery({ search: ' ', teams: [], genders: [], statuses: [] })).toBe('');
     expect(parseFilterQuery('')).toBeNull();
     expect(parseFilterQuery('?other=1')).toBeNull();
+  });
+});
+
+describe('damaged and restored URLs', () => {
+  it('treats a malformed player escape as no player instead of throwing', () => {
+    expect(parseJerseyHash('#players/%')).toEqual({ screen: 'players', playerId: '' });
+    expect(parseJerseyHash('#players/%E0%A4%A')).toEqual({ screen: 'players', playerId: '' });
+  });
+
+  it('uses saved filters only on first load; a restored entry with no filters means none', () => {
+    const saved = { search: '', teams: ['Blue'], genders: [], statuses: [] };
+    expect(filtersForUrl('', { initial: true, saved }).teams).toEqual(['Blue']);
+    expect(filtersForUrl('', { initial: false, saved }).teams).toEqual([]);
+    expect(filtersForUrl('?team=Gold', { initial: true, saved }).teams).toEqual(['Gold']);
   });
 });

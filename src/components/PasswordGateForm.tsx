@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { loginDestination } from '@/lib/login-destination'
 
 // Shared UI for the /admin and /coach login pages (ADR 0008): one password field, posted to the
 // area's login route. Reads `next` from the URL itself (not useSearchParams) so this can render
@@ -47,8 +48,8 @@ export function PasswordGateForm({
         return
       }
       onSuccess?.()
-      const next = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('next') : null
-      router.push(next || defaultNext)
+      const next = new URLSearchParams(window.location.search).get('next')
+      router.push(loginDestination(next, window.location.hash, defaultNext))
       router.refresh()
     } catch {
       setError('Network error. Please try again.')

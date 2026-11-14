@@ -21,10 +21,19 @@ export interface JerseyFilterParams {
   statuses: string[];
 }
 
+/** A damaged bookmark (e.g. a stray "%") yields no player rather than an exception. */
+function safeDecode(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return '';
+  }
+}
+
 export function parseJerseyHash(hash: string): JerseyLocation {
   const [screenPart, playerPart] = hash.replace(/^#/, '').split('/');
   const screen = SCREENS.includes(screenPart as JerseyScreen) ? (screenPart as JerseyScreen) : 'checkin';
-  return { screen, playerId: decodeURIComponent(playerPart || '') };
+  return { screen, playerId: safeDecode(playerPart || '') };
 }
 
 export function jerseyHash({ screen, playerId }: JerseyLocation): string {
@@ -44,6 +53,17 @@ export function parseFilterQuery(search: string): JerseyFilterParams | null {
     genders: params.getAll(PARAMS.genders),
     statuses: params.getAll(PARAMS.statuses),
   };
+}
+
+const NO_FILTERS: JerseyFilterParams = { search: '', teams: [], genders: [], statuses: [] };
+
+/**
+ * The filters a URL means. On first load, a URL naming no filters falls back to this device's
+ * saved ones; when the back/forward button restores an entry, no filters in it means none,
+ * so the page always shows exactly what that URL says.
+ */
+export function filtersForUrl(search: string, { initial, saved }: { initial: boolean; saved: JerseyFilterParams }): JerseyFilterParams {
+  return parseFilterQuery(search) ?? (initial ? saved : NO_FILTERS);
 }
 
 /** "?team=Blue&status=outstanding", or "" when nothing is filtered. */
