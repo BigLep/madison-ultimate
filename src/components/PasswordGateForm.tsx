@@ -49,7 +49,7 @@ export function PasswordGateForm({
       }
       onSuccess?.()
       const next = new URLSearchParams(window.location.search).get('next')
-      router.push(loginDestination(next, window.location.hash, defaultNext))
+      router.push(loginDestination(next, window.location.hash, defaultNext, window.location.origin))
       router.refresh()
     } catch {
       setError('Network error. Please try again.')
