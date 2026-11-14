@@ -171,3 +171,40 @@ _Avoid_: photo migration, backfill
 **Media Opt-Out**:
 A family's declaration that photos of their player must not appear in team communications or be shared within the team. Does not affect the Player Photo. The team never posts to social media for anyone, opted out or not.
 _Avoid_: photo opt-out (conflates with Player Photo)
+
+### Jerseys
+
+**Program Jersey**:
+A jersey Madison Ultimate owns and lends to a Player through a Jersey Loan. It must come back, and it outlives any one season. Tracked by size only, never as an individual item.
+_Avoid_: team jersey, loaner
+
+**Family Jersey**:
+A jersey a family bought and keeps. Never loaned or checked in; recorded only so the program knows which Players won't need a Program Jersey in later seasons.
+_Avoid_: personal jersey, player-owned jersey, own jersey
+
+**Jersey Loan**:
+One Program Jersey of a given size lent to one Player for one season: open from Check-out until Check-in, then closed as Returned or Lost. Loans are never deleted, so together they are the history of where Program Jerseys have been.
+_Avoid_: checkout (as a noun), assignment
+
+**Check-out**:
+Starting a Jersey Loan: a Jersey Manager hands a Player a Program Jersey and records it.
+
+**Check-in**:
+Ending a Jersey Loan: a Jersey Manager receives the Program Jersey back and records it. Always names the Player; a jersey nobody can attribute is not checked in until it is. Families never check in a jersey themselves.
+_Avoid_: return report, self check-in
+
+**Jersey Manager**:
+A team parent (or Coach) who records Check-outs and Check-ins, in an area gated by its own password and separate from Coach Tools.
+_Avoid_: jersey admin, equipment manager
+
+**Jersey Stock**:
+The Program Jerseys the program physically has on hand right now, by size.
+_Avoid_: inventory (ambiguous: on hand vs. everything owned)
+
+**Lost Jersey Fee**:
+A fee a Jersey Manager may issue on a Jersey Loan closed as Lost, recorded with whether and when it was paid. Never issued for damage.
+_Avoid_: replacement charge, fine
+
+**Jersey Note**:
+A free-form observation a Jersey Manager records on the spot, optionally about a Player or a size. Never shown to families.
+_Avoid_: comment, loan note (the per-loan notes are different and stay with that loan)
