@@ -5,7 +5,6 @@
 // same-origin result is followed, so it can never send anyone off-site (a string prefix check is
 // not enough: "/\t/example.com" becomes "//example.com" once the tab is stripped).
 
-// eslint-disable-next-line no-control-regex
 const CONTROL_CHARS = /[\u0000-\u001f\u007f]/;
 
 export function loginDestination(next: string | null, fragment: string, defaultNext: string, origin: string): string {
