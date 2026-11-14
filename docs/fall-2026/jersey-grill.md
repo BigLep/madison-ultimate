@@ -282,3 +282,7 @@ With Q26, every branch of the design tree is visited. Next, outside this grill: 
 
 - Q26 Jersey Notes tab and "Add note" in `/jerseys`: adopted.
 - Q27 Shared understanding reached (2026-11-13). ADR 0009 written; terms in `CONTEXT.md`. Next: create the Jerseys workbook (on your go-ahead), then a build plan.
+
+## Correction (2026-11-13, after seeding)
+
+Q21 was wrong for the one player it covered: that player did take a Program Jersey, and the Adult XL Family Jersey ordered under their name was for a coach, not the player. The workbook now has an open Adult Small loan for them and no Family Jersey row, so the seed is **49** open loans and **23** Family Jerseys (after also removing the earlier parent-sized row). Family jersey orders placed under a player's name can include jerseys for adults; check the size before treating one as the player's.
