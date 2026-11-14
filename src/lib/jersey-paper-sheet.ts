@@ -1,7 +1,7 @@
 // The Check-in tab's "Download as XLSX": a printable sheet of outstanding Program Jerseys for a
 // Jersey Manager who would rather tick names off on paper. Columns: Player, Team, Jersey,
 // Returned? (blank, to check off), Note (blank, to write in). Every table cell has a border so it
-// prints as a grid. Server-only (exceljs).
+// prints as a grid; gridlines elsewhere are off so nothing but the table shows. Server-only (exceljs).
 
 import ExcelJS from 'exceljs';
 import { formatJerseySize } from './signup-form-schema';
@@ -53,7 +53,10 @@ export async function outstandingJerseysWorkbook(rows: OutstandingRow[], { title
       cell.alignment = { vertical: 'middle', horizontal: col === 4 ? 'center' : 'left', wrapText: col === 5 };
     }
   }
-  sheet.views = [{ state: 'frozen', ySplit: 3 }];
+  // Only the bordered table should show, on screen and on paper: no gridlines in the empty area
+  // past it, and a print area that stops at the last row.
+  sheet.views = [{ state: 'frozen', ySplit: 3, showGridLines: false }];
+  sheet.pageSetup.printArea = `A1:E${3 + rows.length}`;
 
   return Buffer.from(await workbook.xlsx.writeBuffer());
 }

@@ -59,5 +59,7 @@ describe('outstandingJerseysWorkbook', () => {
       }
     }
     expect(sheet.getCell('A2').value).toBe('1 still out as of Saturday, November 14');
+    expect(sheet.views[0].showGridLines).toBe(false);
+    expect(sheet.pageSetup.printArea).toBe('A1:E4');
   });
 });
