@@ -839,11 +839,16 @@ function PlayerPanel({
   return (
     <Card style={cardStyle}>
       <CardContent className="pt-4 space-y-4">
-        {/* The name is in the header breadcrumb; this line just places the player. */}
-        <p className="text-sm" style={mutedStyle}>
-          {onRoster ? formatTeamOrTbd(subject.team) : NOT_ON_ROSTER}
-          {open.length === 0 && subject.jerseySize && ` · asked for ${sizeLabel(subject.jerseySize)} at signup`}
-        </p>
+        {/* The name is also in the breadcrumb, but this is where a manager's eyes land before tapping Returned. */}
+        <div>
+          <h2 className="text-xl font-bold" style={titleStyle}>
+            {subject.fullName}
+          </h2>
+          <p className="text-sm" style={mutedStyle}>
+            {onRoster ? formatTeamOrTbd(subject.team) : NOT_ON_ROSTER}
+            {open.length === 0 && subject.jerseySize && ` · asked for ${sizeLabel(subject.jerseySize)} at signup`}
+          </p>
+        </div>
 
         {open.map(loan => (
           <OpenLoan key={loan.loanId} loan={loan} write={write} />
