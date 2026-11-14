@@ -3,7 +3,8 @@
 // #fragment on the login page's own URL across the redirect (it is never sent to the server), so
 // it is re-attached here. ?next= is resolved the way the browser will resolve it and only a
 // same-origin result is followed, so it can never send anyone off-site (a string prefix check is
-// not enough: "/\t/example.com" becomes "//example.com" once the tab is stripped).
+// not enough: "/\t/example.com" becomes "//example.com" once the tab is stripped, and
+// "/.//example.com" normalizes to the path "//example.com").
 
 const CONTROL_CHARS = /[\u0000-\u001f\u007f]/;
 
@@ -12,7 +13,9 @@ export function loginDestination(next: string | null, fragment: string, defaultN
   if (next && next.startsWith('/') && !CONTROL_CHARS.test(next)) {
     try {
       const url = new URL(next, origin);
-      if (url.origin === origin) target = url.pathname + url.search + url.hash;
+      // The returned path is resolved again by the router, so it must not itself start with "//"
+      // (dot segments can normalize "/.//example.com" into exactly that).
+      if (url.origin === origin && !url.pathname.startsWith('//')) target = url.pathname + url.search + url.hash;
     } catch {
       // unparseable: use the default
     }

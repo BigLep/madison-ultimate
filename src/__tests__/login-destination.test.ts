@@ -23,4 +23,11 @@ describe('loginDestination', () => {
       expect(go(`/${ch}/example.com`)).toBe('/jerseys');
     }
   });
+
+  it('rejects paths that normalize to "//host" (literal and encoded dot segments)', () => {
+    for (const next of ['/.//example.com', '/safe/..//example.com', '/%2e//example.com', '/%2E%2E//example.com']) {
+      expect(go(next)).toBe('/jerseys');
+    }
+    expect(go('/jerseys/../coach')).toBe('/coach');
+  });
 });
