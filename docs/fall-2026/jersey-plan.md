@@ -53,10 +53,10 @@ API routes, all under `/api/jerseys` (gated): `GET state` (everything the three 
 
 - `GET /api/player/[playerId]/jersey` (ungated, keyed by PlayerID like the practice and game routes) returns only that player's: open loan size, last return date, unpaid fee. Never notes, never other players.
 - A card at the top of the Home tab, shown only when there is something to say:
-  - Open loan: "You have a Program Jersey (Adult Small). Please return it to a Jersey Manager by Friday, November 21."
+  - Open loan: "You have a Program Jersey (Adult Small). Please return it to a Jersey Manager at the game on Saturday, November 14 or at the team party on Friday, November 20."
   - Returned this season: "Program Jersey returned Tuesday, November 18. Thank you!"
   - Lost with an unpaid fee: "Your Program Jersey was marked lost. A $X fee is due. A coach will be in touch about how to pay." (Payment will likely go through the school; the wording changes once that's settled.)
-- Due date: `APP_CONFIG.JERSEY_RETURN_DUE_DATE` (empty = no "by …" phrase), added to the per-season checklist in `SEASON_SETUP.md`.
+- Return dates: `APP_CONFIG.JERSEY_RETURN_EVENTS`, a list of dates and places (Fall 2026: the game on Saturday, November 14 and the team party on Friday, November 20). The card names the ones still ahead and drops each once it passes; added to the per-season checklist in `SEASON_SETUP.md`.
 
 ## Phase 6: Docs and rollout
 

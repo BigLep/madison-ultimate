@@ -20,6 +20,7 @@ import {
   jerseyStatusesFor,
   filterOptions,
   keepAvailable,
+  upcomingReturnEvents,
   JerseyLoan,
 } from '@/lib/jerseys';
 
@@ -285,5 +286,19 @@ describe('filter options and saved selections', () => {
     const { teams } = filterOptions([{ team: 'Gold', gender: 'Girl' }]);
     expect(keepAvailable(['Blue'], teams)).toEqual([]);
     expect(keepAvailable(['Blue', 'Gold'], teams)).toEqual(['Gold']);
+  });
+});
+
+describe('upcomingReturnEvents', () => {
+  const events = [
+    { date: '2026-11-20', where: 'at the team party' },
+    { date: '2026-11-14', where: 'at the game' },
+  ];
+
+  it('lists the events still ahead, soonest first, including today', () => {
+    expect(upcomingReturnEvents(events, '2026-11-13').map(e => e.date)).toEqual(['2026-11-14', '2026-11-20']);
+    expect(upcomingReturnEvents(events, '2026-11-14').map(e => e.date)).toEqual(['2026-11-14', '2026-11-20']);
+    expect(upcomingReturnEvents(events, '2026-11-15').map(e => e.date)).toEqual(['2026-11-20']);
+    expect(upcomingReturnEvents(events, '2026-11-21')).toEqual([]);
   });
 });

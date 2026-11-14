@@ -1,5 +1,5 @@
 // The Player Portal's Program Jersey status (ADR 0009): open loan size, last return, unpaid Lost
-// Jersey Fees. Keyed by PlayerID and ungated, like the practice and game routes, so it returns
+// Jersey Fees, plus the season's return events. Keyed by PlayerID and ungated, like the practice and game routes, so it returns
 // only that player's own status: never Jersey Notes, names, or other players.
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -11,7 +11,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   const { playerId } = await params;
   try {
     const status = portalJerseyStatus(playerId, await readLoans());
-    return NextResponse.json({ success: true, ...status, returnDueDate: APP_CONFIG.JERSEY_RETURN_DUE_DATE });
+    return NextResponse.json({ success: true, ...status, returnEvents: APP_CONFIG.JERSEY_RETURN_EVENTS });
   } catch (error) {
     // The jersey card is an extra on the Home tab; a broken read must not look like an error there.
     console.error('Error reading jersey status for the Player Portal:', error);

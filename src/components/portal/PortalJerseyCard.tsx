@@ -1,9 +1,10 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatJerseySize } from '@/lib/signup-form-schema'
 import { formatFullDate } from '@/lib/date-formatters'
+import { upcomingReturnEvents, type ReturnEvent } from '@/lib/jerseys'
 
 // Program Jersey card on the Player Portal Home tab (ADR 0009; docs/fall-2026/jersey-plan.md
 // phase 5). Shown only when there is something to say: a jersey to return, an unpaid Lost Jersey
@@ -14,11 +15,21 @@ interface JerseyStatus {
   openLoanSizes: string[]
   returned: { size: string; checkedInAt: string } | null
   unpaidFees: string[]
-  returnDueDate: string
+  returnEvents: ReturnEvent[]
 }
 
 const cardStyle = { background: 'var(--card-bg)', borderColor: 'var(--border)' } as const
 const textStyle = { color: 'var(--primary-text)' }
+
+/** "at the game on Saturday, November 14 or at the team party on Friday, November 20" */
+function returnEventsPhrase(events: ReturnEvent[]): ReactNode {
+  return events.map((e, i) => (
+    <span key={e.date}>
+      {i > 0 && (i === events.length - 1 ? ' or ' : ', ')}
+      {e.where} on <strong>{formatFullDate(e.date)}</strong>
+    </span>
+  ))
+}
 
 /** An ISO timestamp's calendar day in the viewer's timezone, as YYYY-MM-DD (UTC would be a day off in the evening). */
 function localDay(iso: string): string {
@@ -44,7 +55,8 @@ export function PortalJerseyCard({ playerId }: { playerId: string }) {
   }, [playerId])
 
   if (!status) return null
-  const { openLoanSizes, returned, unpaidFees, returnDueDate } = status
+  const { openLoanSizes, returned, unpaidFees } = status
+  const upcoming = upcomingReturnEvents(status.returnEvents || [], localDay(new Date().toISOString()))
   if (openLoanSizes.length === 0 && unpaidFees.length === 0 && !returned) return null
 
   const sizes = openLoanSizes.map(s => formatJerseySize(s) || s).join(' and ')
@@ -58,7 +70,7 @@ export function PortalJerseyCard({ playerId }: { playerId: string }) {
           <p style={textStyle}>
             You have {openLoanSizes.length > 1 ? `${openLoanSizes.length} Program Jerseys` : 'a Program Jersey'} ({sizes}). Please return{' '}
             {openLoanSizes.length > 1 ? 'them' : 'it'} to a Jersey Manager
-            {returnDueDate ? <> by <strong>{formatFullDate(returnDueDate)}</strong></> : null}.
+            {upcoming.length > 0 ? <> {returnEventsPhrase(upcoming)}</> : ' as soon as you can'}.
           </p>
         )}
         {unpaidFees.map((fee, i) => (

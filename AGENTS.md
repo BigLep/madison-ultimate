@@ -56,7 +56,7 @@ Install a real `node_modules` with `npm ci`. A `node_modules` symlink makes Turb
 - `/coach` (Coach Home: Home, Me, Availability tabs for the coach remembered on this device), `/coach/login` (Coach Login: pick your name, shared password), `/api/coach/logout` (ungated); `/api/coach/coaches/[coachId]` (profile read/edit), `.../photo` (Coach Photo upload), `.../availability` (Coach Availability read/write keyed by CoachID)
 - `/coaches` (public Coaches Page) and `/api/coaches`, `/api/coaches/[coachId]/photo` (public: name, About, photo; never email or phone)
 - `/jerseys` (Jersey Manager tools: Check-in, Players (check-out, Family Jerseys, team/gender/jersey-status filters), Stock, Add note) and `/jerseys/login` (your name plus the shared password); everything under `/jerseys` and `/api/jerseys` needs the `/jerseys` password gate (`JERSEY_MANAGER_PASSWORD`; see ADR 0008), distinct from the `/coach` one so team parents never reach Coach Tools. `/api/jerseys/state` reads the whole Jerseys workbook (`JERSEYS_SHEET_ID`, ADR 0009); `/api/jerseys/checkout`, `/api/jerseys/loans/[loanId]/checkin`, `.../fee-paid`, `/api/jerseys/family-jerseys`, and `/api/jerseys/notes` write to it
-- `/api/player/[playerId]/jersey` - the Player Portal's Program Jersey card (open loan size, last return, unpaid Lost Jersey Fee, season due date); ungated, keyed by PlayerID, never notes or other players
+- `/api/player/[playerId]/jersey` - the Player Portal's Program Jersey card (open loan size, last return, unpaid Lost Jersey Fee, the season's return dates); ungated, keyed by PlayerID, never notes or other players
 
 ## Troubleshooting
 

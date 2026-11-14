@@ -282,6 +282,18 @@ export function keepAvailable<T extends string>(selected: T[], available: readon
   return selected.filter(v => available.includes(v));
 }
 
+export interface ReturnEvent {
+  /** YYYY-MM-DD */
+  date: string;
+  /** Short phrase, e.g. "at the team party". */
+  where: string;
+}
+
+/** Return events on or after `today` (YYYY-MM-DD, the viewer's local date), soonest first. */
+export function upcomingReturnEvents(events: readonly ReturnEvent[], today: string): ReturnEvent[] {
+  return events.filter(e => e.date >= today).sort((a, b) => a.date.localeCompare(b.date));
+}
+
 // ---- Write validation ----
 
 export const MAX_MANAGER_NAME_LENGTH = 60;

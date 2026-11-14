@@ -143,10 +143,10 @@ describe('POST /api/jerseys/family-jerseys and /notes', () => {
 });
 
 describe('GET /api/player/[playerId]/jersey', () => {
-  it("returns only that player's own status and the season due date", async () => {
+  it("returns only that player's own status and the season's return events", async () => {
     vi.mocked(readLoans).mockResolvedValue([LOAN, { ...LOAN, loanId: 'l0002', playerId: 'p002', size: 'YL' }]);
     const body = await (await getPortalJersey(new NextRequest('http://localhost/x'), { params: Promise.resolve({ playerId: 'p001' }) })).json();
-    expect(body).toEqual({ success: true, openLoanSizes: ['AS'], returned: null, unpaidFees: [], returnDueDate: expect.any(String) });
+    expect(body).toEqual({ success: true, openLoanSizes: ['AS'], returned: null, unpaidFees: [], returnEvents: expect.any(Array) });
     expect(JSON.stringify(body)).not.toContain('TestFirst');
   });
 
