@@ -22,6 +22,17 @@ export async function readWriteBody(request: NextRequest): Promise<{ body: Recor
   return { body: body as Record<string, unknown>, by };
 }
 
+/**
+ * Who a Jersey Note is about: a Rostered Player, or someone who only appears in the loan rows (a
+ * past player whose jersey is still out). The name always comes from the server, never the client.
+ */
+export async function findNoteSubject(playerId: unknown, loans: { playerId: string; playerName: string }[]): Promise<{ playerId: string; fullName: string } | null> {
+  const rostered = await findRosteredPlayer(playerId);
+  if (rostered) return rostered;
+  const loan = typeof playerId === 'string' && playerId ? loans.find(l => l.playerId === playerId) : undefined;
+  return loan ? { playerId: loan.playerId, fullName: loan.playerName || loan.playerId } : null;
+}
+
 export async function findRosteredPlayer(playerId: unknown): Promise<RosteredPlayerSummary | null> {
   if (typeof playerId !== 'string' || !playerId) return null;
   return (await listRosteredPlayers()).find(p => p.playerId === playerId) ?? null;

@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ArrowDownToLine, ArrowUpFromLine, Package } from 'lucide-react'
+import { ArrowDownToLine, Users, Package } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,6 +9,7 @@ import { BottomTabNav, type BottomTabItem } from '@/components/portal/PortalNav'
 import { formatJerseySize, JERSEY_SIZE_OPTIONS } from '@/lib/signup-form-schema'
 import { formatLocalTimestamp, formatFullDate } from '@/lib/date-formatters'
 import { formatTeamOrTbd, compareTeams } from '@/lib/team-display'
+import { GENDER_CODE_ORDER, shortGenderCode } from '@/lib/gender-display'
 import { getJerseyManagerName, rememberJerseyManagerName } from '@/lib/jersey-session'
 import {
   computeStock,
@@ -16,6 +17,9 @@ import {
   hasUnpaidFee,
   isOpenLoan,
   newestFirst,
+  jerseyStatusesFor,
+  JERSEY_STATUSES,
+  type JerseyStatus,
   MAX_MANAGER_NAME_LENGTH,
   MAX_NOTE_LENGTH,
   type JerseyLoan,
@@ -24,15 +28,16 @@ import {
   type JerseyNote,
 } from '@/lib/jerseys'
 
-// The /jerseys screens (ADR 0009; docs/fall-2026/jersey-plan.md phase 4): Check-in, Check-out,
-// and Stock tabs, a player panel with every action for that player, and Add note. All data comes
+// The /jerseys screens (ADR 0009; docs/fall-2026/jersey-plan.md phase 4): Check-in, Players
+// (where check-out happens), and Stock tabs, with the Player Directory's team and gender filters
+// plus a jersey status filter, a player panel with every action for that player, and Add note. All data comes
 // from one GET /api/jerseys/state; after any write the page re-reads it.
 
-type Screen = 'checkin' | 'checkout' | 'stock'
+type Screen = 'checkin' | 'players' | 'stock'
 
 const TABS: Array<BottomTabItem<Screen>> = [
   { id: 'checkin', label: 'Check-in', icon: ArrowDownToLine },
-  { id: 'checkout', label: 'Check-out', icon: ArrowUpFromLine },
+  { id: 'players', label: 'Players', icon: Users },
   { id: 'stock', label: 'Stock', icon: Package },
 ]
 
@@ -40,6 +45,7 @@ interface JerseyPlayer {
   playerId: string
   fullName: string
   team: string
+  gender: string
   jerseySize: string
 }
 
@@ -56,7 +62,45 @@ interface Subject {
   playerId: string
   fullName: string
   team: string
+  gender: string
   jerseySize: string
+}
+
+/** Checkbox filters, as in the Player Directory: OR within a group, AND across groups, none = all. */
+interface Filters {
+  search: string
+  teams: string[]
+  genders: string[]
+  statuses: JerseyStatus[]
+}
+
+// A Jersey Manager's filters are a per-device convenience, like the Player Directory's.
+const FILTER_STORAGE_KEYS = { teams: 'jerseys-filter-teams', genders: 'jerseys-filter-genders', statuses: 'jerseys-filter-statuses' } as const
+
+function loadStoredList(key: string): string[] {
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(key) || '[]')
+    return Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === 'string') : []
+  } catch {
+    return []
+  }
+}
+
+function storeList(key: string, values: string[]) {
+  try {
+    window.localStorage.setItem(key, JSON.stringify(values))
+  } catch {
+    // Blocked storage: the filter just won't persist.
+  }
+}
+
+function matchesFilters(subject: Subject, statuses: Set<JerseyStatus>, filters: Filters, useStatus: boolean): boolean {
+  return (
+    matchesSearch(subject.fullName, filters.search) &&
+    (filters.teams.length === 0 || filters.teams.includes(subject.team)) &&
+    (filters.genders.length === 0 || filters.genders.includes(shortGenderCode(subject.gender))) &&
+    (!useStatus || filters.statuses.length === 0 || filters.statuses.some(st => statuses.has(st)))
+  )
 }
 
 const cardStyle = { background: 'var(--card-bg)', borderColor: 'var(--border)' } as const
@@ -120,7 +164,7 @@ export function JerseyManager({ workbookUrl }: { workbookUrl: string }) {
   const [state, setState] = useState<JerseyState | null>(null)
   const [loadError, setLoadError] = useState('')
   const [screen, setScreen] = useState<Screen>('checkin')
-  const [search, setSearch] = useState('')
+  const [filters, setFilters] = useState<Filters>({ search: '', teams: [], genders: [], statuses: [] })
   const [selected, setSelected] = useState<Subject | null>(null)
   const [noteFor, setNoteFor] = useState<Subject | 'general' | null>(null)
   const [managerName, setManagerName] = useState<string | null>(null)
@@ -143,8 +187,23 @@ export function JerseyManager({ workbookUrl }: { workbookUrl: string }) {
 
   useEffect(() => {
     setManagerName(getJerseyManagerName())
+    setFilters(f => ({
+      ...f,
+      teams: loadStoredList(FILTER_STORAGE_KEYS.teams),
+      genders: loadStoredList(FILTER_STORAGE_KEYS.genders),
+      statuses: loadStoredList(FILTER_STORAGE_KEYS.statuses) as JerseyStatus[],
+    }))
     load()
   }, [load])
+
+  const toggleFilter = (group: 'teams' | 'genders' | 'statuses', value: string) => {
+    setFilters(f => {
+      const current = f[group] as string[]
+      const next = current.includes(value) ? current.filter(v => v !== value) : [...current, value]
+      storeList(FILTER_STORAGE_KEYS[group], next)
+      return { ...f, [group]: next }
+    })
+  }
 
   /** Posts a write stamped with the manager name; on success re-reads everything. */
   const write = useCallback(
@@ -177,7 +236,7 @@ export function JerseyManager({ workbookUrl }: { workbookUrl: string }) {
 
   const subjectFor = useCallback(
     (playerId: string, fallbackName: string): Subject =>
-      playersById.get(playerId) || { playerId, fullName: fallbackName || playerId, team: NOT_ON_ROSTER, jerseySize: '' },
+      playersById.get(playerId) || { playerId, fullName: fallbackName || playerId, team: NOT_ON_ROSTER, gender: '', jerseySize: '' },
     [playersById]
   )
 
@@ -244,13 +303,19 @@ export function JerseyManager({ workbookUrl }: { workbookUrl: string }) {
         )}
 
         {state && !selected && screen !== 'stock' && (
-          <Input aria-label="Search players" placeholder="Search by name" value={search} onChange={e => setSearch(e.target.value)} />
+          <FilterBar
+            state={state}
+            filters={filters}
+            showStatus={screen === 'players'}
+            onSearch={search => setFilters(f => ({ ...f, search }))}
+            onToggle={toggleFilter}
+          />
         )}
 
         {state && !selected && screen === 'checkin' && (
-          <CheckInList state={state} search={search} subjectFor={subjectFor} onPick={setSelected} />
+          <CheckInList state={state} filters={filters} subjectFor={subjectFor} onPick={setSelected} />
         )}
-        {state && !selected && screen === 'checkout' && <CheckOutList state={state} search={search} onPick={setSelected} />}
+        {state && !selected && screen === 'players' && <PlayersList state={state} filters={filters} onPick={setSelected} />}
         {state && !selected && screen === 'stock' && <StockView state={state} workbookUrl={workbookUrl} subjectFor={subjectFor} onPick={setSelected} />}
       </main>
 
@@ -334,28 +399,85 @@ function TeamGroups<T>({ groups, render }: { groups: Array<[string, T[]]>; rende
   )
 }
 
+function FilterBar({
+  state,
+  filters,
+  showStatus,
+  onSearch,
+  onToggle,
+}: {
+  state: JerseyState
+  filters: Filters
+  showStatus: boolean
+  onSearch: (search: string) => void
+  onToggle: (group: 'teams' | 'genders' | 'statuses', value: string) => void
+}) {
+  const teams = Array.from(new Set(state.players.map(p => p.team))).sort(compareTeams)
+  const seenGenders = new Set(state.players.map(p => shortGenderCode(p.gender)).filter(Boolean))
+  const genders = GENDER_CODE_ORDER.filter(code => seenGenders.has(code))
+  const active = filters.teams.length + filters.genders.length + (showStatus ? filters.statuses.length : 0)
+
+  const group = (legend: string, name: 'teams' | 'genders' | 'statuses', options: Array<{ value: string; label: string }>) =>
+    options.length > 0 && (
+      <fieldset>
+        <legend className="text-sm mb-1" style={mutedStyle}>
+          {legend}
+        </legend>
+        <div className="flex flex-wrap gap-x-4 gap-y-2">
+          {options.map(o => (
+            <label key={o.value} className="flex items-center gap-2 text-sm" style={textStyle}>
+              <input type="checkbox" className="h-4 w-4" checked={(filters[name] as string[]).includes(o.value)} onChange={() => onToggle(name, o.value)} />
+              {o.label}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+    )
+
+  return (
+    <div className="space-y-3">
+      <details open={active > 0 || undefined} className="space-y-3">
+        <summary className="text-sm cursor-pointer" style={mutedStyle}>
+          Filters{active > 0 ? ` (${active} on)` : ''}
+        </summary>
+        <div className="space-y-3 pt-2">
+          {group('Team', 'teams', teams.map(t => ({ value: t, label: formatTeamOrTbd(t) })))}
+          {group('Gender', 'genders', genders.map(g => ({ value: g, label: g })))}
+          {showStatus && group('Jersey status', 'statuses', JERSEY_STATUSES.map(st => ({ value: st.id, label: st.label })))}
+        </div>
+      </details>
+      <Input aria-label="Search players" placeholder="Search by name" value={filters.search} onChange={e => onSearch(e.target.value)} />
+    </div>
+  )
+}
+
 function CheckInList({
   state,
-  search,
+  filters,
   subjectFor,
   onPick,
 }: {
   state: JerseyState
-  search: string
+  filters: Filters
   subjectFor: (playerId: string, name: string) => Subject
   onPick: (s: Subject) => void
 }) {
-  const open = state.loans.filter(isOpenLoan).filter(l => matchesSearch(l.playerName || l.playerId, search))
-  const items = open.map(loan => ({ loan, subject: subjectFor(loan.playerId, loan.playerName) })).sort((a, b) => a.subject.fullName.localeCompare(b.subject.fullName))
-  const unpaid = state.loans.filter(hasUnpaidFee).filter(l => matchesSearch(l.playerName || l.playerId, search))
+  const none = new Set<JerseyStatus>()
+  const items = state.loans
+    .filter(isOpenLoan)
+    .map(loan => ({ loan, subject: subjectFor(loan.playerId, loan.playerName) }))
+    .filter(i => matchesFilters(i.subject, none, filters, false))
+    .sort((a, b) => a.subject.fullName.localeCompare(b.subject.fullName))
+  const unpaid = state.loans.filter(hasUnpaidFee).filter(l => matchesFilters(subjectFor(l.playerId, l.playerName), none, filters, false))
   const outCount = state.loans.filter(isOpenLoan).length
+  const filtered = items.length !== outCount
 
   return (
     <div className="space-y-4">
       <p className="text-sm" style={mutedStyle}>
-        {outCount} Program {outCount === 1 ? 'Jersey' : 'Jerseys'} still out. Tap a player to check theirs in.
+        {outCount} Program {outCount === 1 ? 'Jersey' : 'Jerseys'} still out{filtered ? `, ${items.length} shown` : ''}. Tap a player to check theirs in.
       </p>
-      {items.length === 0 && <p style={mutedStyle}>No open loans{search ? ' match that name' : ''}.</p>}
+      {items.length === 0 && <p style={mutedStyle}>No open loans{filtered ? ' match these filters' : ''}.</p>}
       <TeamGroups
         groups={groupByTeam(items, i => i.subject.team)}
         render={({ loan, subject }) => <PlayerRow key={loan.loanId} name={subject.fullName} detail={loan.size} onClick={() => onPick(subject)} />}
@@ -378,24 +500,33 @@ function CheckInList({
   )
 }
 
-function CheckOutList({ state, search, onPick }: { state: JerseyState; search: string; onPick: (s: Subject) => void }) {
-  const openBy = new Set(state.loans.filter(isOpenLoan).map(l => l.playerId))
-  const familyBy = new Set(state.familyJerseys.map(f => f.playerId))
-  const players = state.players.filter(p => matchesSearch(p.fullName, search))
+/** What a player's row says at a glance, most pressing first. */
+function statusDetail(statuses: Set<JerseyStatus>, openSize: string | undefined, requestedSize: string): string {
+  if (statuses.has('unpaid-fee')) return 'Unpaid fee'
+  if (statuses.has('outstanding')) return `Has ${openSize || 'a jersey'}`
+  if (statuses.has('lost')) return 'Lost'
+  if (statuses.has('returned')) return 'Returned'
+  if (statuses.has('family')) return 'Family Jersey'
+  return requestedSize
+}
+
+function PlayersList({ state, filters, onPick }: { state: JerseyState; filters: Filters; onPick: (s: Subject) => void }) {
+  const rows = state.players.map(p => ({
+    player: p,
+    statuses: jerseyStatusesFor(p.playerId, state.loans, state.familyJerseys),
+    openSize: state.loans.find(l => l.playerId === p.playerId && isOpenLoan(l))?.size,
+  }))
+  const shown = rows.filter(r => matchesFilters(r.player, r.statuses, filters, true))
   return (
     <div className="space-y-4">
       <p className="text-sm" style={mutedStyle}>
-        Every Rostered Player. Tap one to check out a Program Jersey or record a Family Jersey.
+        {shown.length === rows.length ? `All ${rows.length} Rostered Players.` : `${shown.length} of ${rows.length} Rostered Players.`} Tap one to check out a Program Jersey or record a Family Jersey.
       </p>
+      {shown.length === 0 && <p style={mutedStyle}>No players match these filters.</p>}
       <TeamGroups
-        groups={groupByTeam(players, p => p.team)}
-        render={p => (
-          <PlayerRow
-            key={p.playerId}
-            name={p.fullName}
-            detail={openBy.has(p.playerId) ? 'Has a Program Jersey' : familyBy.has(p.playerId) ? 'Family Jersey' : p.jerseySize}
-            onClick={() => onPick(p)}
-          />
+        groups={groupByTeam(shown, r => r.player.team)}
+        render={r => (
+          <PlayerRow key={r.player.playerId} name={r.player.fullName} detail={statusDetail(r.statuses, r.openSize, r.player.jerseySize)} onClick={() => onPick(r.player)} />
         )}
       />
     </div>

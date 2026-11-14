@@ -61,9 +61,9 @@ beforeEach(() => {
 });
 
 describe('GET /api/jerseys/state', () => {
-  it('returns players with name, Team, and signup size only (no gender, no contact info)', async () => {
+  it('returns players with name, Team, gender, and signup size only (no contact info)', async () => {
     const body = await (await getState()).json();
-    expect(body.players).toEqual([{ playerId: 'p001', fullName: 'TestFirst TestLast', team: 'Blue', jerseySize: 'AS' }]);
+    expect(body.players).toEqual([{ playerId: 'p001', fullName: 'TestFirst TestLast', team: 'Blue', gender: 'Girl', jerseySize: 'AS' }]);
   });
 });
 
@@ -129,7 +129,15 @@ describe('POST /api/jerseys/family-jerseys and /notes', () => {
     expect(appendNote).toHaveBeenLastCalledWith(expect.objectContaining({ playerId: 'p001', playerName: 'TestFirst TestLast' }));
   });
 
-  it('refuses an empty note', async () => {
+  it("saves a note about a past player whose jersey is still out, using the loan's name", async () => {
+    vi.mocked(readLoans).mockResolvedValue([{ ...LOAN, playerId: 'p777', playerName: 'TestPast TestLast' }]);
+    expect((await postNote(post('http://localhost/x', { note: 'Moved away', playerId: 'p777', playerName: 'ignored', by: 'M' }))).status).toBe(200);
+    expect(appendNote).toHaveBeenLastCalledWith(expect.objectContaining({ playerId: 'p777', playerName: 'TestPast TestLast' }));
+    vi.mocked(readLoans).mockResolvedValue([]);
+    expect((await postNote(post('http://localhost/x', { note: 'Who?', playerId: 'p888', by: 'M' }))).status).toBe(400);
+  });
+
+    it('refuses an empty note', async () => {
     expect((await postNote(post('http://localhost/x', { note: '  ', by: 'M' }))).status).toBe(400);
   });
 });

@@ -1,10 +1,10 @@
 // Jersey Notes (CONTEXT.md): free-form observations a Jersey Manager records on the spot,
-// optionally about a Player or a size. Add-only; mistakes are fixed in the sheet.
+// optionally about a Player (on the Roster, or a past player with a loan) or a size. Add-only; mistakes are fixed in the sheet.
 
 import { NextRequest, NextResponse } from 'next/server';
-import { appendNote } from '@/lib/jerseys-sheet';
+import { appendNote, readLoans } from '@/lib/jerseys-sheet';
 import { isKnownJerseySize, MAX_NOTE_LENGTH } from '@/lib/jerseys';
-import { readWriteBody, findRosteredPlayer, jsonError, serverError } from '@/lib/jerseys-api';
+import { readWriteBody, findNoteSubject, jsonError, serverError } from '@/lib/jerseys-api';
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,8 +19,8 @@ export async function POST(request: NextRequest) {
     let playerId = '';
     let playerName = '';
     if (body.playerId) {
-      const player = await findRosteredPlayer(body.playerId);
-      if (!player) return jsonError('That player is not on the Roster.', 400);
+      const player = await findNoteSubject(body.playerId, await readLoans());
+      if (!player) return jsonError('That player is not on the Roster or in the Jersey Loans.', 400);
       playerId = player.playerId;
       playerName = player.fullName;
     }

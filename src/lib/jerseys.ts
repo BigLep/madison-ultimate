@@ -204,25 +204,65 @@ export function newestFirst<T>(items: T[], at: (item: T) => string): T[] {
 export interface PortalJerseyStatus {
   /** Sizes of the player's open loans (normally zero or one). */
   openLoanSizes: string[];
-  /** The player's most recent loan, when it was Returned and nothing is open. */
+  /** The player's most recent loan, when it was Returned recently and nothing is open. */
   returned: { size: string; checkedInAt: string } | null;
   /** Unpaid Lost Jersey Fees, as typed in the sheet (e.g. "25"). */
   unpaidFees: string[];
 }
 
-export function portalJerseyStatus(playerId: string, loans: JerseyLoan[]): PortalJerseyStatus {
+/**
+ * How long a family keeps seeing "returned, thank you". Long enough to cover the end of a season,
+ * short enough that it is gone before the next one starts, without a per-season setting.
+ */
+export const RETURN_THANKS_DAYS = 60;
+
+/** The latest loan, when it came back and nothing is open (no time limit; the Jersey Manager view). */
+function latestReturn(mine: JerseyLoan[]): JerseyLoan | null {
+  if (mine.some(isOpenLoan)) return null;
+  const latest = newestFirst(mine, l => l.checkedInAt || l.checkedOutAt)[0];
+  return latest && !isLostLoan(latest) ? latest : null;
+}
+
+export function portalJerseyStatus(playerId: string, loans: JerseyLoan[], now: Date = new Date()): PortalJerseyStatus {
   const mine = loans.filter(l => l.playerId === playerId);
   const open = mine.filter(isOpenLoan);
-  const latest = newestFirst(mine, l => l.checkedInAt || l.checkedOutAt)[0];
-  const returned =
-    open.length === 0 && latest && !isOpenLoan(latest) && !isLostLoan(latest)
-      ? { size: latest.size, checkedInAt: latest.checkedInAt }
-      : null;
+  const last = latestReturn(mine);
+  const returnedAt = last ? new Date(last.checkedInAt).getTime() : NaN;
+  const recent = Number.isFinite(returnedAt) && now.getTime() - returnedAt <= RETURN_THANKS_DAYS * 24 * 60 * 60 * 1000;
+  const returned = last && recent ? { size: last.size, checkedInAt: last.checkedInAt } : null;
   return {
     openLoanSizes: open.map(l => l.size),
     returned,
     unpaidFees: mine.filter(hasUnpaidFee).map(l => l.feeIssued),
   };
+}
+
+/** A player's jersey situation, for the /jerseys status filter. A player can be in several. */
+export const JERSEY_STATUSES = [
+  { id: 'outstanding', label: 'Outstanding loan' },
+  { id: 'returned', label: 'Returned' },
+  { id: 'lost', label: 'Lost' },
+  { id: 'unpaid-fee', label: 'Unpaid fee' },
+  { id: 'family', label: 'Family Jersey' },
+  { id: 'none', label: 'No jersey recorded' },
+] as const;
+
+export type JerseyStatus = (typeof JERSEY_STATUSES)[number]['id'];
+
+/**
+ * Every status that applies to a player. "Returned" means their most recent loan came back and
+ * nothing is out; "none" means no loans and no Family Jersey at all.
+ */
+export function jerseyStatusesFor(playerId: string, loans: JerseyLoan[], familyJerseys: FamilyJersey[]): Set<JerseyStatus> {
+  const mine = loans.filter(l => l.playerId === playerId);
+  const statuses = new Set<JerseyStatus>();
+  if (mine.some(isOpenLoan)) statuses.add('outstanding');
+  if (latestReturn(mine)) statuses.add('returned');
+  if (mine.some(isLostLoan)) statuses.add('lost');
+  if (mine.some(hasUnpaidFee)) statuses.add('unpaid-fee');
+  if (familyJerseys.some(f => f.playerId === playerId)) statuses.add('family');
+  if (mine.length === 0 && !statuses.has('family')) statuses.add('none');
+  return statuses;
 }
 
 // ---- Write validation ----

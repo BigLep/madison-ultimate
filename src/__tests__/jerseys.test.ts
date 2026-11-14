@@ -17,6 +17,7 @@ import {
   cleanFeeAmount,
   cleanIsoDate,
   compareSizes,
+  jerseyStatusesFor,
   JerseyLoan,
 } from '@/lib/jerseys';
 
@@ -138,16 +139,25 @@ describe('portalJerseyStatus', () => {
     });
   });
 
-  it('reports the latest loan when it was returned and nothing is open', () => {
-    const status = portalJerseyStatus('p001', [
-      loan({ loanId: 'old', outcome: 'Returned', checkedInAt: '2026-03-01T00:00:00.000Z', size: 'YL' }),
-      loan({ loanId: 'new', outcome: 'Returned', checkedInAt: '2026-11-18T00:00:00.000Z' }),
-    ]);
+  it('reports the latest loan when it was returned recently and nothing is open', () => {
+    const status = portalJerseyStatus(
+      'p001',
+      [
+        loan({ loanId: 'old', outcome: 'Returned', checkedInAt: '2026-03-01T00:00:00.000Z', size: 'YL' }),
+        loan({ loanId: 'new', outcome: 'Returned', checkedInAt: '2026-11-18T00:00:00.000Z' }),
+      ],
+      new Date('2026-11-20T00:00:00.000Z')
+    );
     expect(status.returned).toEqual({ size: 'AS', checkedInAt: '2026-11-18T00:00:00.000Z' });
   });
 
+  it("stops thanking a family for last season's return once the window has passed", () => {
+    const loans = [loan({ outcome: 'Returned', checkedInAt: '2026-11-18T00:00:00.000Z' })];
+    expect(portalJerseyStatus('p001', loans, new Date('2027-03-01T00:00:00.000Z')).returned).toBeNull();
+  });
+
   it('reports unpaid Lost Jersey Fees and no thank-you after a Lost loan', () => {
-    const status = portalJerseyStatus('p001', [loan({ outcome: 'Lost', feeIssued: '25', checkedInAt: '2026-11-18T00:00:00.000Z' })]);
+    const status = portalJerseyStatus('p001', [loan({ outcome: 'Lost', feeIssued: '25', checkedInAt: '2026-11-18T00:00:00.000Z' })], new Date('2027-03-01T00:00:00.000Z'));
     expect(status).toEqual({ openLoanSizes: [], returned: null, unpaidFees: ['25'] });
   });
 
@@ -233,5 +243,24 @@ describe('input cleaning', () => {
     expect(cleanIsoDate('2026-11-20')).toBe('2026-11-20');
     expect(cleanIsoDate('11/20/2026')).toBeNull();
     expect(cleanIsoDate(undefined)).toBeNull();
+  });
+});
+
+describe('jerseyStatusesFor', () => {
+  const family = [{ playerId: 'p003', playerName: '', size: 'AM', seasonRecorded: 'Fall 2026', notes: '' }];
+  const statuses = (playerId: string, loans: JerseyLoan[]) => [...jerseyStatusesFor(playerId, loans, family)].sort();
+
+  it('marks an open loan as outstanding', () => {
+    expect(statuses('p001', [loan()])).toEqual(['outstanding']);
+  });
+
+  it('marks a latest-returned loan as returned (however long ago), and a Lost one as lost and unpaid', () => {
+    expect(statuses('p001', [loan({ outcome: 'Returned', checkedInAt: '2026-11-18T00:00:00.000Z' })])).toEqual(['returned']);
+    expect(statuses('p001', [loan({ outcome: 'Lost', feeIssued: '25' })])).toEqual(['lost', 'unpaid-fee']);
+  });
+
+  it('marks a Family Jersey, and "none" only when there is neither a loan nor a Family Jersey', () => {
+    expect(statuses('p003', [])).toEqual(['family']);
+    expect(statuses('p009', [loan()])).toEqual(['none']);
   });
 });
