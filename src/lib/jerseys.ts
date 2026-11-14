@@ -294,6 +294,62 @@ export function upcomingReturnEvents(events: readonly ReturnEvent[], today: stri
   return events.filter(e => e.date >= today).sort((a, b) => a.date.localeCompare(b.date));
 }
 
+/** The /jerseys filters: OR within a group, AND across groups, an empty group means all. */
+export interface JerseyFilters {
+  search: string;
+  teams: string[];
+  genders: string[];
+  statuses: JerseyStatus[];
+}
+
+/** Who a row is about, as the filters see them. Past players have team NOT_ON_ROSTER and no gender. */
+export interface FilterSubject {
+  playerId: string;
+  fullName: string;
+  team: string;
+  gender: string;
+}
+
+export const NOT_ON_ROSTER = 'Not on Roster';
+
+export function matchesJerseyFilters(subject: FilterSubject, statuses: Set<JerseyStatus>, filters: JerseyFilters, useStatus: boolean): boolean {
+  return (
+    subject.fullName.toLowerCase().includes(filters.search.trim().toLowerCase()) &&
+    (filters.teams.length === 0 || filters.teams.includes(subject.team)) &&
+    (filters.genders.length === 0 || filters.genders.includes(shortGenderCode(subject.gender))) &&
+    (!useStatus || filters.statuses.length === 0 || filters.statuses.some(st => statuses.has(st)))
+  );
+}
+
+export interface OutstandingRow {
+  playerName: string;
+  team: string;
+  size: string;
+}
+
+/**
+ * The Check-in tab's list, for the paper sheet: one row per open loan that passes the team, gender,
+ * and search filters (status filters don't apply there), ordered by team then name, with players
+ * no longer on the Roster last.
+ */
+export function outstandingRows(players: FilterSubject[], loans: JerseyLoan[], filters: JerseyFilters): OutstandingRow[] {
+  const byId = new Map(players.map(p => [p.playerId, p]));
+  const none = new Set<JerseyStatus>();
+  return loans
+    .filter(isOpenLoan)
+    .map(loan => ({
+      loan,
+      subject: byId.get(loan.playerId) || { playerId: loan.playerId, fullName: loan.playerName || loan.playerId, team: NOT_ON_ROSTER, gender: '' },
+    }))
+    .filter(({ subject }) => matchesJerseyFilters(subject, none, filters, false))
+    .sort((a, b) => {
+      const ta = a.subject.team === NOT_ON_ROSTER ? 1 : 0;
+      const tb = b.subject.team === NOT_ON_ROSTER ? 1 : 0;
+      return ta - tb || compareTeams(a.subject.team, b.subject.team) || a.subject.fullName.localeCompare(b.subject.fullName);
+    })
+    .map(({ loan, subject }) => ({ playerName: subject.fullName, team: subject.team, size: loan.size }));
+}
+
 // ---- Write validation ----
 
 export const MAX_MANAGER_NAME_LENGTH = 60;

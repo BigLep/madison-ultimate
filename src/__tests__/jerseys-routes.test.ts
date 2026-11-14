@@ -24,6 +24,7 @@ import { POST as postFeePaid } from '@/app/api/jerseys/loans/[loanId]/fee-paid/r
 import { POST as postFamily } from '@/app/api/jerseys/family-jerseys/route';
 import { POST as postNote } from '@/app/api/jerseys/notes/route';
 import { GET as getPortalJersey } from '@/app/api/player/[playerId]/jersey/route';
+import { GET as getOutstandingXlsx } from '@/app/api/jerseys/outstanding-xlsx/route';
 import { readLoans, appendLoan, updateLoan, appendFamilyJersey, appendNote } from '@/lib/jerseys-sheet';
 
 const LOAN: JerseyLoan = {
@@ -154,5 +155,16 @@ describe('GET /api/player/[playerId]/jersey', () => {
     vi.mocked(readLoans).mockRejectedValue(new Error('JERSEYS_SHEET_ID is not configured'));
     const res = await getPortalJersey(new NextRequest('http://localhost/x'), { params: Promise.resolve({ playerId: 'p001' }) });
     expect(res.status).toBe(503);
+  });
+});
+
+describe('GET /api/jerseys/outstanding-xlsx', () => {
+  it('returns an .xlsx attachment of the open loans that pass the query filters', async () => {
+    vi.mocked(readLoans).mockResolvedValue([LOAN]);
+    const res = await getOutstandingXlsx(new NextRequest('http://localhost/api/jerseys/outstanding-xlsx?team=Blue'));
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toContain('spreadsheetml');
+    expect(res.headers.get('content-disposition')).toMatch(/attachment; filename="outstanding-jerseys-\d{4}-\d{2}-\d{2}\.xlsx"/);
+    expect((await res.arrayBuffer()).byteLength).toBeGreaterThan(0);
   });
 });

@@ -9,7 +9,6 @@ import { BottomTabNav, type BottomTabItem } from '@/components/portal/PortalNav'
 import { formatJerseySize, JERSEY_SIZE_OPTIONS } from '@/lib/signup-form-schema'
 import { formatLocalTimestamp, formatFullDate } from '@/lib/date-formatters'
 import { formatTeamOrTbd, compareTeams } from '@/lib/team-display'
-import { shortGenderCode } from '@/lib/gender-display'
 import { getJerseyManagerName, rememberJerseyManagerName } from '@/lib/jersey-session'
 import { parseJerseyHash, jerseyHash, parseFilterQuery, filterQuery, type JerseyScreen } from '@/lib/jersey-url'
 import {
@@ -20,6 +19,9 @@ import {
   newestFirst,
   jerseyStatusesFor,
   filterOptions,
+  matchesJerseyFilters,
+  NOT_ON_ROSTER,
+  type JerseyFilters,
   keepAvailable,
   JERSEY_STATUSES,
   type JerseyStatus,
@@ -70,12 +72,7 @@ interface Subject {
 }
 
 /** Checkbox filters, as in the Player Directory: OR within a group, AND across groups, none = all. */
-interface Filters {
-  search: string
-  teams: string[]
-  genders: string[]
-  statuses: JerseyStatus[]
-}
+type Filters = JerseyFilters
 
 // A Jersey Manager's filters are a per-device convenience, like the Player Directory's.
 const FILTER_STORAGE_KEYS = { teams: 'jerseys-filter-teams', genders: 'jerseys-filter-genders', statuses: 'jerseys-filter-statuses' } as const
@@ -98,12 +95,7 @@ function storeList(key: string, values: string[]) {
 }
 
 function matchesFilters(subject: Subject, statuses: Set<JerseyStatus>, filters: Filters, useStatus: boolean): boolean {
-  return (
-    matchesSearch(subject.fullName, filters.search) &&
-    (filters.teams.length === 0 || filters.teams.includes(subject.team)) &&
-    (filters.genders.length === 0 || filters.genders.includes(shortGenderCode(subject.gender))) &&
-    (!useStatus || filters.statuses.length === 0 || filters.statuses.some(st => statuses.has(st)))
-  )
+  return matchesJerseyFilters(subject, statuses, filters, useStatus)
 }
 
 const cardStyle = { background: 'var(--card-bg)', borderColor: 'var(--border)' } as const
@@ -113,7 +105,6 @@ const titleStyle = { color: 'var(--page-title)' }
 const warnStyle = { color: 'var(--availability-unsure-border)' }
 const selectClassName = 'flex h-9 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900'
 
-const NOT_ON_ROSTER = 'Not on Roster'
 // Button styles match the rest of the portal (PlayerProfileForm, CoachProfile, PasswordGateForm):
 // the main action is accent-filled, everything else is the outline variant, and both are at least
 // 44px tall so they are easy to tap.
@@ -136,10 +127,6 @@ function whenText(iso: string): string {
 function todayIso(): string {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
-function matchesSearch(name: string, search: string): boolean {
-  return name.toLowerCase().includes(search.trim().toLowerCase())
 }
 
 function groupByTeam<T>(items: T[], teamOf: (item: T) => string): Array<[string, T[]]> {
@@ -555,6 +542,13 @@ function CheckInList({
       <p className="text-sm" style={mutedStyle}>
         {outCount} Program {outCount === 1 ? 'Jersey' : 'Jerseys'} still out{filtered ? `, ${items.length} shown` : ''}. Tap a player to check theirs in.
       </p>
+      {items.length > 0 && (
+        <Button asChild variant="outline" size="sm" className={secondaryButton}>
+          <a href={`/api/jerseys/outstanding-xlsx${filterQuery({ ...filters, statuses: [] })}`} download>
+            Download as XLSX{filtered ? ` (${items.length} shown)` : ''}
+          </a>
+        </Button>
+      )}
       {items.length === 0 && <p style={mutedStyle}>No open loans{filtered ? ' match these filters' : ''}.</p>}
       <TeamGroups
         groups={groupByTeam(items, i => i.subject.team)}
