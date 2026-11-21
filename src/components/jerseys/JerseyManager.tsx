@@ -1059,6 +1059,7 @@ function CheckOut({ subject, hasOpenLoan, hasFamilyJersey, write }: { subject: S
  */
 function ContactParents({ subject, openSizes }: { subject: Subject; openSizes: string[] }) {
   const [contacts, setContacts] = useState<FamilyContact[] | null>(null)
+  const [cc, setCc] = useState<string[]>([])
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -1067,7 +1068,10 @@ function ContactParents({ subject, openSizes }: { subject: Subject; openSizes: s
       .then(res => res.json())
       .then(data => {
         if (cancelled) return
-        if (data.success) setContacts(data.contacts)
+        if (data.success) {
+          setContacts(data.contacts)
+          setCc(data.cc || [])
+        }
         else setError(data.error || 'Could not load parent contacts.')
       })
       .catch(() => !cancelled && setError('Network error loading parent contacts.'))
@@ -1081,6 +1085,7 @@ function ContactParents({ subject, openSizes }: { subject: Subject; openSizes: s
       ? mailtoUrl(
           jerseyReminderEmail({
             contacts,
+            cc,
             playerName: subject.fullName,
             sizes: openSizes,
             returnEvents: APP_CONFIG.JERSEY_RETURN_EVENTS,

@@ -29,13 +29,19 @@ function whenPhrase(events: ReturnEvent[], today: string): string {
 
 export function jerseyReminderEmail(input: {
   contacts: FamilyContact[];
+  /** Copied on every reminder (the lead Jersey Manager and the team inbox); parents are never duplicated here. */
+  cc?: string[];
   playerName: string;
   sizes: string[];
   returnEvents: readonly ReturnEvent[];
   /** YYYY-MM-DD in the manager's local time. */
   today: string;
-}): { to: string[]; subject: string; body: string } {
+}): { to: string[]; cc: string[]; subject: string; body: string } {
   const to = input.contacts.map(c => c.email.trim()).filter(Boolean);
+  const seen = new Set(to.map(a => a.toLowerCase()));
+  const cc = (input.cc || [])
+    .map(a => a.trim())
+    .filter(a => a && !seen.has(a.toLowerCase()) && seen.add(a.toLowerCase()));
   const jersey =
     input.sizes.length > 1
       ? `${input.sizes.length} Madison Ultimate program jerseys (${input.sizes.map(s => formatJerseySize(s) || s).join(' and ')})`
@@ -50,14 +56,21 @@ export function jerseyReminderEmail(input: {
     '',
     'Thank you!',
   ].join('\n');
-  return { to, subject: `Madison Ultimate jersey return: ${input.playerName}`, body };
+  return { to, cc, subject: `Madison Ultimate jersey return: ${input.playerName}`, body };
 }
 
 /** Plain addresses only, so nothing in a sheet cell can inject extra mailto: fields. */
 const SIMPLE_EMAIL = /^[^\s@,;?&#]+@[^\s@,;?&#]+\.[^\s@,;?&#]+$/;
 
 /** A mailto: URL for the email. Addresses stay readable (mail apps expect a literal "@"). */
-export function mailtoUrl({ to, subject, body }: { to: string[]; subject: string; body: string }): string {
-  const addresses = to.map(a => a.trim()).filter(a => SIMPLE_EMAIL.test(a));
-  return `mailto:${addresses.join(',')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+export function mailtoUrl({ to, cc = [], subject, body }: { to: string[]; cc?: string[]; subject: string; body: string }): string {
+  const clean = (list: string[]) => list.map(a => a.trim()).filter(a => SIMPLE_EMAIL.test(a));
+  const ccPart = clean(cc).length > 0 ? `cc=${clean(cc).join(',')}&` : '';
+  return `mailto:${clean(to).join(',')}?${ccPart}subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+/** The Cc list for reminders: JERSEY_REMINDER_CC (comma-separated) plus the team inbox, deduplicated. */
+export function reminderCcList(envValue: string | undefined, teamEmail: string): string[] {
+  const all = [...(envValue || '').split(','), teamEmail].map(a => a.trim()).filter(Boolean);
+  return all.filter((a, i) => all.findIndex(b => b.toLowerCase() === a.toLowerCase()) === i);
 }

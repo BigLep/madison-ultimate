@@ -13,7 +13,7 @@ const STATE = {
   familyJerseys: [],
   notes: [],
 };
-const CONTACTS = { success: true, contacts: [{ name: 'TestParent TestLast', email: 'parent@example.com' }] };
+const CONTACTS = { success: true, contacts: [{ name: 'TestParent TestLast', email: 'parent@example.com' }], cc: ['manager@example.com', 'team@example.com'] };
 
 const fetchMock = vi.fn(async (url: string) => new Response(JSON.stringify(String(url).includes('/contacts') ? CONTACTS : STATE)));
 
@@ -44,7 +44,7 @@ describe('Parents under More options', () => {
 
     const reminder = screen.getByRole('link', { name: 'Email a jersey reminder' });
     const href = reminder.getAttribute('href')!;
-    expect(href.startsWith('mailto:parent@example.com?subject=')).toBe(true);
+    expect(href.startsWith('mailto:parent@example.com?cc=manager@example.com,team@example.com&subject=')).toBe(true);
     expect(decodeURIComponent(href)).toContain('TestBlue TestLast still has a Madison Ultimate program jersey (Adult Small)');
   });
 });

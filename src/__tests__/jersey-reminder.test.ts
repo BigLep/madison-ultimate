@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { jerseyReminderEmail, mailtoUrl } from '@/lib/jersey-reminder';
+import { jerseyReminderEmail, mailtoUrl, reminderCcList } from '@/lib/jersey-reminder';
 
 const EVENTS = [
   { date: '2026-11-14', where: 'at the game' },
@@ -43,5 +43,23 @@ describe('mailtoUrl', () => {
 
   it('drops addresses that could smuggle extra mailto fields', () => {
     expect(mailtoUrl({ to: ['a@example.com?bcc=x@evil.test', 'not-an-email', 'b@example.com'], subject: 's', body: 'b' })).toBe('mailto:b@example.com?subject=s&body=b');
+  });
+});
+
+describe('Cc on reminders', () => {
+  it('copies the lead manager and team inbox, without repeating a parent who is also on the list', () => {
+    const email = jerseyReminderEmail({ contacts: CONTACTS, cc: ['manager@example.com', 'A@example.com', 'team@example.com'], playerName: 'P', sizes: ['YL'], returnEvents: [], today: '2026-11-21' });
+    expect(email.cc).toEqual(['manager@example.com', 'team@example.com']);
+    expect(mailtoUrl(email)).toMatch(/^mailto:a@example\.com,b@example\.com\?cc=manager@example\.com,team@example\.com&subject=/);
+  });
+
+  it('builds the Cc list from the env var plus the team inbox, deduplicated', () => {
+    expect(reminderCcList(' manager@example.com , ', 'team@example.com')).toEqual(['manager@example.com', 'team@example.com']);
+    expect(reminderCcList(undefined, 'team@example.com')).toEqual(['team@example.com']);
+    expect(reminderCcList('Team@example.com', 'team@example.com')).toEqual(['Team@example.com']);
+  });
+
+  it('omits cc= entirely when there is nobody to copy', () => {
+    expect(mailtoUrl({ to: ['a@example.com'], cc: [], subject: 's', body: 'b' })).toBe('mailto:a@example.com?subject=s&body=b');
   });
 });

@@ -209,8 +209,18 @@ describe('GET /api/jerseys/players/[playerId]/contacts', () => {
   it("returns caretaker names and emails only: no phones, no student contact", async () => {
     const res = await getContacts(new NextRequest('http://localhost/x'), { params: Promise.resolve({ playerId: 'p001' }) });
     const body = await res.json();
-    expect(body).toEqual({ success: true, contacts: [{ name: 'TestParent TestLast', email: 'parent@example.com' }] });
+    expect(body).toEqual({ success: true, contacts: [{ name: 'TestParent TestLast', email: 'parent@example.com' }], cc: expect.any(Array) });
     expect(JSON.stringify(body)).not.toMatch(/555-|student@/);
+  });
+
+  it('copies the lead manager from JERSEY_REMINDER_CC and the team inbox', async () => {
+    vi.stubEnv('JERSEY_REMINDER_CC', 'manager@example.com');
+    try {
+      const body = await (await getContacts(new NextRequest('http://localhost/x'), { params: Promise.resolve({ playerId: 'p001' }) })).json();
+      expect(body.cc).toEqual(['manager@example.com', 'madisonultimate@gmail.com']);
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   it('404s for a player not on the Roster', async () => {
