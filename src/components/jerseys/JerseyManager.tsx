@@ -10,6 +10,8 @@ import { formatJerseySize, JERSEY_SIZE_OPTIONS } from '@/lib/signup-form-schema'
 import { formatLocalTimestamp, formatFullDate } from '@/lib/date-formatters'
 import { formatTeamOrTbd, compareTeams } from '@/lib/team-display'
 import { getJerseyManagerName, rememberJerseyManagerName } from '@/lib/jersey-session'
+import { jerseyReminderEmail, mailtoUrl, type FamilyContact } from '@/lib/jersey-reminder'
+import { APP_CONFIG } from '@/lib/app-config'
 import { parseJerseyHash, jerseyHash, filtersForUrl, filterQuery, type JerseyScreen } from '@/lib/jersey-url'
 import {
   computeStock,
@@ -835,6 +837,8 @@ function PlayerPanel({
   const notes = newestFirst(state.notes.filter(n => n.playerId === subject.playerId), n => n.recordedAt)
   const onRoster = subject.team !== NOT_ON_ROSTER
   const checkOut = onRoster && <CheckOut subject={subject} hasOpenLoan={open.length > 0} hasFamilyJersey={family.length > 0} write={write} />
+  // Parent contacts load only once More options is opened, so browsing never pulls family emails.
+  const [moreOpen, setMoreOpen] = useState(false)
 
   return (
     <Card style={cardStyle}>
@@ -878,11 +882,12 @@ function PlayerPanel({
         )}
 
         {(onRoster || closed.length > 0) && (
-          <details className="border-t pt-3" style={{ borderColor: 'var(--border)' }}>
+          <details className="border-t pt-3" style={{ borderColor: 'var(--border)' }} onToggle={e => setMoreOpen((e.currentTarget as HTMLDetailsElement).open)}>
             <summary className="text-sm cursor-pointer min-h-[44px] flex items-center" style={mutedStyle}>
               More options
             </summary>
             <div className="space-y-4 pt-2">
+              {onRoster && moreOpen && <ContactParents subject={subject} openSizes={open.map(l => l.size)} />}
               {open.length > 0 && checkOut}
               {onRoster && <RecordFamilyJersey subject={subject} family={family} write={write} />}
               {closed.length > 0 && (
@@ -1043,6 +1048,80 @@ function CheckOut({ subject, hasOpenLoan, hasFamilyJersey, write }: { subject: S
           {busy ? 'Saving…' : 'Check out'}
         </Button>
       </div>
+    </section>
+  )
+}
+
+/**
+ * A player's parents, for following up on a jersey that hasn't come back: each name with a mailto
+ * link, plus a ready-to-edit reminder email (jersey-reminder.ts) to all of them when a jersey is
+ * out. The manager's own mail app sends it; the app never does.
+ */
+function ContactParents({ subject, openSizes }: { subject: Subject; openSizes: string[] }) {
+  const [contacts, setContacts] = useState<FamilyContact[] | null>(null)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let cancelled = false
+    fetch(`/api/jerseys/players/${encodeURIComponent(subject.playerId)}/contacts`, { cache: 'no-store' })
+      .then(res => res.json())
+      .then(data => {
+        if (cancelled) return
+        if (data.success) setContacts(data.contacts)
+        else setError(data.error || 'Could not load parent contacts.')
+      })
+      .catch(() => !cancelled && setError('Network error loading parent contacts.'))
+    return () => {
+      cancelled = true
+    }
+  }, [subject.playerId])
+
+  const reminder =
+    contacts && contacts.length > 0 && openSizes.length > 0
+      ? mailtoUrl(
+          jerseyReminderEmail({
+            contacts,
+            playerName: subject.fullName,
+            sizes: openSizes,
+            returnEvents: APP_CONFIG.JERSEY_RETURN_EVENTS,
+            today: todayIso(),
+          })
+        )
+      : ''
+
+  return (
+    <section className="space-y-2">
+      <h3 className="text-sm font-semibold" style={titleStyle}>
+        Parents
+      </h3>
+      {!contacts && !error && (
+        <p className="text-sm" style={mutedStyle}>
+          Loading…
+        </p>
+      )}
+      {error && <SaveBanner message={{ kind: 'error', text: error }} />}
+      {contacts && contacts.length === 0 && (
+        <p className="text-sm" style={mutedStyle}>
+          No parent email on file.
+        </p>
+      )}
+      {contacts && contacts.length > 0 && (
+        <ul className="space-y-1 text-sm">
+          {contacts.map(c => (
+            <li key={c.email} style={textStyle}>
+              {c.name || 'Parent'}:{' '}
+              <a href={`mailto:${c.email}`} className="underline break-all" style={{ color: 'var(--accent)' }}>
+                {c.email}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+      {reminder && (
+        <Button asChild variant="outline" size="sm" className={secondaryButton}>
+          <a href={reminder}>Email a jersey reminder</a>
+        </Button>
+      )}
     </section>
   )
 }

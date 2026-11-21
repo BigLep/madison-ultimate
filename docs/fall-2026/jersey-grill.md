@@ -286,3 +286,7 @@ With Q26, every branch of the design tree is visited. Next, outside this grill: 
 ## Correction (2026-11-13, after seeding)
 
 Q21 was wrong for the one player it covered: that player did take a Program Jersey, and the Adult XL Family Jersey ordered under their name was for a coach, not the player. The workbook now has an open Adult Small loan for them and no Family Jersey row, so the seed is **49** open loans and **23** Family Jerseys (after also removing the earlier parent-sized row). Family jersey orders placed under a player's name can include jerseys for adults; check the size before treating one as the player's.
+
+## Change (2026-11-21): parent contacts for follow-up
+
+Reverses the "no caretaker contact info anywhere in `/jerseys`" part of Q16. Following up on unreturned jerseys turned out to be a Jersey Manager job (the master collector emails families directly), so a player's panel now has a Parents section under More options: caretaker names and emails (never phones), fetched one player at a time only when More options is opened, plus an "Email a jersey reminder" link that opens a pre-written email in the manager's own mail app. The app still never sends email itself.

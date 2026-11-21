@@ -114,6 +114,8 @@ describe('proxy: jersey manager area', () => {
     const withCookie = (url: string, name: string, value: string) => new NextRequest(url, { headers: { cookie: `${name}=${value}` } });
     expect(proxy(new NextRequest('http://localhost/jerseys')).status).toBe(307);
     expect(proxy(new NextRequest('http://localhost/api/jerseys/state')).status).toBe(401);
+    // Caretaker contacts are only ever behind the jersey password.
+    expect(proxy(new NextRequest('http://localhost/api/jerseys/players/p001/contacts')).status).toBe(401);
     expect(proxy(withCookie('http://localhost/api/jerseys/state', COACH_GATE_AREA.cookieName, 'coachpw')).status).toBe(401);
     expect(proxy(withCookie('http://localhost/api/jerseys/state', JERSEY_GATE_AREA.cookieName, 'jerseypw')).status).toBe(200);
     expect(proxy(withCookie('http://localhost/api/coach/players', JERSEY_GATE_AREA.cookieName, 'jerseypw')).status).toBe(401);

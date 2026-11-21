@@ -4,6 +4,18 @@ import ExcelJS from 'exceljs';
 import type { JerseyLoan } from '@/lib/jerseys';
 
 vi.mock('@/lib/coach-directory', () => ({
+  getPlayerDirectoryEntry: vi.fn(async (playerId: string) =>
+    playerId === 'p001'
+      ? {
+          playerId: 'p001', fullName: 'TestFirst TestLast', team: 'Blue', grade: '7', gender: 'Girl', hasPhoto: false, allergies: '',
+          studentEmail: 'student@example.com', studentPhone: '555-0100',
+          caretakers: [
+            { name: 'TestParent TestLast', email: 'parent@example.com', phone: '555-0101' },
+            { name: 'TestNoEmail TestLast', email: '', phone: '555-0102' },
+          ],
+        }
+      : null
+  ),
   listRosteredPlayers: vi.fn(async () => [
     { playerId: 'p001', fullName: 'TestFirst TestLast', team: 'Blue', gender: 'Girl', jerseySize: 'AS' },
   ]),
@@ -26,6 +38,7 @@ import { POST as postFamily } from '@/app/api/jerseys/family-jerseys/route';
 import { POST as postNote } from '@/app/api/jerseys/notes/route';
 import { GET as getPortalJersey } from '@/app/api/player/[playerId]/jersey/route';
 import { GET as getOutstandingXlsx } from '@/app/api/jerseys/outstanding-xlsx/route';
+import { GET as getContacts } from '@/app/api/jerseys/players/[playerId]/contacts/route';
 import { readLoans, appendLoan, updateLoan, appendFamilyJersey, appendNote } from '@/lib/jerseys-sheet';
 
 const LOAN: JerseyLoan = {
@@ -189,5 +202,19 @@ describe('GET /api/jerseys/outstanding-xlsx', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe('GET /api/jerseys/players/[playerId]/contacts', () => {
+  it("returns caretaker names and emails only: no phones, no student contact", async () => {
+    const res = await getContacts(new NextRequest('http://localhost/x'), { params: Promise.resolve({ playerId: 'p001' }) });
+    const body = await res.json();
+    expect(body).toEqual({ success: true, contacts: [{ name: 'TestParent TestLast', email: 'parent@example.com' }] });
+    expect(JSON.stringify(body)).not.toMatch(/555-|student@/);
+  });
+
+  it('404s for a player not on the Roster', async () => {
+    const res = await getContacts(new NextRequest('http://localhost/x'), { params: Promise.resolve({ playerId: 'p999' }) });
+    expect(res.status).toBe(404);
   });
 });
