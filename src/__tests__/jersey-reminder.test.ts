@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { jerseyReminderEmail, mailtoUrl, reminderCcList } from '@/lib/jersey-reminder';
+import { jerseyReminderEmail, mailtoUrl, reminderCcList, mailtoForAddress } from '@/lib/jersey-reminder';
 
 const EVENTS = [
   { date: '2026-11-14', where: 'at the game' },
@@ -61,5 +61,17 @@ describe('Cc on reminders', () => {
 
   it('omits cc= entirely when there is nobody to copy', () => {
     expect(mailtoUrl({ to: ['a@example.com'], cc: [], subject: 's', body: 'b' })).toBe('mailto:a@example.com?subject=s&body=b');
+  });
+});
+
+describe('address encoding', () => {
+  it('percent-encodes a literal "%" so the mail app sees the same address, in To and Cc', () => {
+    expect(mailtoUrl({ to: ['test%41@example.com'], cc: ['c%41@example.com'], subject: 's', body: 'b' })).toBe('mailto:test%2541@example.com?cc=c%2541@example.com&subject=s&body=b');
+  });
+
+  it('single-address links use the same check, refusing injected fields', () => {
+    expect(mailtoForAddress('parent@example.com')).toBe('mailto:parent@example.com');
+    expect(mailtoForAddress('parent@example.com?bcc=other@example.com')).toBeNull();
+    expect(mailtoForAddress('a+b@example.com')).toBe('mailto:a%2Bb@example.com');
   });
 });

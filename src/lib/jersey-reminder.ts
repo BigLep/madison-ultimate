@@ -62,9 +62,27 @@ export function jerseyReminderEmail(input: {
 /** Plain addresses only, so nothing in a sheet cell can inject extra mailto: fields. */
 const SIMPLE_EMAIL = /^[^\s@,;?&#]+@[^\s@,;?&#]+\.[^\s@,;?&#]+$/;
 
-/** A mailto: URL for the email. Addresses stay readable (mail apps expect a literal "@"). */
+/**
+ * One address for a mailto: URL, or null when it isn't a plain address. The local part and domain
+ * are percent-encoded separately and the "@" kept literal, so a "%" in the address survives
+ * (RFC 6068 section 2) and nothing in a sheet cell can add mailto: fields.
+ */
+export function mailtoAddress(address: string): string | null {
+  const a = address.trim();
+  if (!SIMPLE_EMAIL.test(a)) return null;
+  const at = a.lastIndexOf('@');
+  return `${encodeURIComponent(a.slice(0, at))}@${encodeURIComponent(a.slice(at + 1))}`;
+}
+
+/** A single-address mailto: link, or null for anything that isn't a plain address. */
+export function mailtoForAddress(address: string): string | null {
+  const encoded = mailtoAddress(address);
+  return encoded ? `mailto:${encoded}` : null;
+}
+
+/** A mailto: URL for the email; invalid addresses are dropped. */
 export function mailtoUrl({ to, cc = [], subject, body }: { to: string[]; cc?: string[]; subject: string; body: string }): string {
-  const clean = (list: string[]) => list.map(a => a.trim()).filter(a => SIMPLE_EMAIL.test(a));
+  const clean = (list: string[]) => list.map(mailtoAddress).filter((a): a is string => a !== null);
   const ccPart = clean(cc).length > 0 ? `cc=${clean(cc).join(',')}&` : '';
   return `mailto:${clean(to).join(',')}?${ccPart}subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }

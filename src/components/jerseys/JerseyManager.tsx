@@ -10,7 +10,7 @@ import { formatJerseySize, JERSEY_SIZE_OPTIONS } from '@/lib/signup-form-schema'
 import { formatLocalTimestamp, formatFullDate } from '@/lib/date-formatters'
 import { formatTeamOrTbd, compareTeams } from '@/lib/team-display'
 import { getJerseyManagerName, rememberJerseyManagerName } from '@/lib/jersey-session'
-import { jerseyReminderEmail, mailtoUrl, type FamilyContact } from '@/lib/jersey-reminder'
+import { jerseyReminderEmail, mailtoUrl, mailtoForAddress, type FamilyContact } from '@/lib/jersey-reminder'
 import { APP_CONFIG } from '@/lib/app-config'
 import { parseJerseyHash, jerseyHash, filtersForUrl, filterQuery, type JerseyScreen } from '@/lib/jersey-url'
 import {
@@ -349,6 +349,9 @@ export function JerseyManager({ workbookUrl }: { workbookUrl: string }) {
 
         {state && selected && (
           <PlayerPanel
+            // A fresh panel per player: More options closes and any loaded parent contacts are
+            // dropped, so one family's emails can never sit under another player's name.
+            key={selected.playerId}
             subject={selected}
             state={state}
             write={write}
@@ -1058,20 +1061,20 @@ function CheckOut({ subject, hasOpenLoan, hasFamilyJersey, write }: { subject: S
  * out. The manager's own mail app sends it; the app never does.
  */
 function ContactParents({ subject, openSizes }: { subject: Subject; openSizes: string[] }) {
-  const [contacts, setContacts] = useState<FamilyContact[] | null>(null)
-  const [cc, setCc] = useState<string[]>([])
+  const [loaded, setLoaded] = useState<{ playerId: string; contacts: FamilyContact[]; cc: string[] } | null>(null)
   const [error, setError] = useState('')
+  // Only ever show contacts fetched for this player (the panel is also keyed by player).
+  const contacts = loaded?.playerId === subject.playerId ? loaded.contacts : null
+  const cc = loaded?.playerId === subject.playerId ? loaded.cc : []
 
   useEffect(() => {
     let cancelled = false
+    setError('')
     fetch(`/api/jerseys/players/${encodeURIComponent(subject.playerId)}/contacts`, { cache: 'no-store' })
       .then(res => res.json())
       .then(data => {
         if (cancelled) return
-        if (data.success) {
-          setContacts(data.contacts)
-          setCc(data.cc || [])
-        }
+        if (data.success) setLoaded({ playerId: subject.playerId, contacts: data.contacts, cc: data.cc || [] })
         else setError(data.error || 'Could not load parent contacts.')
       })
       .catch(() => !cancelled && setError('Network error loading parent contacts.'))
@@ -1115,9 +1118,13 @@ function ContactParents({ subject, openSizes }: { subject: Subject; openSizes: s
           {contacts.map(c => (
             <li key={c.email} style={textStyle}>
               {c.name || 'Parent'}:{' '}
-              <a href={`mailto:${c.email}`} className="underline break-all" style={{ color: 'var(--accent)' }}>
-                {c.email}
-              </a>
+              {mailtoForAddress(c.email) ? (
+                <a href={mailtoForAddress(c.email)!} className="underline break-all" style={{ color: 'var(--accent)' }}>
+                  {c.email}
+                </a>
+              ) : (
+                <span className="break-all">{c.email} (not a valid email)</span>
+              )}
             </li>
           ))}
         </ul>
