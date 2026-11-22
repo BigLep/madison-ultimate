@@ -1,0 +1,50 @@
+name: Deploy
+
+# Production deploys run here, not through the Vercel GitHub integration
+# (vercel.json sets git.deploymentEnabled to false). Pattern from
+# https://vercel.com/kb/guide/how-can-i-use-github-actions-with-vercel
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Deploy pushes one at a time, in order, so an older build never lands after a newer one.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  VERCEL_CLI_VERSION: 65.12.1
+
+jobs:
+  test:
+    name: Unit tests
+    # Same checks as the Test workflow's unit job. The integration job is not a deploy
+    # gate because it depends on shared test spreadsheets and Drive folders.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run test:run
+      - run: npx tsc --noEmit
+
+  deploy:
+    name: Deploy to Vercel production
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm install --global vercel@${{ env.VERCEL_CLI_VERSION }}
+      - run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+      - run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+      - run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
