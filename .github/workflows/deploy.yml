@@ -1,7 +1,7 @@
 name: Deploy
 
 # Production deploys run here, not through the Vercel GitHub integration
-# (vercel.json sets git.deploymentEnabled to false). Pattern from
+# (vercel.json sets git.deploymentEnabled to false). Adapted from
 # https://vercel.com/kb/guide/how-can-i-use-github-actions-with-vercel
 on:
   push:
@@ -45,6 +45,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm install --global vercel@${{ env.VERCEL_CLI_VERSION }}
-      - run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-      - run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-      - run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+      # Build on Vercel rather than with `vercel pull` + `vercel build` + `deploy --prebuilt`:
+      # `vercel pull` writes env values into a double-quoted dotenv file, where the
+      # service-account key's \n escapes become real newlines and the JSON no longer parses.
+      - run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
